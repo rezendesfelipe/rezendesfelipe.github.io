@@ -130,3 +130,17 @@ a { color: inherit; }
 .grid--stack .card { grid-column: span 4; }
 @media (max-width: 920px) { .grid--stack .card { grid-column: span 6; } }
 @media (max-width: 720px) { .grid--stack .card { grid-column: span 12; } }
+
+.lang-toggle {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: .35rem .6rem;
+  border-radius: 999px;
+  border: 1px solid var(--border);
+  text-decoration: none;
+  color: var(--text);
+}
+.lang-toggle:hover {
+  border-color: rgba(122, 162, 255, .5);
+}

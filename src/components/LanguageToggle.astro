@@ -1,0 +1,27 @@
+---
+const pathname = Astro.url.pathname;
+
+// Normalize: remove trailing slash exceto root
+const normalized = pathname !== '/' ? pathname.replace(/\/$/, '') : '/';
+
+function toEN(path: string) {
+  if (path === '/') return '/en/';
+  if (path.startsWith('/en')) return path; // já é EN
+  return `/en${path}${path.endsWith('/') ? '' : '/'}`;
+}
+
+function toPT(path: string) {
+  if (path === '/en' || path === '/en/') return '/';
+  if (path.startsWith('/en/')) return path.replace(/^\/en/, '') || '/';
+  return path;
+}
+
+const isEN = normalized === '/en' || normalized.startsWith('/en/');
+const targetHref = isEN ? toPT(pathname) : toEN(pathname);
+const label = isEN ? 'PT' : 'EN';
+const aria = isEN ? 'Mudar para Português' : 'Switch to English';
+---
+
+<a class="lang-toggle" href={targetHref} aria-label={aria}>
+  {label}
+</a>

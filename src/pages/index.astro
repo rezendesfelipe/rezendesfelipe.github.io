@@ -5,6 +5,7 @@ import FormattedDate from '../components/FormattedDate.astro';
 import Card from '../components/Card.astro';
 import { stack } from '../data/stack';
 import { SITE_TITLE } from '../consts';
+import LanguageToggle from '../components/LanguageToggle.astro';
 
 const lang = 'pt';
 
@@ -34,7 +35,7 @@ const certs = (await getCollection('certifications', (c) => (c.data.lang ?? 'pt'
             <a href="#certificacoes">Certificações</a>
             <a href="#stack">Stack</a>
             <a href="#contato">Contato</a>
-            <a class="lang" href="/en/">EN</a>
+            <LanguageToggle />
           </div>
         </nav>
       </header>
