@@ -1,0 +1,16 @@
+---
+const { title, description, url, tags } = Astro.props;
+---
+
+<a class="card" href={url}>
+  <h3 class="card__title">{title}</h3>
+  <p class="card__desc">{description}</p>
+
+  {tags?.length ? (
+    <ul class="tags" aria-label="Tags">
+      {tags.map((t) => (
+        <li class="tag">{t}</li>
+      ))}
+    </ul>
+  ) : null}
+</a>

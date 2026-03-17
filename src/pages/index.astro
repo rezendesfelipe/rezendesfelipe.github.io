@@ -1,49 +1,96 @@
 ---
+import { getCollection } from 'astro:content';
 import BaseHead from '../components/BaseHead.astro';
+import FormattedDate from '../components/FormattedDate.astro';
 import Footer from '../components/Footer.astro';
 import Header from '../components/Header.astro';
+import ProjectCard from '../components/ProjectCard.astro';
 import { SITE_DESCRIPTION, SITE_TITLE } from '../consts';
+
+const posts = (await getCollection('blog'))
+  .sort((a, b) => b.data.pubDate.valueOf() - a.data.pubDate.valueOf())
+  .slice(0, 3);
+
+const projects = (await getCollection('projects'))
+  .sort((a, b) => (a.data.order ?? 999) - (b.data.order ?? 999));
+
+const featuredProjects = projects.filter((p) => p.data.featured).slice(0, 6);
 ---
 
-<!doctype html>
-<html lang="en">
-	<head>
-		<BaseHead title={SITE_TITLE} description={SITE_DESCRIPTION} />
-	</head>
-	<body>
-		<Header />
-		<main>
-			<h1>🧑‍🚀 Hello, Astronaut!</h1>
-			<p>
-				Welcome to the official <a href="https://astro.build/">Astro</a> blog starter template. This template
-				serves as a lightweight, minimally-styled starting point for anyone looking to build a personal
-				website, blog, or portfolio with Astro.
-			</p>
-			<p>
-				This template comes with a few integrations already configured in your
-				<code>astro.config.mjs</code> file. You can customize your setup with
-				<a href="https://astro.build/integrations">Astro Integrations</a> to add tools like Tailwind,
-				React, or Vue to your project.
-			</p>
-			<p>Here are a few ideas on how to get started with the template:</p>
-			<ul>
-				<li>Edit this page in <code>src/pages/index.astro</code></li>
-				<li>Edit the site header items in <code>src/components/Header.astro</code></li>
-				<li>Add your name to the footer in <code>src/components/Footer.astro</code></li>
-				<li>Check out the included blog posts in <code>src/content/blog/</code></li>
-				<li>Customize the blog post page layout in <code>src/layouts/BlogPost.astro</code></li>
-			</ul>
-			<p>
-				Have fun! If you get stuck, remember to
-				<a href="https://docs.astro.build/">read the docs</a>
-				or <a href="https://astro.build/chat">join us on Discord</a> to ask questions.
-			</p>
-			<p>
-				Looking for a blog template with a bit more personality? Check out
-				<a href="https://github.com/Charca/astro-blog-template">astro-blog-template</a>
-				by <a href="https://twitter.com/Charca">Maxi Ferreira</a>.
-			</p>
-		</main>
-		<Footer />
-	</body>
+<html lang="pt-BR">
+  <head>
+    <BaseHead title={SITE_TITLE} description={SITE_DESCRIPTION} />
+  </head>
+  <body>
+    <main class="container">
+      <section class="hero">
+        <p class="hero__kicker">Olá, eu sou</p>
+        <h1 class="hero__title">Felipe Rezende</h1>
+        <p class="hero__subtitle">
+          Portfólio e blog sobre estudos (cloud, dev, arquitetura e o que eu estiver aprendendo).
+        </p>
+
+        <div class="hero__actions">
+          <a class="btn" href="/about/">Sobre</a>
+          <a class="btn btn--ghost" href="/blog/">Ler posts</a>
+          <a class="btn btn--ghost" href="#projetos">Projetos</a>
+        </div>
+
+        <div class="hero__links">
+          <a href="https://github.com/rezendesfelipe">GitHub</a>
+          <span aria-hidden="true">·</span>
+          <a href="mailto:SEU_EMAIL_AQUI">Email</a>
+          <span aria-hidden="true">·</span>
+          <a href="https://www.linkedin.com/in/SEU_LINKEDIN/">LinkedIn</a>
+        </div>
+      </section>
+
+      <section class="section" aria-labelledby="sobre">
+        <h2 id="sobre">Sobre</h2>
+        <p class="muted">
+          Eu registro aqui meus estudos e projetos, com foco em aprendizado contínuo e prática.
+          A ideia é documentar de forma simples e reaproveitável.
+        </p>
+      </section>
+
+      <section class="section" id="projetos" aria-labelledby="projetos-title">
+        <div class="section__header">
+          <h2 id="projetos-title">Projetos</h2>
+          <p class="muted">Algumas coisas que eu construí / estou construindo.</p>
+        </div>
+
+        <div class="grid">
+          {featuredProjects.map((p) => (
+            <ProjectCard
+              title={p.data.title}
+              description={p.data.description}
+              url={p.data.url}
+              tags={p.data.tags}
+            />
+          ))}
+        </div>
+      </section>
+
+      <section class="section" aria-labelledby="posts-title">
+        <div class="section__header">
+          <h2 id="posts-title">Posts recentes</h2>
+          <a class="link" href="/blog/">Ver todos</a>
+        </div>
+
+        <ul class="post-list">
+          {posts.map((post) => (
+            <li>
+              <a href={`/blog/${post.slug}/`}>
+                <h3>{post.data.title}</h3>
+                <p class="muted">{post.data.description}</p>
+                <p class="muted">
+                  <FormattedDate date={post.data.pubDate} />
+                </p>
+              </a>
+            </li>
+          ))}
+        </ul>
+      </section>
+    </main>
+  </body>
 </html>
