@@ -33,5 +33,17 @@ const projects = defineCollection({
     order: z.number().optional(),
   }),
 });
+const langSchema = z.enum(['pt', 'en']);
 
-export const collections = { blog, projects };
+const certifications = defineCollection({
+  type: 'content',
+  schema: z.object({
+    lang: langSchema.default('pt'),
+    title: z.string(),
+    issuer: z.string(),
+    issuedAt: z.coerce.date().optional(),
+    url: z.string().url().optional(),
+    order: z.number().optional(),
+  }),
+});
+export const collections = { blog, projects, certifications };

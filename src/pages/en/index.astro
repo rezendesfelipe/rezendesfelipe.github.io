@@ -1,12 +1,12 @@
 ---
 import { getCollection } from 'astro:content';
-import BaseHead from '../components/BaseHead.astro';
-import FormattedDate from '../components/FormattedDate.astro';
-import Card from '../components/Card.astro';
-import { stack } from '../data/stack';
-import { SITE_TITLE } from '../consts';
+import BaseHead from '../../components/BaseHead.astro';
+import FormattedDate from '../../components/FormattedDate.astro';
+import Card from '../../components/Card.astro';
+import { stack } from '../../data/stack';
+import { SITE_TITLE } from '../../consts';
 
-const lang = 'pt';
+const lang = 'en';
 
 const posts = (await getCollection('blog', (p) => (p.data.lang ?? 'pt') === lang))
   .sort((a, b) => b.data.pubDate.valueOf() - a.data.pubDate.valueOf())
@@ -20,35 +20,35 @@ const certs = (await getCollection('certifications', (c) => (c.data.lang ?? 'pt'
   .sort((a, b) => (a.data.order ?? 999) - (b.data.order ?? 999));
 ---
 
-<html lang="pt-BR">
+<html lang="en">
   <head>
-    <BaseHead title={SITE_TITLE} description="Portfólio e blog de estudos de DevOps." />
+    <BaseHead title={SITE_TITLE} description="DevOps Engineer portfolio and study blog." />
   </head>
   <body>
     <main class="container">
       <header class="topbar">
         <nav class="topbar__nav">
-          <a class="topbar__brand" href="/">Felipe Rezende</a>
+          <a class="topbar__brand" href="/en/">Felipe Rezende</a>
           <div class="topbar__links">
-            <a href="#projetos">Projetos</a>
-            <a href="#certificacoes">Certificações</a>
+            <a href="#projects">Projects</a>
+            <a href="#certifications">Certifications</a>
             <a href="#stack">Stack</a>
-            <a href="#contato">Contato</a>
-            <a class="lang" href="/en/">EN</a>
+            <a href="#contact">Contact</a>
+            <a class="lang" href="/">PT</a>
           </div>
         </nav>
       </header>
 
       <section class="hero">
         <p class="muted">DevOps Engineer</p>
-        <h1>Construindo infraestrutura confiável, automatizada e observável.</h1>
+        <h1>Building reliable, automated, and observable infrastructure.</h1>
         <p class="hero__subtitle">
-          Aqui eu registro estudos e compartilho projetos sobre cloud, IaC, CI/CD, Kubernetes e observabilidade.
+          I document my studies and share projects about cloud, IaC, CI/CD, Kubernetes, and observability.
         </p>
 
         <div class="hero__actions">
-          <a class="btn" href="/blog/">Ler artigos</a>
-          <a class="btn btn--ghost" href="#contato">Contato</a>
+          <a class="btn" href="/en/blog/">Read articles</a>
+          <a class="btn btn--ghost" href="#contact">Contact</a>
         </div>
 
         <div class="hero__meta">
@@ -60,9 +60,9 @@ const certs = (await getCollection('certifications', (c) => (c.data.lang ?? 'pt'
         </div>
       </section>
 
-      <section class="section" id="projetos">
+      <section class="section" id="projects">
         <div class="section__header">
-          <h2>Projetos</h2>
+          <h2>Projects</h2>
         </div>
 
         <div class="grid">
@@ -82,9 +82,9 @@ const certs = (await getCollection('certifications', (c) => (c.data.lang ?? 'pt'
         </div>
       </section>
 
-      <section class="section" id="certificacoes">
+      <section class="section" id="certifications">
         <div class="section__header">
-          <h2>Certificações</h2>
+          <h2>Certifications</h2>
         </div>
 
         <div class="grid">
@@ -99,11 +99,11 @@ const certs = (await getCollection('certifications', (c) => (c.data.lang ?? 'pt'
 
       <section class="section" id="stack">
         <div class="section__header">
-          <h2>{stack.pt.title}</h2>
+          <h2>{stack.en.title}</h2>
         </div>
 
         <div class="grid grid--stack">
-          {stack.pt.items.map((i) => (
+          {stack.en.items.map((i) => (
             <Card>
               <h3 class="card__title">{i.label}</h3>
               <p class="muted">{i.value}</p>
@@ -114,14 +114,14 @@ const certs = (await getCollection('certifications', (c) => (c.data.lang ?? 'pt'
 
       <section class="section">
         <div class="section__header">
-          <h2>Últimos artigos</h2>
-          <a class="link" href="/blog/">Ver todos</a>
+          <h2>Latest articles</h2>
+          <a class="link" href="/en/blog/">View all</a>
         </div>
 
         <ul class="post-list">
           {posts.map((post) => (
             <li>
-              <a href={`/blog/${post.slug}/`}>
+              <a href={`/en/blog/${post.slug}/`}>
                 <h3>{post.data.title}</h3>
                 <p class="muted">{post.data.description}</p>
                 <p class="muted"><FormattedDate date={post.data.pubDate} /></p>
@@ -131,19 +131,19 @@ const certs = (await getCollection('certifications', (c) => (c.data.lang ?? 'pt'
         </ul>
       </section>
 
-      <section class="section" id="contato">
+      <section class="section" id="contact">
         <div class="section__header">
-          <h2>Contato</h2>
+          <h2>Contact</h2>
         </div>
 
         <div class="grid">
-          <Card href="mailto:frezende21@gmail.com">
+          <Card href="mailto:SEU_EMAIL_AQUI">
             <h3 class="card__title">Email</h3>
-            <p class="muted">frezende21@gmail.com</p>
+            <p class="muted">SEU_EMAIL_AQUI</p>
           </Card>
-          <Card href="https://www.linkedin.com/in/rezendesfelipe/">
+          <Card href="https://www.linkedin.com/in/SEU_LINKEDIN/">
             <h3 class="card__title">LinkedIn</h3>
-            <p class="muted">Conecte comigo</p>
+            <p class="muted">Connect with me</p>
           </Card>
           <Card href="https://github.com/rezendesfelipe">
             <h3 class="card__title">GitHub</h3>
