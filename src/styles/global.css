@@ -144,3 +144,8 @@ a { color: inherit; }
 .lang-toggle:hover {
   border-color: rgba(122, 162, 255, .5);
 }
+
+.nav-lang {
+  margin-left: auto;
+  display: inline-flex;
+}
