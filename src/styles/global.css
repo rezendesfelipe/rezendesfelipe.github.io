@@ -40,9 +40,9 @@ html, body {
 
 /* ─── Layout ─────────────────────────────────────────────── */
 .container {
-  max-width: 980px;
+  max-width: 1440px;
   margin: 0 auto;
-  padding: 0 1.25rem 3.5rem;
+  padding: 0 2rem 3.5rem;
 }
 
 a { color: inherit; }
@@ -82,7 +82,7 @@ code:not(pre code) {
   border-bottom: 1px solid var(--border);
 }
 .topbar__nav {
-  max-width: 980px;
+  max-width: 1440px;
   margin: 0 auto;
   display: flex;
   align-items: center;
@@ -182,7 +182,7 @@ code:not(pre code) {
   color: var(--text);
 }
 .hero__name span {
-  background: linear-gradient(90deg, var(--accent) 0%, var(--accent-ai) 100%);
+  background: linear-gradient(90deg, #1575E7 0%, #5BBFAE 50%, #8DC63F 100%);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
@@ -309,12 +309,13 @@ code:not(pre code) {
   border-radius: 12px;
   padding: 1.1rem 1.25rem;
   text-decoration: none;
-  transition: transform .12s ease, border-color .15s ease;
+  transition: transform .12s ease, border-color .15s ease, box-shadow .15s ease;
   display: block;
 }
 .card:hover {
   transform: translateY(-2px);
-  border-color: rgba(0, 120, 212, .5);
+  border-color: rgba(21, 117, 231, .6);
+  box-shadow: 0 0 18px rgba(21, 117, 231, .25), 0 0 6px rgba(141, 198, 63, .15);
 }
 .card__title { margin: 0 0 .4rem; font-size: 1rem; font-weight: 600; }
 .card__desc { margin: 0; color: var(--muted); font-size: .9rem; }
@@ -352,8 +353,7 @@ code:not(pre code) {
   gap: .75rem;
 }
 .arsenal-card--highlight {
-  border-color: var(--accent);
-  background: linear-gradient(135deg, var(--panel) 0%, rgba(0, 120, 212, 0.08) 100%);
+  background: linear-gradient(135deg, var(--panel) 0%, rgba(21, 117, 231, 0.08) 100%);
 }
 .arsenal-card__header {
   display: flex;

@@ -16,7 +16,7 @@ export const arsenal: {
       {
         icon: '🏆',
         label: '7+ anos de experiência',
-        subtitle: 'Tech Lead e Arquiteto Cloud',
+        subtitle: 'Tech Lead · Arquiteto Cloud',
         highlight: true,
         items: [],
       },
@@ -38,7 +38,7 @@ export const arsenal: {
       {
         icon: '🏆',
         label: '7+ years experience',
-        subtitle: 'Team Lead and Cloud Architect',
+        subtitle: 'Tech Lead · Cloud Architect',
         highlight: true,
         items: [],
       },
