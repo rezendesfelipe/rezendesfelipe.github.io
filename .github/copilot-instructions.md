@@ -2,16 +2,16 @@
 
 ## Project Overview
 
-This is **Felipe Rezende's personal website**, built with [Astro](https://astro.build/). It is a static site deployed to GitHub Pages at [rezendesfelipe.github.io](https://rezendesfelipe.github.io). The site includes a blog, a projects showcase, and a certifications section, and supports bilingual content (Portuguese and English).
+This is **Felipe Rezende's personal website**, built with <a href="https://astro.build/">Astro</a>. It is a static site deployed to GitHub Pages at <a href="https://rezendesfelipe.github.io">rezendesfelipe.github.io</a>. The site includes a blog, a projects showcase, and a certifications section, and supports bilingual content (Portuguese and English).
 
 ## Tech Stack
 
-- **Framework**: [Astro](https://astro.build/) v6
+- **Framework**: <a href="https://astro.build/">Astro</a> v6
 - **Content**: Markdown (`.md`) and MDX (`.mdx`) via Astro Content Collections
 - **Language**: TypeScript
 - **Styling**: Plain CSS (scoped in `.astro` component `<style>` blocks)
-- **Fonts**: [Geist](https://vercel.com/font) (via the `geist` npm package)
-- **Node.js**: >=22.12.0
+- **Fonts**: <a href="https://vercel.com/font">Geist</a> (via the `geist` npm package)
+- **Node.js**: &gt;=22.12.0
 
 ## Local Development
 
@@ -35,7 +35,7 @@ There is no dedicated test suite. Verify changes by running `npm run build` (Typ
 
 ```
 .github/
-  workflows/deploy.yml   # CI/CD: builds & deploys to GitHub Pages on push to main
+  workflows/deploy.yml   # CI/CD: builds &amp; deploys to GitHub Pages on push to main
 public/                  # Static assets served at the root (images, fonts, etc.)
 src/
   assets/                # Processed assets (e.g. images imported in components)
