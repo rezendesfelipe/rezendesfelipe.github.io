@@ -51,6 +51,27 @@ a:hover { color: var(--accent); }
 .link { color: var(--accent); text-decoration: none; font-size: .9rem; }
 .link:hover { text-decoration: underline; }
 
+/* ─── Code / Monospace ────────────────────────────────── */
+code, pre, kbd, samp {
+  font-family: var(--font-mono);
+}
+pre {
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 1rem 1.25rem;
+  overflow-x: auto;
+  font-size: .875rem;
+  line-height: 1.6;
+}
+code:not(pre code) {
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  padding: .1em .35em;
+  font-size: .875em;
+}
+
 /* ─── Topbar / Navbar ──────────────────────────────────── */
 .topbar {
   position: sticky;
@@ -317,10 +338,44 @@ a:hover { color: var(--accent); }
   cursor: pointer;
   transition: border-color .15s, color .15s;
 }
+/* AI-themed accent color for technical tag hover states */
 .tag:hover,
 .tag--active {
+  border-color: var(--accent-ai);
+  color: var(--accent-ai);
+}
+
+/* ─── Arsenal Cards ────────────────────────────────────── */
+.arsenal-card {
+  display: flex;
+  flex-direction: column;
+  gap: .75rem;
+}
+.arsenal-card--highlight {
   border-color: var(--accent);
-  color: var(--accent);
+  background: linear-gradient(135deg, var(--panel) 0%, rgba(0, 120, 212, 0.08) 100%);
+}
+.arsenal-card__header {
+  display: flex;
+  align-items: flex-start;
+  gap: .75rem;
+}
+.arsenal-card__icon {
+  font-size: 1.5rem;
+  line-height: 1;
+  flex-shrink: 0;
+}
+.arsenal-card__title {
+  margin: 0 0 .2rem !important;
+}
+.arsenal-card__subtitle {
+  margin: 0;
+  font-size: .85rem;
+  color: var(--accent-ai);
+  font-weight: 500;
+}
+.arsenal-card__tags {
+  margin-top: 0 !important;
 }
 
 /* ─── Post list ──────────────────────────────────────── */
