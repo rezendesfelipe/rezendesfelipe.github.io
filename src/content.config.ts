@@ -16,6 +16,17 @@ const blog = defineCollection({
 			heroImage: z.optional(image()),
 			lang: z.enum(['pt', 'en']).default('pt'),
 			tags: z.array(z.string()).default([]),
+			// Extended fields for rich blog structure
+			author: z.object({
+				name: z.string(),
+				role: z.string().optional(),
+				url: z.string().url().optional(),
+				avatar: z.string().optional(),
+			}).optional(),
+			category: z.string().optional(),
+			readingTime: z.string().optional(),
+			draft: z.boolean().default(false),
+			canonical: z.string().url().optional(),
 		}),
 });
 const projects = defineCollection({

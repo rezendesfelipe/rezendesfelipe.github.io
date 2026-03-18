@@ -1,86 +1,522 @@
 ---
 import { Image } from 'astro:assets';
-import type { CollectionEntry } from 'astro:content';
+import { getCollection, type CollectionEntry } from 'astro:content';
 import BaseHead from '../components/BaseHead.astro';
 import Footer from '../components/Footer.astro';
 import FormattedDate from '../components/FormattedDate.astro';
-import Header from '../components/Header.astro';
+import logo from '../assets/logo_variation_4.png';
+import LanguageToggle from '../components/LanguageToggle.astro';
 
 type Props = CollectionEntry<'blog'>['data'];
 
-const { title, description, pubDate, updatedDate, heroImage } = Astro.props;
+const { title, description, pubDate, updatedDate, heroImage, author, category, readingTime, tags, canonical } = Astro.props;
+
+// Related posts: same category or shared tags (excluding this post)
+const allPosts = (await getCollection('blog', (p) => !p.data.draft && (p.data.lang ?? 'pt') === 'pt')).sort(
+  (a, b) => b.data.pubDate.valueOf() - a.data.pubDate.valueOf()
+);
+const currentUrl = Astro.url.pathname;
+const related = allPosts
+  .filter((p) => {
+    if (`/blog/${p.id}/` === currentUrl) return false;
+    const sameCategory = category && p.data.category === category;
+    const sharedTags = (tags ?? []).some((t) => (p.data.tags ?? []).includes(t));
+    return sameCategory || sharedTags;
+  })
+  .slice(0, 3);
+
+// JSON-LD: Article schema (HowTo if category is Tutorials)
+const isTutorial = category === 'Tutorials';
+const authorName = author?.name ?? 'Felipe Rezende';
+const authorUrl = author?.url ?? 'https://www.linkedin.com/in/rezendesfelipe/';
+const pageUrl = canonical ?? new URL(Astro.url.pathname, Astro.site).toString();
+
+const articleSchema = {
+  '@context': 'https://schema.org',
+  '@type': isTutorial ? 'HowTo' : 'Article',
+  headline: title,
+  description,
+  datePublished: pubDate.toISOString(),
+  dateModified: (updatedDate ?? pubDate).toISOString(),
+  author: {
+    '@type': 'Person',
+    name: authorName,
+    url: authorUrl,
+  },
+  url: pageUrl,
+  ...(isTutorial ? { name: title } : {}),
+};
 ---
 
-<html lang="en">
-	<head>
-		<BaseHead title={title} description={description} />
-		<style>
-			main {
-				width: calc(100% - 2em);
-				max-width: 100%;
-				margin: 0;
-			}
-			.hero-image {
-				width: 100%;
-			}
-			.hero-image img {
-				display: block;
-				margin: 0 auto;
-				border-radius: 12px;
-				box-shadow: var(--box-shadow);
-			}
-			.prose {
-				width: 720px;
-				max-width: calc(100% - 2em);
-				margin: auto;
-				padding: 1em;
-				color: rgb(var(--gray-dark));
-			}
-			.title {
-				margin-bottom: 1em;
-				padding: 1em 0;
-				text-align: center;
-				line-height: 1;
-			}
-			.title h1 {
-				margin: 0 0 0.5em 0;
-			}
-			.date {
-				margin-bottom: 0.5em;
-				color: rgb(var(--gray));
-			}
-			.last-updated-on {
-				font-style: italic;
-			}
-		</style>
-	</head>
+<html lang="pt-BR">
+  <head>
+    <BaseHead title={title} description={description} />
+    <script type="application/ld+json" set:html={JSON.stringify(articleSchema)} />
+    <style>
+      .post-layout {
+        display: grid;
+        grid-template-columns: 1fr min(68ch, 100%) 1fr;
+        gap: 0;
+      }
+      .post-layout > * { grid-column: 2; }
+      .post-layout .full-bleed { grid-column: 1 / -1; }
 
-	<body>
-		<Header />
-		<main>
-			<article>
-				<div class="hero-image">
-					{heroImage && <Image width={1020} height={510} src={heroImage} alt="" />}
-				</div>
-				<div class="prose">
-					<div class="title">
-						<div class="date">
-							<FormattedDate date={pubDate} />
-							{
-								updatedDate && (
-									<div class="last-updated-on">
-										Last updated on <FormattedDate date={updatedDate} />
-									</div>
-								)
-							}
-						</div>
-						<h1>{title}</h1>
-						<hr />
-					</div>
-					<slot />
-				</div>
-			</article>
-		</main>
-		<Footer />
-	</body>
+      .post-wrap {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) 240px;
+        gap: 3rem;
+        max-width: 1100px;
+        margin: 0 auto;
+        padding: 2rem 1.5rem 4rem;
+      }
+
+      /* ── TOC Sidebar ── */
+      .toc-sidebar {
+        position: sticky;
+        top: 80px;
+        align-self: start;
+        max-height: calc(100vh - 100px);
+        overflow-y: auto;
+        padding: 1.25rem;
+        background: var(--panel);
+        border: 1px solid var(--border);
+        border-radius: 12px;
+      }
+      .toc-sidebar__title {
+        font-size: .75rem;
+        font-weight: 700;
+        letter-spacing: .08em;
+        text-transform: uppercase;
+        color: var(--muted);
+        margin: 0 0 .75rem;
+      }
+      .toc-sidebar__list {
+        list-style: none;
+        padding: 0;
+        margin: 0;
+        display: flex;
+        flex-direction: column;
+        gap: .35rem;
+      }
+      .toc-sidebar__list a {
+        text-decoration: none;
+        color: var(--muted);
+        font-size: .82rem;
+        line-height: 1.4;
+        transition: color .15s;
+        display: block;
+      }
+      .toc-sidebar__list a:hover { color: var(--accent); }
+      .toc-sidebar__list li.toc-h3 { padding-left: .75rem; }
+
+      /* ── Article ── */
+      .post-article { min-width: 0; }
+
+      /* breadcrumb */
+      .post-breadcrumb {
+        display: flex;
+        align-items: center;
+        gap: .5rem;
+        font-size: .8rem;
+        color: var(--muted);
+        margin-bottom: 1.5rem;
+      }
+      .post-breadcrumb a { text-decoration: none; color: var(--muted); }
+      .post-breadcrumb a:hover { color: var(--accent); }
+      .post-breadcrumb__sep { color: var(--border); }
+
+      /* header */
+      .post-header { margin-bottom: 2rem; }
+      .post-header__badges { display: flex; align-items: center; gap: .5rem; margin-bottom: .75rem; flex-wrap: wrap; }
+      .post-header__category {
+        font-size: .75rem;
+        font-weight: 600;
+        letter-spacing: .06em;
+        text-transform: uppercase;
+        color: var(--accent);
+        background: rgba(0,120,212,.12);
+        border: 1px solid rgba(0,120,212,.3);
+        padding: .18rem .6rem;
+        border-radius: 999px;
+      }
+      .post-header__reading {
+        font-size: .78rem;
+        color: var(--muted);
+        background: var(--panel);
+        border: 1px solid var(--border);
+        padding: .18rem .6rem;
+        border-radius: 999px;
+      }
+      .post-header__title {
+        font-size: clamp(1.6rem, 4vw, 2.4rem);
+        font-weight: 800;
+        line-height: 1.15;
+        letter-spacing: -.025em;
+        margin: 0 0 .75rem;
+        color: var(--text);
+      }
+      .post-header__desc {
+        font-size: 1rem;
+        color: var(--muted);
+        line-height: 1.65;
+        margin: 0 0 1.25rem;
+      }
+
+      /* author bio */
+      .post-author {
+        display: flex;
+        align-items: center;
+        gap: .85rem;
+        padding: .9rem 1.1rem;
+        background: var(--panel);
+        border: 1px solid var(--border);
+        border-radius: 12px;
+        margin-bottom: 2rem;
+      }
+      .post-author__avatar {
+        width: 44px;
+        height: 44px;
+        border-radius: 50%;
+        background: linear-gradient(135deg, var(--accent), var(--accent-ai));
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.1rem;
+        font-weight: 700;
+        color: #fff;
+        flex-shrink: 0;
+      }
+      .post-author__info { flex: 1; min-width: 0; }
+      .post-author__name {
+        font-weight: 600;
+        font-size: .9rem;
+        margin: 0 0 .1rem;
+      }
+      .post-author__name a { text-decoration: none; color: var(--accent); }
+      .post-author__name a:hover { text-decoration: underline; }
+      .post-author__role { font-size: .8rem; color: var(--muted); margin: 0; }
+      .post-author__dates { font-size: .78rem; color: var(--muted); text-align: right; flex-shrink: 0; }
+
+      /* hero image */
+      .post-hero-img {
+        width: 100%;
+        border-radius: 12px;
+        border: 1px solid var(--border);
+        margin-bottom: 2.5rem;
+        overflow: hidden;
+      }
+      .post-hero-img img { width: 100%; height: auto; display: block; }
+
+      /* prose content */
+      .post-prose {
+        color: var(--text);
+        line-height: 1.75;
+        font-size: 1rem;
+      }
+      .post-prose h2 {
+        font-size: 1.5rem;
+        font-weight: 700;
+        margin: 2.5rem 0 .75rem;
+        letter-spacing: -.02em;
+        color: var(--text);
+        padding-bottom: .4rem;
+        border-bottom: 1px solid var(--border);
+      }
+      .post-prose h3 {
+        font-size: 1.2rem;
+        font-weight: 600;
+        margin: 1.75rem 0 .5rem;
+        color: var(--text);
+      }
+      .post-prose h4 {
+        font-size: 1rem;
+        font-weight: 600;
+        margin: 1.25rem 0 .4rem;
+        color: var(--text);
+      }
+      .post-prose p { margin: 0 0 1.1rem; }
+      .post-prose ul, .post-prose ol { margin: 0 0 1.1rem 1.5rem; }
+      .post-prose li { margin-bottom: .35rem; }
+      .post-prose blockquote {
+        border-left: 3px solid var(--accent);
+        padding: .75rem 1.25rem;
+        margin: 1.5rem 0;
+        background: rgba(0,120,212,.06);
+        border-radius: 0 8px 8px 0;
+        color: var(--muted);
+      }
+      .post-prose blockquote p { margin: 0; }
+      .post-prose a { color: var(--accent); text-decoration: none; }
+      .post-prose a:hover { text-decoration: underline; }
+      .post-prose hr {
+        border: none;
+        border-top: 1px solid var(--border);
+        margin: 2.5rem 0;
+      }
+      .post-prose table {
+        width: 100%;
+        border-collapse: collapse;
+        margin: 1.5rem 0;
+        font-size: .9rem;
+      }
+      .post-prose th, .post-prose td {
+        border: 1px solid var(--border);
+        padding: .5rem .75rem;
+        text-align: left;
+      }
+      .post-prose th { background: var(--panel); font-weight: 600; }
+
+      /* ── Tags section ── */
+      .post-tags { margin: 2rem 0; }
+      .post-tags__label { font-size: .8rem; color: var(--muted); margin-bottom: .5rem; }
+
+      /* ── Related Posts ── */
+      .related-posts { margin-top: 3rem; }
+      .related-posts__title {
+        font-size: 1.1rem;
+        font-weight: 700;
+        letter-spacing: -.01em;
+        margin: 0 0 1rem;
+        padding-bottom: .5rem;
+        border-bottom: 1px solid var(--border);
+      }
+      .related-posts__grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+        gap: 1rem;
+      }
+      .related-post-card {
+        border: 1px solid var(--border);
+        background: var(--panel);
+        border-radius: 10px;
+        padding: 1rem 1.1rem;
+        text-decoration: none;
+        transition: border-color .2s, box-shadow .2s, transform .15s;
+        display: block;
+      }
+      .related-post-card:hover {
+        border-color: rgba(0,120,212,.5);
+        box-shadow: 0 0 14px rgba(0,120,212,.2);
+        transform: translateY(-2px);
+        color: var(--text);
+      }
+      .related-post-card__cat {
+        font-size: .72rem;
+        font-weight: 600;
+        color: var(--accent);
+        text-transform: uppercase;
+        letter-spacing: .05em;
+        margin-bottom: .3rem;
+      }
+      .related-post-card__title {
+        font-size: .9rem;
+        font-weight: 600;
+        margin: 0 0 .4rem;
+        line-height: 1.35;
+      }
+      .related-post-card__date { font-size: .78rem; color: var(--muted); }
+
+      /* ── Inline Newsletter CTA ── */
+      .post-newsletter {
+        margin-top: 3rem;
+        padding: 1.75rem 2rem;
+        background: linear-gradient(135deg, rgba(0,120,212,.1) 0%, rgba(0,255,192,.05) 100%);
+        border: 1px solid rgba(0,120,212,.25);
+        border-radius: 16px;
+        text-align: center;
+      }
+      .post-newsletter__icon { font-size: 2rem; margin-bottom: .5rem; }
+      .post-newsletter__title { font-size: 1.15rem; font-weight: 700; margin: 0 0 .4rem; }
+      .post-newsletter__desc { font-size: .9rem; color: var(--muted); margin: 0 0 1.25rem; }
+      .post-newsletter__actions { display: flex; gap: .75rem; justify-content: center; flex-wrap: wrap; }
+
+      /* ── Responsive ── */
+      @media (max-width: 900px) {
+        .post-wrap {
+          grid-template-columns: 1fr;
+          padding: 1.5rem 1rem 3rem;
+        }
+        .toc-sidebar { display: none; }
+      }
+      @media (max-width: 600px) {
+        .post-author { flex-wrap: wrap; }
+        .post-author__dates { text-align: left; width: 100%; }
+      }
+    </style>
+  </head>
+
+  <body>
+    <header class="topbar">
+      <nav class="topbar__nav">
+        <a class="topbar__brand" href="/"><img src={logo.src} alt="Felipe Rezende" class="topbar__logo" /></a>
+        <div class="topbar__links">
+          <a href="/">Início</a>
+          <a href="/blog/">Blog</a>
+          <a href="/#case-studies">Estudos de Caso</a>
+          <a href="/#contato">Contato</a>
+          <LanguageToggle />
+        </div>
+      </nav>
+    </header>
+
+    <div class="post-wrap">
+      <article class="post-article">
+
+        <!-- Breadcrumb -->
+        <nav class="post-breadcrumb" aria-label="Breadcrumb">
+          <a href="/">Início</a>
+          <span class="post-breadcrumb__sep" aria-hidden="true">›</span>
+          <a href="/blog/">Blog</a>
+          {category && (
+            <>
+              <span class="post-breadcrumb__sep" aria-hidden="true">›</span>
+              <span>{category}</span>
+            </>
+          )}
+        </nav>
+
+        <!-- Post header -->
+        <header class="post-header">
+          <div class="post-header__badges">
+            {category && <span class="post-header__category">{category}</span>}
+            {readingTime && <span class="post-header__reading">🕐 {readingTime}</span>}
+          </div>
+          <h1 class="post-header__title">{title}</h1>
+          <p class="post-header__desc">{description}</p>
+
+          <!-- Author bio (E-E-A-T) -->
+          <div class="post-author" itemscope itemtype="https://schema.org/Person">
+            <div class="post-author__avatar" aria-hidden="true" itemprop="image">
+              {authorName[0]}
+            </div>
+            <div class="post-author__info">
+              <p class="post-author__name">
+                {author?.url
+                  ? <a href={author.url} target="_blank" rel="noopener" itemprop="url"><span itemprop="name">{authorName}</span></a>
+                  : <span itemprop="name">{authorName}</span>
+                }
+              </p>
+              {author?.role && <p class="post-author__role" itemprop="jobTitle">{author.role}</p>}
+            </div>
+            <div class="post-author__dates">
+              <div><FormattedDate date={pubDate} /></div>
+              {updatedDate && updatedDate.toDateString() !== pubDate.toDateString() && (
+                <div style="font-size:.72rem;margin-top:.15rem;">Atualizado: <FormattedDate date={updatedDate} /></div>
+              )}
+            </div>
+          </div>
+        </header>
+
+        <!-- Hero Image -->
+        {heroImage && (
+          <div class="post-hero-img">
+            <Image width={1020} height={510} src={heroImage} alt="" />
+          </div>
+        )}
+
+        <!-- Body content -->
+        <div class="post-prose">
+          <slot />
+        </div>
+
+        <!-- Tags -->
+        {(tags ?? []).length > 0 && (
+          <div class="post-tags">
+            <p class="post-tags__label">Tags:</p>
+            <ul class="tags">
+              {(tags ?? []).map((t) => (
+                <li><a href={`/blog/?tag=${t}`} class="tag">{t}</a></li>
+              ))}
+            </ul>
+          </div>
+        )}
+
+        <!-- Related Posts -->
+        {related.length > 0 && (
+          <section class="related-posts" aria-label="Artigos relacionados">
+            <h2 class="related-posts__title">Artigos relacionados</h2>
+            <div class="related-posts__grid">
+              {related.map((p) => (
+                <a href={`/blog/${p.id}/`} class="related-post-card">
+                  {p.data.category && <p class="related-post-card__cat">{p.data.category}</p>}
+                  <h3 class="related-post-card__title">{p.data.title}</h3>
+                  <p class="related-post-card__date"><FormattedDate date={p.data.pubDate} /></p>
+                </a>
+              ))}
+            </div>
+          </section>
+        )}
+
+        <!-- Newsletter CTA -->
+        <div class="post-newsletter">
+          <div class="post-newsletter__icon" aria-hidden="true">📬</div>
+          <h2 class="post-newsletter__title">Gostou do conteúdo?</h2>
+          <p class="post-newsletter__desc">
+            Acompanhe novos artigos sobre Cloud, DevOps e Platform Engineering via RSS ou LinkedIn.
+          </p>
+          <div class="post-newsletter__actions">
+            <a href="/rss.xml" class="btn">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true" style="margin-right:.35rem"><path d="M6.18 15.64a2.18 2.18 0 0 1 2.18 2.18C8.36 19.01 7.38 20 6.18 20C4.98 20 4 19.01 4 17.82a2.18 2.18 0 0 1 2.18-2.18M4 4.44A15.56 15.56 0 0 1 19.56 20h-2.83A12.73 12.73 0 0 0 4 7.27V4.44m0 5.66a9.9 9.9 0 0 1 9.9 9.9h-2.83A7.07 7.07 0 0 0 4 12.93V10.1z"/></svg>
+              RSS Feed
+            </a>
+            <a href="https://www.linkedin.com/in/rezendesfelipe/" target="_blank" rel="noopener" class="btn btn--ghost">LinkedIn</a>
+            <a href="/blog/" class="btn btn--ghost">← Ver todos os artigos</a>
+          </div>
+        </div>
+      </article>
+
+      <!-- TOC Sidebar (desktop only) -->
+      <aside class="toc-sidebar" aria-label="Índice do artigo" id="toc-sidebar">
+        <p class="toc-sidebar__title">Neste artigo</p>
+        <ul class="toc-sidebar__list" id="toc-list"></ul>
+      </aside>
+    </div>
+
+    <Footer />
+
+    <script>
+      // Build TOC from headings in the post prose
+      const prose = document.querySelector('.post-prose');
+      const tocList = document.getElementById('toc-list');
+      const tocSidebar = document.getElementById('toc-sidebar');
+      if (prose && tocList) {
+        const headings = prose.querySelectorAll('h2, h3');
+        if (headings.length === 0 && tocSidebar) {
+          tocSidebar.style.display = 'none';
+        }
+        headings.forEach((h) => {
+          if (!h.id) {
+            h.id = h.textContent!
+              .toLowerCase()
+              .replace(/[^\w\s-]/g, '')
+              .replace(/\s+/g, '-')
+              .trim();
+          }
+          const li = document.createElement('li');
+          if (h.tagName === 'H3') li.classList.add('toc-h3');
+          const a = document.createElement('a');
+          a.href = `#${h.id}`;
+          a.textContent = h.textContent;
+          li.appendChild(a);
+          tocList.appendChild(li);
+        });
+
+        // Highlight active TOC item on scroll
+        const tocLinks = tocList.querySelectorAll<HTMLAnchorElement>('a');
+        const observer = new IntersectionObserver(
+          (entries) => {
+            entries.forEach((e) => {
+              if (e.isIntersecting) {
+                tocLinks.forEach((l) => l.style.color = '');
+                const active = tocList.querySelector<HTMLAnchorElement>(`a[href="#${e.target.id}"]`);
+                if (active) active.style.color = 'var(--accent)';
+              }
+            });
+          },
+          { rootMargin: '-10% 0px -80% 0px', threshold: 0 }
+        );
+        headings.forEach((h) => observer.observe(h));
+      }
+    </script>
+  </body>
 </html>
