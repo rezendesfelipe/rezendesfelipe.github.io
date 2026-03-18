@@ -90,13 +90,37 @@ const certs = (await getCollection('certifications', (c) => (c.data.lang ?? 'pt'
           <a class="link" href="/blog/">Ver todos →</a>
         </div>
 
-        <ul class="post-list">
+        <ul class="home-posts-grid">
           {posts.map((post) => (
             <li>
-              <a href={`/blog/${post.id}/`}>
-                <h3>{post.data.title}</h3>
-                <p class="muted post-desc">{post.data.description}</p>
-                <p class="muted post-date"><FormattedDate date={post.data.pubDate} /></p>
+              <a href={`/blog/${post.id}/`} class="blog-card__link">
+                <div class="blog-card__image" aria-hidden="true">
+                  {post.data.heroImage
+                    ? <img src={(post.data.heroImage as any).src} alt="" />
+                    : <div class="blog-card__image-placeholder"><span>📄</span></div>
+                  }
+                </div>
+                <div class="blog-card__body">
+                  {post.data.category && (
+                    <div class="blog-card__meta">
+                      <span class="blog-cat-badge">{post.data.category}</span>
+                      {post.data.readingTime && <span class="blog-card__reading">{post.data.readingTime}</span>}
+                    </div>
+                  )}
+                  <h3 class="blog-card__title">{post.data.title}</h3>
+                  <p class="blog-card__desc">{post.data.description}</p>
+                  <div class="blog-post-footer">
+                    <div class="blog-author-mini">
+                      <div class="blog-author-mini__avatar" aria-hidden="true">
+                        {post.data.author?.name?.[0] ?? 'F'}
+                      </div>
+                      <div>
+                        <span class="blog-author-mini__name">{post.data.author?.name ?? 'Felipe Rezende'}</span>
+                        <span class="blog-author-mini__date"> · <FormattedDate date={post.data.pubDate} /></span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
               </a>
             </li>
           ))}

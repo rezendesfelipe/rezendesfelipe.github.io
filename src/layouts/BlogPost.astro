@@ -2,7 +2,6 @@
 import { Image } from 'astro:assets';
 import { getCollection, type CollectionEntry } from 'astro:content';
 import BaseHead from '../components/BaseHead.astro';
-import Footer from '../components/Footer.astro';
 import FormattedDate from '../components/FormattedDate.astro';
 import logo from '../assets/logo_variation_4.png';
 import LanguageToggle from '../components/LanguageToggle.astro';
@@ -455,11 +454,7 @@ const articleSchema = {
             Acompanhe novos artigos sobre Cloud, DevOps e Platform Engineering via RSS ou LinkedIn.
           </p>
           <div class="post-newsletter__actions">
-            <a href="/rss.xml" class="btn">
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true" style="margin-right:.35rem"><path d="M6.18 15.64a2.18 2.18 0 0 1 2.18 2.18C8.36 19.01 7.38 20 6.18 20C4.98 20 4 19.01 4 17.82a2.18 2.18 0 0 1 2.18-2.18M4 4.44A15.56 15.56 0 0 1 19.56 20h-2.83A12.73 12.73 0 0 0 4 7.27V4.44m0 5.66a9.9 9.9 0 0 1 9.9 9.9h-2.83A7.07 7.07 0 0 0 4 12.93V10.1z"/></svg>
-              RSS Feed
-            </a>
-            <a href="https://www.linkedin.com/in/rezendesfelipe/" target="_blank" rel="noopener" class="btn btn--ghost">LinkedIn</a>
+            <a href="https://www.linkedin.com/in/rezendesfelipe/" target="_blank" rel="noopener" class="btn">LinkedIn</a>
             <a href="/blog/" class="btn btn--ghost">← Ver todos os artigos</a>
           </div>
         </div>
@@ -472,7 +467,43 @@ const articleSchema = {
       </aside>
     </div>
 
-    <Footer />
+    <footer class="footer container-wide">
+      <div class="footer__grid">
+        <div>
+          <p class="footer__brand-name">Felipe Rezende</p>
+          <p class="footer__tagline">Cloud and DevOps Architect.<br/>Construindo infraestrutura confiável.</p>
+        </div>
+        <div>
+          <p class="footer__col-title">Navegação</p>
+          <ul class="footer__links">
+            <li><a href="/">Início</a></li>
+            <li><a href="/blog/">Blog</a></li>
+            <li><a href="/#case-studies">Estudos de Caso</a></li>
+            <li><a href="/#certificacoes">Certificações</a></li>
+          </ul>
+        </div>
+        <div>
+          <p class="footer__col-title">Conteúdo</p>
+          <ul class="footer__links">
+            <li><a href="/blog/">Artigos</a></li>
+            <li><a href="/#arsenal">Arsenal Técnico</a></li>
+            <li><a href="/sitemap-index.xml">Sitemap</a></li>
+          </ul>
+        </div>
+        <div>
+          <p class="footer__col-title">Contato</p>
+          <ul class="footer__links">
+            <li><a href="https://github.com/rezendesfelipe" target="_blank" rel="noopener">GitHub</a></li>
+            <li><a href="https://www.linkedin.com/in/rezendesfelipe/" target="_blank" rel="noopener">LinkedIn</a></li>
+            <li><a href="mailto:frezende21@gmail.com">Email</a></li>
+          </ul>
+        </div>
+      </div>
+      <div class="footer__bottom">
+        <p class="footer__copy">© {new Date().getFullYear()} Felipe Rezende. Todos os direitos reservados.</p>
+        <span class="footer__made">feito com <a href="https://astro.build" target="_blank" rel="noopener">astro</a></span>
+      </div>
+    </footer>
 
     <script>
       // Build TOC from headings in the post prose
