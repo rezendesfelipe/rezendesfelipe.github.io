@@ -6,6 +6,7 @@ import Card from '../../components/Card.astro';
 import { stack } from '../../data/stack';
 import { SITE_TITLE } from '../../consts';
 import LanguageToggle from '../../components/LanguageToggle.astro';
+import logo from '../../assets/logo_variation_4.png';
 
 const lang = 'en';
 
@@ -28,7 +29,7 @@ const certs = (await getCollection('certifications', (c) => (c.data.lang ?? 'pt'
   <body>
     <header class="topbar">
       <nav class="topbar__nav">
-        <a class="topbar__brand" href="/en/">Felipe Rezende</a>
+        <a class="topbar__brand" href="/en/"><img src={logo.src} alt="Felipe Rezende" class="topbar__logo" /></a>
         <div class="topbar__links">
           <a href="#projects">Projects</a>
           <a href="#certifications">Certifications</a>

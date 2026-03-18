@@ -4,6 +4,7 @@ import BaseHead from '../../components/BaseHead.astro';
 import FormattedDate from '../../components/FormattedDate.astro';
 import LanguageToggle from '../../components/LanguageToggle.astro';
 import { SITE_TITLE, SITE_DESCRIPTION } from '../../consts';
+import logo from '../../assets/logo_variation_4.png';
 
 const allPosts = (await getCollection('blog', (p) => (p.data.lang ?? 'pt') === 'pt')).sort(
   (a, b) => b.data.pubDate.valueOf() - a.data.pubDate.valueOf(),
@@ -21,7 +22,7 @@ const allTags = [...new Set(allPosts.flatMap((p) => p.data.tags ?? []))].sort();
   <body>
     <header class="topbar">
       <nav class="topbar__nav">
-        <a class="topbar__brand" href="/">Felipe Rezende</a>
+        <a class="topbar__brand" href="/"><img src={logo.src} alt="Felipe Rezende" class="topbar__logo" /></a>
         <div class="topbar__links">
           <a href="/">Início</a>
           <a href="/blog/">Blog</a>
