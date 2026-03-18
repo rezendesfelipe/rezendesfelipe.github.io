@@ -1,0 +1,28 @@
+---
+interface Props {
+  icon: string;
+  label: string;
+  subtitle?: string;
+  items: string[];
+  highlight?: boolean;
+}
+
+const { icon, label, subtitle, items, highlight } = Astro.props;
+---
+
+<div class:list={['card', 'arsenal-card', highlight && 'arsenal-card--highlight']}>
+  <div class="arsenal-card__header">
+    <span class="arsenal-card__icon" aria-hidden="true">{icon}</span>
+    <div>
+      <h3 class="card__title arsenal-card__title">{label}</h3>
+      {subtitle && <p class="arsenal-card__subtitle">{subtitle}</p>}
+    </div>
+  </div>
+  {items.length > 0 && (
+    <ul class="tags arsenal-card__tags">
+      {items.map((item) => (
+        <li class="tag">{item}</li>
+      ))}
+    </ul>
+  )}
+</div>
