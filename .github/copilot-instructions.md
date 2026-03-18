@@ -36,6 +36,7 @@ There is no dedicated test suite. Verify changes by running `npm run build` (Typ
 ```
 .github/
   workflows/deploy.yml   # CI/CD: builds &amp; deploys to GitHub Pages on push to main
+  workflows/deploy.yml   # CI/CD: builds & deploys to GitHub Pages on push to main
 public/                  # Static assets served at the root (images, fonts, etc.)
 src/
   assets/                # Processed assets (e.g. images imported in components)
