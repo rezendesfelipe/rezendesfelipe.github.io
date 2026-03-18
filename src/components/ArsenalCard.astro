@@ -5,13 +5,12 @@ interface Props {
   subtitle?: string;
   items: string[];
   highlight?: boolean;
-  variant?: 'default' | 'purple';
 }
 
-const { icon, label, subtitle, items, highlight, variant } = Astro.props;
+const { icon, label, subtitle, items, highlight } = Astro.props;
 ---
 
-<div class:list={['card', 'arsenal-card', highlight && 'arsenal-card--highlight', variant === 'purple' && 'arsenal-card--purple']}>
+<div class:list={['card', 'arsenal-card', highlight && 'arsenal-card--highlight']}>
   <div class="arsenal-card__header">
     <span class="arsenal-card__icon" aria-hidden="true">{icon}</span>
     <div>

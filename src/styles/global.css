@@ -22,7 +22,6 @@
   --border: rgba(255, 255, 255, 0.10);
   --accent: #0078D4;
   --accent-ai: #00FFC0;
-  --accent-purple: #a855f7;
   --font-sans: 'Geist Sans', system-ui, sans-serif;
   --font-mono: 'Geist Mono', 'Courier New', monospace;
 }
@@ -268,10 +267,6 @@ code:not(pre code) {
   font-weight: 600;
   letter-spacing: -.01em;
 }
-/* Arsenal section gets a subtle cyan accent on the heading */
-.section--arsenal .section__header h2 {
-  color: var(--accent-ai);
-}
 
 /* ─── Buttons ────────────────────────────────────────── */
 .btn {
@@ -351,19 +346,10 @@ code:not(pre code) {
   display: flex;
   flex-direction: column;
   gap: .75rem;
-  transition: transform .12s ease, border-color .15s ease, box-shadow .15s ease;
-}
-.arsenal-card:hover {
-  box-shadow: 0 0 18px rgba(0, 255, 192, 0.08);
-  border-color: rgba(0, 255, 192, 0.3);
 }
 .arsenal-card--highlight {
   border-color: var(--accent);
   background: linear-gradient(135deg, var(--panel) 0%, rgba(0, 120, 212, 0.08) 100%);
-}
-.arsenal-card--highlight:hover {
-  box-shadow: 0 0 22px rgba(0, 120, 212, 0.18);
-  border-color: rgba(0, 120, 212, 0.6);
 }
 .arsenal-card__header {
   display: flex;
@@ -383,20 +369,9 @@ code:not(pre code) {
   font-size: .85rem;
   color: var(--accent-ai);
   font-weight: 500;
-  font-family: var(--font-mono);
-  letter-spacing: .01em;
 }
 .arsenal-card__tags {
   margin-top: 0 !important;
-}
-/* Purple accent on DevOps card tags for AI-focus visual */
-.arsenal-card--purple .tag {
-  border-color: rgba(168, 85, 247, 0.25);
-  color: var(--muted);
-}
-.arsenal-card--purple .tag:hover {
-  border-color: var(--accent-purple);
-  color: var(--accent-purple);
 }
 
 /* ─── Post list ──────────────────────────────────────── */

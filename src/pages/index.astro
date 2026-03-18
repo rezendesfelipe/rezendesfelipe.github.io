@@ -142,7 +142,7 @@ const certs = (await getCollection('certifications', (c) => (c.data.lang ?? 'pt'
       </section>
 
       <!-- ── Section: Arsenal Técnico ── -->
-      <section class="section section--arsenal" id="arsenal">
+      <section class="section" id="arsenal">
         <div class="section__header">
           <h2>{arsenal.pt.title}</h2>
         </div>
@@ -155,7 +155,6 @@ const certs = (await getCollection('certifications', (c) => (c.data.lang ?? 'pt'
               subtitle={cat.subtitle}
               items={cat.items}
               highlight={cat.highlight}
-              variant={cat.variant}
             />
           ))}
         </div>

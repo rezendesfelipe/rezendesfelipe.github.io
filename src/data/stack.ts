@@ -4,7 +4,6 @@ export type ArsenalCategory = {
   subtitle?: string;
   items: string[];
   highlight?: boolean;
-  variant?: 'default' | 'purple';
 };
 
 export const arsenal: {
@@ -29,7 +28,6 @@ export const arsenal: {
       {
         icon: '⚙️',
         label: 'DevOps',
-        variant: 'purple',
         items: ['Agile', 'SCRUM', 'GitHub Actions', 'Azure DevOps', 'Bash Scripting', 'Python', 'CI/CD'],
       },
     ],
@@ -52,7 +50,6 @@ export const arsenal: {
       {
         icon: '⚙️',
         label: 'DevOps',
-        variant: 'purple',
         items: ['Agile', 'SCRUM', 'GitHub Actions', 'Azure DevOps', 'Bash Scripting', 'Python', 'CI/CD'],
       },
     ],
