@@ -18,10 +18,13 @@ function toPT(path: string) {
 
 const isEN = normalized === '/en' || normalized.startsWith('/en/');
 const targetHref = isEN ? toPT(pathname) : toEN(pathname);
-const label = isEN ? 'PT' : 'EN';
 const aria = isEN ? 'Mudar para Português' : 'Switch to English';
 ---
 
-<a class="lang-toggle" href={targetHref} aria-label={aria}>
-  {label}
+<a class={`lang-switch${isEN ? ' lang-switch--en' : ''}`} href={targetHref} aria-label={aria} title={aria}>
+  <span class="lang-switch__label lang-switch__label--pt">PT</span>
+  <span class="lang-switch__track" aria-hidden="true">
+    <span class="lang-switch__thumb"></span>
+  </span>
+  <span class="lang-switch__label lang-switch__label--en">EN</span>
 </a>

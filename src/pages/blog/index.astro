@@ -1,124 +1,129 @@
 ---
-import { Image } from 'astro:assets';
 import { getCollection } from 'astro:content';
 import BaseHead from '../../components/BaseHead.astro';
-import Footer from '../../components/Footer.astro';
 import FormattedDate from '../../components/FormattedDate.astro';
-import Header from '../../components/Header.astro';
 import LanguageToggle from '../../components/LanguageToggle.astro';
-import { SITE_DESCRIPTION, SITE_TITLE } from '../../consts';
+import { SITE_TITLE, SITE_DESCRIPTION } from '../../consts';
 
-const posts = (await getCollection('blog', (p) => (p.data.lang ?? 'pt') === 'pt')).sort(
-	(a, b) => b.data.pubDate.valueOf() - a.data.pubDate.valueOf(),
+const allPosts = (await getCollection('blog', (p) => (p.data.lang ?? 'pt') === 'pt')).sort(
+  (a, b) => b.data.pubDate.valueOf() - a.data.pubDate.valueOf(),
 );
+
+// Collect all unique tags
+const allTags = [...new Set(allPosts.flatMap((p) => p.data.tags ?? []))].sort();
 ---
 
 <!doctype html>
 <html lang="pt-BR">
-	<head>
-		<BaseHead title={SITE_TITLE} description={SITE_DESCRIPTION} />
-		<style>
-			main {
-				width: 960px;
-			}
-			ul {
-				display: flex;
-				flex-wrap: wrap;
-				gap: 2rem;
-				list-style-type: none;
-				margin: 0;
-				padding: 0;
-			}
-			ul li {
-				width: calc(50% - 1rem);
-			}
-			ul li * {
-				text-decoration: none;
-				transition: 0.2s ease;
-			}
-			ul li:first-child {
-				width: 100%;
-				margin-bottom: 1rem;
-				text-align: center;
-			}
-			ul li:first-child img {
-				width: 100%;
-			}
-			ul li:first-child .title {
-				font-size: 2.369rem;
-			}
-			ul li img {
-				margin-bottom: 0.5rem;
-				border-radius: 12px;
-			}
-			ul li a {
-				display: block;
-			}
-			.title {
-				margin: 0;
-				color: rgb(var(--black));
-				line-height: 1;
-			}
-			.date {
-				margin: 0;
-				color: rgb(var(--gray));
-			}
-			ul li a:hover h4,
-			ul li a:hover .date {
-				color: rgb(var(--accent));
-			}
-			ul a:hover img {
-				box-shadow: var(--box-shadow);
-			}
-			@media (max-width: 720px) {
-				ul {
-					gap: 0.5em;
-				}
-				ul li {
-					width: 100%;
-					text-align: center;
-				}
-				ul li:first-child {
-					margin-bottom: 0;
-				}
-				ul li:first-child .title {
-					font-size: 1.563em;
-				}
-			}
-			.lang-wrap {
-				display: flex;
-				justify-content: flex-end;
-				margin: 1rem 0;
-			}
-		</style>
-	</head>
-	<body>
-		<Header />
-		<main>
-			<div class="lang-wrap">
-				<LanguageToggle />
-			</div>
+  <head>
+    <BaseHead title={`Blog · ${SITE_TITLE}`} description={SITE_DESCRIPTION} />
+  </head>
+  <body>
+    <header class="topbar">
+      <nav class="topbar__nav">
+        <a class="topbar__brand" href="/">Felipe Rezende</a>
+        <div class="topbar__links">
+          <a href="/">Início</a>
+          <a href="/blog/">Blog</a>
+          <a href="/#projetos">Projetos</a>
+          <a href="/#contato">Contato</a>
+          <LanguageToggle />
+        </div>
+      </nav>
+    </header>
 
-			<section>
-				<ul>
-					{
-						posts.map((post) => (
-							<li>
-								<a href={`/blog/${post.id}/`}>
-									{post.data.heroImage && (
-										<Image width={720} height={360} src={post.data.heroImage} alt="" />
-									)}
-									<h4 class="title">{post.data.title}</h4>
-									<p class="date">
-										<FormattedDate date={post.data.pubDate} />
-									</p>
-								</a>
-							</li>
-						))
-					}
-				</ul>
-			</section>
-		</main>
-		<Footer />
-	</body>
+    <main class="container">
+      <section class="section" style="border-top: none; padding-top: 2.5rem;">
+        <div class="section__header">
+          <h2>Blog</h2>
+        </div>
+
+        <div class="blog-controls">
+          <div class="blog-search">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <circle cx="11" cy="11" r="8"/>
+              <path d="m21 21-4.35-4.35"/>
+            </svg>
+            <input
+              type="search"
+              id="search"
+              placeholder="Buscar artigos..."
+              autocomplete="off"
+              aria-label="Buscar artigos"
+            />
+          </div>
+          {allTags.length > 0 && (
+            <div class="blog-tags" id="tag-filter" aria-label="Filtrar por tag">
+              <button class="tag tag--active" data-tag="">Todos</button>
+              {allTags.map((tag) => (
+                <button class="tag" data-tag={tag}>{tag}</button>
+              ))}
+            </div>
+          )}
+        </div>
+
+        <ul class="post-list" id="post-list">
+          {allPosts.map((post) => (
+            <li data-title={post.data.title.toLowerCase()} data-desc={(post.data.description ?? '').toLowerCase()} data-tags={(post.data.tags ?? []).join(',')}>
+              <a href={`/blog/${post.id}/`}>
+                <h3>{post.data.title}</h3>
+                <p class="muted post-desc">{post.data.description}</p>
+                <div style="display:flex;align-items:center;gap:.75rem;margin-top:.4rem;">
+                  <p class="muted post-date" style="margin:0;"><FormattedDate date={post.data.pubDate} /></p>
+                  {(post.data.tags ?? []).length > 0 && (
+                    <ul class="tags" style="margin:0;">
+                      {(post.data.tags ?? []).map((t) => <li class="tag">{t}</li>)}
+                    </ul>
+                  )}
+                </div>
+              </a>
+            </li>
+          ))}
+        </ul>
+        <p id="no-results" class="muted" style="display:none;margin-top:1rem;">Nenhum artigo encontrado.</p>
+      </section>
+    </main>
+
+    <footer class="footer container">
+      <div class="footer__bottom">
+        <p class="footer__copy">© {new Date().getFullYear()} Felipe Rezende</p>
+        <span class="footer__made">feito com <a href="https://astro.build" target="_blank" rel="noopener">astro</a></span>
+      </div>
+    </footer>
+
+    <script>
+      const searchInput = document.getElementById('search') as HTMLInputElement | null;
+      const tagButtons = document.querySelectorAll<HTMLButtonElement>('#tag-filter [data-tag]');
+      const items = document.querySelectorAll<HTMLLIElement>('#post-list li');
+      const noResults = document.getElementById('no-results');
+      let activeTag = '';
+
+      function filter() {
+        const q = searchInput?.value.toLowerCase().trim() ?? '';
+        let visible = 0;
+        items.forEach((item) => {
+          const title = item.dataset.title ?? '';
+          const desc = item.dataset.desc ?? '';
+          const tags = (item.dataset.tags ?? '').split(',');
+          const matchesSearch = !q || title.includes(q) || desc.includes(q);
+          const matchesTag = !activeTag || tags.includes(activeTag);
+          const show = matchesSearch && matchesTag;
+          (item as HTMLElement).style.display = show ? '' : 'none';
+          if (show) visible++;
+        });
+        if (noResults) noResults.style.display = visible === 0 ? '' : 'none';
+      }
+
+      searchInput?.addEventListener('input', filter);
+
+      tagButtons.forEach((btn) => {
+        btn.addEventListener('click', () => {
+          activeTag = btn.dataset.tag ?? '';
+          tagButtons.forEach((b) => b.classList.remove('tag--active'));
+          btn.classList.add('tag--active');
+          filter();
+        });
+      });
+    </script>
+  </body>
 </html>
