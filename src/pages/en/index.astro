@@ -3,7 +3,8 @@ import { getCollection } from 'astro:content';
 import BaseHead from '../../components/BaseHead.astro';
 import FormattedDate from '../../components/FormattedDate.astro';
 import Card from '../../components/Card.astro';
-import { stack } from '../../data/stack';
+import { arsenal } from '../../data/stack';
+import ArsenalCard from '../../components/ArsenalCard.astro';
 import { SITE_TITLE } from '../../consts';
 import LanguageToggle from '../../components/LanguageToggle.astro';
 
@@ -30,9 +31,9 @@ const certs = (await getCollection('certifications', (c) => (c.data.lang ?? 'pt'
       <nav class="topbar__nav">
         <a class="topbar__brand" href="/en/">Felipe Rezende</a>
         <div class="topbar__links">
-          <a href="#projects">Projects</a>
+          <a href="#case-studies">Case Studies</a>
           <a href="#certifications">Certifications</a>
-          <a href="#stack">Stack</a>
+          <a href="#arsenal">Technical Arsenal</a>
           <a href="/en/blog/">Blog</a>
           <a href="#contact">Contact</a>
           <LanguageToggle />
@@ -101,10 +102,10 @@ const certs = (await getCollection('certifications', (c) => (c.data.lang ?? 'pt'
         </ul>
       </section>
 
-      <!-- ── Section: Projects ── -->
-      <section class="section" id="projects">
+      <!-- ── Section: Case Studies ── -->
+      <section class="section" id="case-studies">
         <div class="section__header">
-          <h2>Projects</h2>
+          <h2>Case Studies</h2>
         </div>
 
         <div class="grid">
@@ -140,18 +141,21 @@ const certs = (await getCollection('certifications', (c) => (c.data.lang ?? 'pt'
         </div>
       </section>
 
-      <!-- ── Section: Stack ── -->
-      <section class="section" id="stack">
+      <!-- ── Section: Technical Arsenal ── -->
+      <section class="section" id="arsenal">
         <div class="section__header">
-          <h2>{stack.en.title}</h2>
+          <h2>{arsenal.en.title}</h2>
         </div>
 
         <div class="grid grid--stack">
-          {stack.en.items.map((i) => (
-            <Card>
-              <h3 class="card__title">{i.label}</h3>
-              <p class="muted card__desc">{i.value}</p>
-            </Card>
+          {arsenal.en.categories.map((cat) => (
+            <ArsenalCard
+              icon={cat.icon}
+              label={cat.label}
+              subtitle={cat.subtitle}
+              items={cat.items}
+              highlight={cat.highlight}
+            />
           ))}
         </div>
       </section>
@@ -191,7 +195,7 @@ const certs = (await getCollection('certifications', (c) => (c.data.lang ?? 'pt'
           <ul class="footer__links">
             <li><a href="/en/">Home</a></li>
             <li><a href="/en/blog/">Blog</a></li>
-            <li><a href="#projects">Projects</a></li>
+            <li><a href="#case-studies">Case Studies</a></li>
             <li><a href="#certifications">Certifications</a></li>
           </ul>
         </div>
@@ -199,7 +203,7 @@ const certs = (await getCollection('certifications', (c) => (c.data.lang ?? 'pt'
           <p class="footer__col-title">Content</p>
           <ul class="footer__links">
             <li><a href="/en/blog/">Articles</a></li>
-            <li><a href="#stack">Stack</a></li>
+            <li><a href="#arsenal">Technical Arsenal</a></li>
             <li><a href="/rss.xml">RSS Feed</a></li>
             <li><a href="/sitemap-index.xml">Sitemap</a></li>
           </ul>
