@@ -480,6 +480,9 @@ code:not(pre code) {
   font-size: .875rem;
   color: var(--muted);
   transition: color .15s;
+  display: inline-flex;
+  align-items: center;
+  gap: .4rem;
 }
 .footer__links a:hover { color: var(--text); }
 .footer__bottom {
