@@ -211,13 +211,13 @@ code:not(pre code) {
 .hero__social a {
   display: inline-flex;
   align-items: center;
-  gap: .4rem;
-  padding: .4rem .8rem;
+  justify-content: center;
+  width: 2.4rem;
+  height: 2.4rem;
   border-radius: 8px;
   border: 1px solid var(--border);
   background: var(--panel);
   text-decoration: none;
-  font-size: .85rem;
   color: var(--muted);
   transition: border-color .15s, color .15s;
 }
@@ -485,6 +485,24 @@ code:not(pre code) {
   gap: .4rem;
 }
 .footer__links a:hover { color: var(--text); }
+.footer__links--icons {
+  flex-direction: row;
+  gap: .65rem;
+  margin-top: .25rem;
+}
+.footer__links--icons a {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 2rem;
+  height: 2rem;
+  border-radius: 8px;
+  border: 1px solid var(--border);
+  background: var(--panel);
+  transition: border-color .15s, color .15s;
+  font-size: 0;
+}
+.footer__links--icons a:hover { border-color: var(--accent); color: var(--text); }
 .footer__bottom {
   margin-top: 2.5rem;
   padding-top: 1rem;
