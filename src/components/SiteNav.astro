@@ -1,0 +1,42 @@
+---
+import LanguageToggle from './LanguageToggle.astro';
+import logo from '../assets/logo_pixeled-removebg-preview.png';
+
+interface Props {
+  lang?: 'pt' | 'en';
+  active?: 'home' | 'about' | 'contact' | 'blog';
+}
+
+const { lang = 'pt', active } = Astro.props;
+
+const base = lang === 'en' ? '/en' : '';
+const homeHref = lang === 'en' ? '/en/' : '/';
+const aboutHref = `${base}/about/`;
+const contactHref = `${base}/contact/`;
+
+const labels = {
+  home: lang === 'en' ? 'Home' : 'Home',
+  about: lang === 'en' ? 'About' : 'About',
+  contact: lang === 'en' ? 'Contact' : 'Contact',
+  hire: lang === 'en' ? 'Hire Me' : 'Hire Me',
+};
+---
+
+<header class="topbar">
+  <nav class="topbar__nav">
+    <a class="topbar__brand" href={homeHref} aria-label="Felipe Rezende">
+      <img src={logo.src} alt="Felipe Rezende logo" class="topbar__logo" />
+    </a>
+
+    <div class="topbar__center-links">
+      <a href={homeHref} class:list={{ active: active === 'home' }}>{labels.home}</a>
+      <a href={aboutHref} class:list={{ active: active === 'about' }}>{labels.about}</a>
+      <a href={contactHref} class:list={{ active: active === 'contact' }}>{labels.contact}</a>
+    </div>
+
+    <div class="topbar__actions">
+      <LanguageToggle />
+      <a class="topbar__hire" href={contactHref}>{labels.hire}</a>
+    </div>
+  </nav>
+</header>

@@ -1,0 +1,148 @@
+---
+import BaseHead from '../components/BaseHead.astro';
+import SiteNav from '../components/SiteNav.astro';
+import SiteFooter from '../components/SiteFooter.astro';
+import { SITE_TITLE } from '../consts';
+---
+
+<html lang="pt-BR">
+  <head>
+    <BaseHead title={`Contact · ${SITE_TITLE}`} description="Entre em contato para projetos de cloud e arquitetura." />
+  </head>
+  <body>
+    <SiteNav lang="pt" active="contact" />
+
+    <main class="contact-page">
+      <div class="container-wide">
+        <header class="contact-header">
+          <p>Connect / Deploy</p>
+          <h1>Let's Architect <span>Something Together</span>.</h1>
+          <p class="lead">Pronto para escalar sua infraestrutura? Vamos desenhar a estratégia cloud ideal para seu cenário.</p>
+        </header>
+
+        <div class="contact-grid">
+          <section class="contact-form-wrap">
+            <form class="contact-form" onsubmit="event.preventDefault()">
+              <div>
+                <label>Nome</label>
+                <input type="text" placeholder="Seu nome" />
+              </div>
+              <div>
+                <label>E-mail</label>
+                <input type="email" placeholder="name@domain.com" />
+              </div>
+              <div>
+                <label>Objetivo do projeto</label>
+                <input type="text" placeholder="Cloud migration, platform engineering..." />
+              </div>
+              <div>
+                <label>Mensagem</label>
+                <textarea rows="5" placeholder="Descreva os desafios e objetivos"></textarea>
+              </div>
+              <button class="btn" type="submit">Initialize Transmission</button>
+            </form>
+          </section>
+
+          <aside class="contact-info">
+            <div class="contact-card">
+              <h3>Direct Access</h3>
+              <p><strong>Email terminal</strong><br/>frezende21@gmail.com</p>
+              <p><strong>Node location</strong><br/>Rio de Janeiro, Brazil [UTC-3]</p>
+            </div>
+            <div class="contact-card">
+              <h3>Digital Identity</h3>
+              <div class="contact-links">
+                <a href="https://www.linkedin.com/in/rezendesfelipe/" target="_blank" rel="noopener">LinkedIn</a>
+                <a href="https://github.com/rezendesfelipe" target="_blank" rel="noopener">GitHub</a>
+              </div>
+            </div>
+          </aside>
+        </div>
+      </div>
+    </main>
+
+    <SiteFooter lang="pt" />
+  </body>
+</html>
+
+<style>
+  .contact-page { padding: 7rem 0 3rem; position: relative; }
+  .contact-page::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background-image: linear-gradient(to right, rgba(47, 217, 244, 0.05) 1px, transparent 1px), linear-gradient(to bottom, rgba(47, 217, 244, 0.05) 1px, transparent 1px);
+    background-size: 40px 40px;
+    pointer-events: none;
+  }
+  .contact-header { position: relative; z-index: 1; margin-bottom: 2rem; }
+  .contact-header > p:first-child {
+    margin: 0 0 .8rem;
+    text-transform: uppercase;
+    letter-spacing: .2em;
+    color: var(--primary);
+    font-size: .72rem;
+  }
+  .contact-header h1 { margin: 0 0 .8rem; font-size: clamp(2.5rem, 7vw, 5rem); line-height: .95; }
+  .contact-header h1 span { color: var(--primary); }
+  .lead { color: var(--muted); max-width: 56ch; }
+
+  .contact-grid {
+    position: relative;
+    z-index: 1;
+    display: grid;
+    grid-template-columns: 1.1fr .9fr;
+    gap: 1.25rem;
+  }
+  .contact-form-wrap {
+    background: rgba(34, 42, 61, .45);
+    backdrop-filter: blur(28px);
+    border-radius: .75rem;
+    outline: 1px solid var(--border);
+    padding: 1.2rem;
+  }
+  .contact-form { display: grid; gap: .9rem; }
+  label {
+    display: block;
+    margin-bottom: .35rem;
+    text-transform: uppercase;
+    letter-spacing: .12em;
+    color: var(--muted);
+    font-size: .68rem;
+    font-family: var(--font-display);
+  }
+  input, textarea {
+    width: 100%;
+    border: none;
+    padding: .8rem .9rem;
+    background: var(--surface-container-highest);
+    color: var(--text);
+    font: inherit;
+    border-bottom: 2px solid transparent;
+    border-radius: .25rem;
+    outline: none;
+  }
+  input:focus, textarea:focus { border-bottom-color: var(--primary); }
+  .contact-info { display: grid; gap: .9rem; }
+  .contact-card {
+    background: var(--surface-container-high);
+    border-radius: .75rem;
+    padding: 1rem;
+    outline: 1px solid var(--border);
+  }
+  .contact-card h3 { margin: 0 0 .75rem; font-size: 1.1rem; }
+  .contact-card p { color: var(--muted); margin: .7rem 0; }
+  .contact-links { display: flex; flex-wrap: wrap; gap: .55rem; }
+  .contact-links a {
+    padding: .5rem .75rem;
+    text-decoration: none;
+    color: var(--muted);
+    outline: 1px solid var(--border);
+    border-radius: .35rem;
+  }
+  .contact-links a:hover { color: var(--primary); box-shadow: var(--cyan-glow); }
+
+  @media (max-width: 980px) {
+    .contact-grid { grid-template-columns: 1fr; }
+  }
+</style>

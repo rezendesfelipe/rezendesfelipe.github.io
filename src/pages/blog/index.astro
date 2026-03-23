@@ -2,37 +2,18 @@
 import { getCollection } from 'astro:content';
 import BaseHead from '../../components/BaseHead.astro';
 import FormattedDate from '../../components/FormattedDate.astro';
-import LanguageToggle from '../../components/LanguageToggle.astro';
+import SiteNav from '../../components/SiteNav.astro';
+import SiteFooter from '../../components/SiteFooter.astro';
 import { SITE_TITLE, SITE_DESCRIPTION } from '../../consts';
-import logo from '../../assets/logo_variation_4.png';
 
 const allPosts = (await getCollection('blog', (p) => (p.data.lang ?? 'pt') === 'pt' && !p.data.draft)).sort(
   (a, b) => b.data.pubDate.valueOf() - a.data.pubDate.valueOf(),
 );
 
-// Featured post = most recent
 const featured = allPosts[0];
 const restPosts = allPosts.slice(1);
-
-// 5–8 top categories
-const TOP_CATEGORIES = [
-  'Cloud & DevOps',
-  'Tutorials',
-  'Customer Stories',
-  'Security',
-  'Platform Engineering',
-  'SRE & Observability',
-  'FinOps',
-  'AI & MLOps',
-];
-
-// Collect all unique tags
 const allTags = [...new Set(allPosts.flatMap((p) => p.data.tags ?? []))].sort();
-
-// Collect categories present in posts (keep ordering)
-const presentCategories = TOP_CATEGORIES.filter((cat) =>
-  allPosts.some((p) => p.data.category === cat)
-);
+const categories = [...new Set(allPosts.map((p) => p.data.category).filter(Boolean))] as string[];
 ---
 
 <!doctype html>
@@ -41,272 +22,150 @@ const presentCategories = TOP_CATEGORIES.filter((cat) =>
     <BaseHead title={`Blog · ${SITE_TITLE}`} description={SITE_DESCRIPTION} />
   </head>
   <body>
-    <header class="topbar">
-      <nav class="topbar__nav">
-        <a class="topbar__brand" href="/"><img src={logo.src} alt="Felipe Rezende" class="topbar__logo" /></a>
-        <div class="topbar__links">
-          <a href="/">Início</a>
-          <a href="/blog/">Blog</a>
-          <a href="/#case-studies">Estudos de Caso</a>
-          <a href="/#contato">Contato</a>
-          <LanguageToggle />
-        </div>
-      </nav>
-    </header>
+    <SiteNav lang="pt" active="blog" />
 
-    <!-- ── Blog Hero ── -->
-    <div class="blog-hero">
-      <div class="blog-hero__inner container-wide">
-        <p class="blog-hero__eyebrow">Blog</p>
-        <h1 class="blog-hero__title">Cloud, DevOps & Platform Engineering</h1>
-        <p class="blog-hero__subtitle">
-          Artigos técnicos, tutoriais passo a passo e estudos de caso sobre
-          infraestrutura cloud, automação e SRE.
-        </p>
-        <div class="blog-search blog-hero__search">
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-            <circle cx="11" cy="11" r="8"/>
-            <path d="m21 21-4.35-4.35"/>
-          </svg>
-          <input
-            type="search"
-            id="search"
-            placeholder="Buscar artigos..."
-            autocomplete="off"
-            aria-label="Buscar artigos"
-          />
-        </div>
-      </div>
-    </div>
-
-    <!-- ── Category Tabs ── -->
-    <div class="blog-cats-bar">
+    <main class="blog-page">
       <div class="container-wide">
-        <div class="blog-cats" id="cat-filter" role="tablist" aria-label="Filtrar por categoria">
-          <button class="blog-cat blog-cat--active" data-cat="" role="tab" aria-selected="true">Todos</button>
-          {TOP_CATEGORIES.map((cat) => (
-            <button class="blog-cat" data-cat={cat} role="tab" aria-selected="false">{cat}</button>
-          ))}
-        </div>
-      </div>
-    </div>
+        <header class="blog-header">
+          <h1>Latest <span>Insights</span></h1>
+          <p>Deep dives em cloud architecture, automação e engenharia de plataformas.</p>
+        </header>
 
-    <main class="container-wide blog-main">
-
-      <!-- ── Featured Post ── -->
-      {featured && (
-        <section class="blog-featured" aria-label="Artigo em destaque">
-          <a href={`/blog/${featured.id}/`} class="blog-featured__card"
-             data-cat={featured.data.category ?? ''}
-             data-tags={(featured.data.tags ?? []).join(',')}
-             data-title={featured.data.title.toLowerCase()}
-             data-desc={(featured.data.description ?? '').toLowerCase()}>
-            <div class="blog-featured__image" aria-hidden="true">
-              {featured.data.heroImage
-                ? <img src={(featured.data.heroImage as any).src} alt="" />
-                : <div class="blog-featured__image-placeholder"><span>📝</span></div>
-              }
-            </div>
-            <div class="blog-featured__body">
-              <div class="blog-featured__meta">
-                {featured.data.category && <span class="blog-cat-badge">{featured.data.category}</span>}
-                <span class="blog-featured__reading">{featured.data.readingTime ?? '5 min de leitura'}</span>
+        <div class="blog-layout">
+          <section>
+            <div class="blog-filter glass">
+              <div class="blog-filter-tags" id="tag-filter">
+                <button class="tag tag--active" data-tag="">Todos</button>
+                {allTags.slice(0, 6).map((tag) => <button class="tag" data-tag={tag}>{tag}</button>)}
               </div>
-              <h2 class="blog-featured__title">{featured.data.title}</h2>
-              <p class="blog-featured__desc">{featured.data.description}</p>
-              <div class="blog-post-footer">
-                <div class="blog-author-mini">
-                  <div class="blog-author-mini__avatar" aria-hidden="true">
-                    {featured.data.author?.name?.[0] ?? 'F'}
-                  </div>
-                  <div>
-                    <span class="blog-author-mini__name">{featured.data.author?.name ?? 'Felipe Rezende'}</span>
-                    <span class="blog-author-mini__date">
-                      · <FormattedDate date={featured.data.pubDate} />
-                    </span>
-                  </div>
-                </div>
-                {(featured.data.tags ?? []).length > 0 && (
-                  <ul class="tags" aria-label="Tags">
-                    {(featured.data.tags ?? []).slice(0, 3).map((t) => <li class="tag">{t}</li>)}
-                  </ul>
-                )}
+              <div class="blog-search">
+                <input type="search" id="search" placeholder="Buscar artigos..." autocomplete="off" aria-label="Buscar artigos" />
               </div>
             </div>
-          </a>
-        </section>
-      )}
 
-      <!-- ── Tag strip ── -->
-      {allTags.length > 0 && (
-        <div class="blog-tag-strip" id="tag-filter" aria-label="Filtrar por tag">
-          <span class="blog-tag-strip__label">Tags:</span>
-          <button class="tag tag--active" data-tag="">Todos</button>
-          {allTags.map((tag) => (
-            <button class="tag" data-tag={tag}>{tag}</button>
-          ))}
-        </div>
-      )}
-
-      <!-- ── Posts Grid ── -->
-      <section aria-label="Artigos">
-        <ul class="blog-grid" id="post-list">
-          {restPosts.map((post) => (
-            <li
-              class="blog-card"
-              data-cat={post.data.category ?? ''}
-              data-tags={(post.data.tags ?? []).join(',')}
-              data-title={post.data.title.toLowerCase()}
-              data-desc={(post.data.description ?? '').toLowerCase()}
-            >
-              <a href={`/blog/${post.id}/`} class="blog-card__link">
-                <div class="blog-card__image" aria-hidden="true">
-                  {post.data.heroImage
-                    ? <img src={(post.data.heroImage as any).src} alt="" />
-                    : <div class="blog-card__image-placeholder"><span>📄</span></div>
-                  }
-                </div>
-                <div class="blog-card__body">
-                  <div class="blog-card__meta">
-                    {post.data.category && <span class="blog-cat-badge">{post.data.category}</span>}
-                    {post.data.readingTime && <span class="blog-card__reading">{post.data.readingTime}</span>}
+            {featured && (
+              <section class="blog-featured" aria-label="Artigo em destaque">
+                <a href={`/blog/${featured.id}/`} class="blog-featured__card"
+                   data-cat={featured.data.category ?? ''}
+                   data-tags={(featured.data.tags ?? []).join(',')}
+                   data-title={featured.data.title.toLowerCase()}
+                   data-desc={(featured.data.description ?? '').toLowerCase()}>
+                  <div class="blog-featured__image" aria-hidden="true">
+                    {featured.data.heroImage
+                      ? <img src={(featured.data.heroImage as any).src} alt="" />
+                      : <div class="blog-featured__image-placeholder"><span>📝</span></div>
+                    }
                   </div>
-                  <h3 class="blog-card__title">{post.data.title}</h3>
-                  <p class="blog-card__desc">{post.data.description}</p>
-                  <div class="blog-post-footer">
-                    <div class="blog-author-mini">
-                      <div class="blog-author-mini__avatar" aria-hidden="true">
-                        {post.data.author?.name?.[0] ?? 'F'}
-                      </div>
-                      <div>
-                        <span class="blog-author-mini__name">{post.data.author?.name ?? 'Felipe Rezende'}</span>
-                        <span class="blog-author-mini__date">· <FormattedDate date={post.data.pubDate} /></span>
+                  <div class="blog-featured__body">
+                    <div class="blog-featured__meta">
+                      {featured.data.category && <span class="blog-cat-badge">{featured.data.category}</span>}
+                      <span class="blog-featured__reading">{featured.data.readingTime ?? '5 min de leitura'}</span>
+                    </div>
+                    <h2 class="blog-featured__title">{featured.data.title}</h2>
+                    <p class="blog-featured__desc">{featured.data.description}</p>
+                    <div class="blog-post-footer">
+                      <div class="blog-author-mini">
+                        <div class="blog-author-mini__avatar" aria-hidden="true">{featured.data.author?.name?.[0] ?? 'F'}</div>
+                        <div>
+                          <span class="blog-author-mini__name">{featured.data.author?.name ?? 'Felipe Rezende'}</span>
+                          <span class="blog-author-mini__date"> · <FormattedDate date={featured.data.pubDate} /></span>
+                        </div>
                       </div>
                     </div>
                   </div>
-                </div>
-              </a>
-            </li>
-          ))}
-        </ul>
-        <p id="no-results" class="muted" style="display:none;margin-top:2rem;text-align:center;">Nenhum artigo encontrado.</p>
-      </section>
+                </a>
+              </section>
+            )}
 
-      <!-- ── Newsletter CTA ── -->
-      <section class="newsletter-cta" aria-label="Newsletter">
-        <div class="newsletter-cta__inner">
-          <div class="newsletter-cta__icon" aria-hidden="true">📬</div>
-          <div class="newsletter-cta__copy">
-            <h2 class="newsletter-cta__title">Fique por dentro</h2>
-            <p class="newsletter-cta__desc">
-              Novos artigos sobre Cloud, DevOps e Platform Engineering diretamente no seu feed.
-              Assine o RSS ou siga nas redes.
-            </p>
-          </div>
-          <div class="newsletter-cta__actions">
-            <a href="https://www.linkedin.com/in/rezendesfelipe/" target="_blank" rel="noopener" class="btn">LinkedIn</a>
-          </div>
+            <ul class="blog-grid" id="post-list">
+              {restPosts.map((post) => (
+                <li class="blog-card"
+                    data-cat={post.data.category ?? ''}
+                    data-tags={(post.data.tags ?? []).join(',')}
+                    data-title={post.data.title.toLowerCase()}
+                    data-desc={(post.data.description ?? '').toLowerCase()}>
+                  <a href={`/blog/${post.id}/`} class="blog-card__link">
+                    <div class="blog-card__image" aria-hidden="true">
+                      {post.data.heroImage
+                        ? <img src={(post.data.heroImage as any).src} alt="" />
+                        : <div class="blog-card__image-placeholder"><span>📄</span></div>
+                      }
+                    </div>
+                    <div class="blog-card__body">
+                      <div class="blog-card__meta">
+                        {post.data.category && <span class="blog-cat-badge">{post.data.category}</span>}
+                        {post.data.readingTime && <span class="blog-card__reading">{post.data.readingTime}</span>}
+                      </div>
+                      <h3 class="blog-card__title">{post.data.title}</h3>
+                      <p class="blog-card__desc">{post.data.description}</p>
+                    </div>
+                  </a>
+                </li>
+              ))}
+            </ul>
+            <p id="no-results" class="muted" style="display:none;margin-top:2rem;text-align:center;">Nenhum artigo encontrado.</p>
+          </section>
+
+          <aside class="blog-sidebar">
+            <div class="glass sidebar-card">
+              <h3>Search Archives</h3>
+              <input type="search" placeholder="Keywords, topics..." disabled />
+            </div>
+            <div class="glass sidebar-card">
+              <h3>Categories</h3>
+              <ul>
+                {categories.map((cat) => <li>{cat}</li>)}
+              </ul>
+            </div>
+            <div class="glass sidebar-card">
+              <h3>Newsletter</h3>
+              <p class="muted">Assine o RSS ou acompanhe no LinkedIn.</p>
+              <a href="/rss.xml" class="btn btn--ghost">RSS Feed</a>
+            </div>
+          </aside>
         </div>
-      </section>
+      </div>
     </main>
 
-    <footer class="footer container-wide">
-      <div class="footer__grid">
-        <div>
-          <p class="footer__brand-name">Felipe Rezende</p>
-          <p class="footer__tagline">Cloud and DevOps Architect.<br/>Construindo infraestrutura confiável.</p>
-        </div>
-        <div>
-          <p class="footer__col-title">Navegação</p>
-          <ul class="footer__links">
-            <li><a href="/">Início</a></li>
-            <li><a href="/blog/">Blog</a></li>
-            <li><a href="/#case-studies">Estudos de Caso</a></li>
-            <li><a href="/#certificacoes">Certificações</a></li>
-          </ul>
-        </div>
-        <div>
-          <p class="footer__col-title">Conteúdo</p>
-          <ul class="footer__links">
-            <li><a href="/blog/">Artigos</a></li>
-            <li><a href="/#arsenal">Arsenal Técnico</a></li>
-            <li><a href="/rss.xml">RSS Feed</a></li>
-            <li><a href="/sitemap-index.xml">Sitemap</a></li>
-          </ul>
-        </div>
-        <div>
-          <p class="footer__col-title">Contato</p>
-          <ul class="footer__links">
-            <li><a href="https://github.com/rezendesfelipe" target="_blank" rel="noopener">GitHub</a></li>
-            <li><a href="https://www.linkedin.com/in/rezendesfelipe/" target="_blank" rel="noopener">LinkedIn</a></li>
-            <li><a href="mailto:frezende21@gmail.com">Email</a></li>
-          </ul>
-        </div>
-      </div>
-      <div class="footer__bottom">
-        <p class="footer__copy">© {new Date().getFullYear()} Felipe Rezende. Todos os direitos reservados.</p>
-        <span class="footer__made">feito com <a href="https://astro.build" target="_blank" rel="noopener">astro</a></span>
-      </div>
-    </footer>
+    <SiteFooter lang="pt" />
 
     <script>
       const searchInput = document.getElementById('search') as HTMLInputElement | null;
-      const catButtons = document.querySelectorAll<HTMLButtonElement>('#cat-filter [data-cat]');
       const tagButtons = document.querySelectorAll<HTMLButtonElement>('#tag-filter [data-tag]');
       const items = document.querySelectorAll<HTMLElement>('#post-list .blog-card');
       const featured = document.querySelector<HTMLElement>('.blog-featured__card');
       const noResults = document.getElementById('no-results');
 
-      let activeCat = '';
       let activeTag = '';
 
       function filter() {
         const q = searchInput?.value.toLowerCase().trim() ?? '';
         let visible = 0;
 
-        // Filter grid items
         items.forEach((item) => {
           const title = item.dataset.title ?? '';
           const desc = item.dataset.desc ?? '';
           const tags = (item.dataset.tags ?? '').split(',');
-          const cat = item.dataset.cat ?? '';
           const matchesSearch = !q || title.includes(q) || desc.includes(q);
-          const matchesCat = !activeCat || cat === activeCat;
           const matchesTag = !activeTag || tags.includes(activeTag);
-          const show = matchesSearch && matchesCat && matchesTag;
+          const show = matchesSearch && matchesTag;
           item.style.display = show ? '' : 'none';
           if (show) visible++;
         });
 
-        // Also filter featured
         if (featured) {
           const ftitle = featured.dataset.title ?? '';
           const fdesc = featured.dataset.desc ?? '';
           const ftags = (featured.dataset.tags ?? '').split(',');
-          const fcat = featured.dataset.cat ?? '';
-          const fMatchSearch = !q || ftitle.includes(q) || fdesc.includes(q);
-          const fMatchCat = !activeCat || fcat === activeCat;
-          const fMatchTag = !activeTag || ftags.includes(activeTag);
-          const fShow = fMatchSearch && fMatchCat && fMatchTag;
-          (featured.closest('.blog-featured') as HTMLElement | null)?.style?.setProperty('display', fShow ? '' : 'none');
-          if (fShow) visible++;
+          const fmatch = (!q || ftitle.includes(q) || fdesc.includes(q)) && (!activeTag || ftags.includes(activeTag));
+          (featured.closest('.blog-featured') as HTMLElement | null)?.style?.setProperty('display', fmatch ? '' : 'none');
+          if (fmatch) visible++;
         }
 
         if (noResults) noResults.style.display = visible === 0 ? '' : 'none';
       }
 
       searchInput?.addEventListener('input', filter);
-
-      catButtons.forEach((btn) => {
-        btn.addEventListener('click', () => {
-          activeCat = btn.dataset.cat ?? '';
-          catButtons.forEach((b) => { b.classList.remove('blog-cat--active'); b.setAttribute('aria-selected', 'false'); });
-          btn.classList.add('blog-cat--active');
-          btn.setAttribute('aria-selected', 'true');
-          filter();
-        });
-      });
-
       tagButtons.forEach((btn) => {
         btn.addEventListener('click', () => {
           activeTag = btn.dataset.tag ?? '';
@@ -318,3 +177,56 @@ const presentCategories = TOP_CATEGORIES.filter((cat) =>
     </script>
   </body>
 </html>
+
+<style>
+  .blog-page { padding-top: 7rem; }
+  .blog-header { margin-bottom: 2rem; }
+  .blog-header h1 { margin: 0 0 .65rem; font-size: clamp(2.2rem, 5vw, 4.5rem); }
+  .blog-header h1 span { color: var(--primary); font-style: italic; }
+  .blog-header p { margin: 0; color: var(--muted); }
+
+  .blog-layout {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) 320px;
+    gap: 1.25rem;
+  }
+  .glass {
+    background: rgba(34, 42, 61, 0.45);
+    backdrop-filter: blur(20px);
+    border-radius: .75rem;
+    outline: 1px solid var(--border);
+  }
+  .blog-filter {
+    display: flex;
+    justify-content: space-between;
+    gap: .9rem;
+    padding: .9rem;
+    margin-bottom: 1.2rem;
+    align-items: center;
+    flex-wrap: wrap;
+  }
+  .blog-filter-tags { display: flex; gap: .45rem; flex-wrap: wrap; }
+  .blog-search { min-width: 250px; }
+
+  .blog-sidebar { display: grid; gap: .9rem; align-content: start; }
+  .sidebar-card { padding: 1rem; }
+  .sidebar-card h3 { margin: 0 0 .8rem; font-size: .95rem; }
+  .sidebar-card ul { list-style: none; margin: 0; padding: 0; display: grid; gap: .45rem; }
+  .sidebar-card li { color: var(--muted); font-size: .88rem; }
+  .sidebar-card input {
+    width: 100%;
+    border: none;
+    border-radius: .4rem;
+    padding: .7rem .8rem;
+    background: var(--surface-container-highest);
+    color: var(--muted);
+  }
+
+  @media (max-width: 1100px) {
+    .blog-layout { grid-template-columns: 1fr; }
+    .blog-sidebar { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  }
+  @media (max-width: 760px) {
+    .blog-sidebar { grid-template-columns: 1fr; }
+  }
+</style>

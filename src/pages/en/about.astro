@@ -1,0 +1,120 @@
+---
+import BaseHead from '../../components/BaseHead.astro';
+import SiteNav from '../../components/SiteNav.astro';
+import SiteFooter from '../../components/SiteFooter.astro';
+import cvFile from '../../assets/CV_CA_FELIPE-REZENDE_ENG_26.pdf';
+import { SITE_TITLE } from '../../consts';
+---
+
+<html lang="en">
+  <head>
+    <BaseHead title={`About · ${SITE_TITLE}`} description="About Felipe Rezende, trajectory and certifications." />
+  </head>
+  <body>
+    <SiteNav lang="en" active="about" />
+
+    <main class="about-page">
+      <section class="about-hero container-wide">
+        <div>
+          <p class="about-kicker">Cloud Infrastructure Architect</p>
+          <h1>Architecting <span>Resilient</span> Digital Foundations.</h1>
+          <p>
+            Felipe Rezende is a Cloud Infrastructure Architect focused on Azure, with experience in multi-cloud,
+            automation, security and platform engineering.
+          </p>
+          <div class="about-actions">
+            <a class="btn" href={cvFile} download>Download CV</a>
+            <a class="btn btn--ghost" href="https://www.linkedin.com/in/rezendesfelipe/" target="_blank" rel="noopener">Connect on LinkedIn</a>
+          </div>
+        </div>
+        <div class="about-photo">
+          <img src="/profile.jpg" alt="Felipe Rezende" />
+        </div>
+      </section>
+
+      <section class="section container-wide">
+        <div class="section__header"><h2>Professional Timeline</h2></div>
+        <ul class="timeline">
+          <li><strong>Senior Cloud Consultant</strong> · SoftwareOne <span>Dec 2025 - Present</span></li>
+          <li><strong>Cloud Solutions Architect Lead</strong> · Mars <span>Jul 2025 - Nov 2025</span></li>
+          <li><strong>Team Lead</strong> · SoftwareOne <span>Feb 2023 - Apr 2025</span></li>
+          <li><strong>Teacher</strong> · FIAP <span>May 2024 - Dec 2025</span></li>
+        </ul>
+      </section>
+
+      <section class="section container-wide">
+        <div class="section__header"><h2>Certifications and Stack</h2></div>
+        <div class="about-chips">
+          <span>AWS Solutions Architect – Professional</span>
+          <span>Google Professional Cloud Architect</span>
+          <span>Azure Solutions Architect Expert (AZ-305)</span>
+          <span>DevOps Engineer Expert (AZ-400)</span>
+          <span>Terraform</span>
+          <span>Kubernetes (AKS)</span>
+          <span>GitHub Actions</span>
+          <span>Azure Governance</span>
+        </div>
+      </section>
+    </main>
+
+    <SiteFooter lang="en" />
+  </body>
+</html>
+
+<style>
+  .about-page { padding-top: 6.8rem; }
+  .about-hero {
+    display: grid;
+    grid-template-columns: 1.15fr .85fr;
+    gap: 2.5rem;
+    align-items: center;
+    padding-bottom: 1rem;
+  }
+  .about-kicker {
+    display: inline-flex;
+    padding: .35rem .65rem;
+    margin: 0 0 1rem;
+    background: rgba(0, 27, 32, .6);
+    color: var(--primary);
+    font-size: .72rem;
+    letter-spacing: .12em;
+    text-transform: uppercase;
+  }
+  h1 { margin: 0 0 1rem; font-size: clamp(2.2rem, 6vw, 4.5rem); line-height: 1.02; }
+  h1 span { color: var(--primary); }
+  p { color: var(--muted); max-width: 62ch; }
+  .about-actions { display: flex; gap: .8rem; flex-wrap: wrap; margin-top: 1.25rem; }
+  .about-photo {
+    border-radius: .75rem;
+    overflow: hidden;
+    background: var(--surface-container-high);
+    box-shadow: var(--ambient-shadow);
+  }
+  .about-photo img { width: 100%; height: 100%; object-fit: cover; display: block; }
+
+  .timeline { list-style: none; margin: 0; padding: 0; display: grid; gap: .85rem; }
+  .timeline li {
+    background: var(--surface-container-high);
+    border-radius: .5rem;
+    padding: .85rem 1rem;
+    color: var(--text);
+    display: flex;
+    justify-content: space-between;
+    gap: 1rem;
+    flex-wrap: wrap;
+  }
+  .timeline span { color: var(--muted); font-size: .88rem; }
+
+  .about-chips { display: flex; flex-wrap: wrap; gap: .55rem; }
+  .about-chips span {
+    padding: .35rem .6rem;
+    border-radius: .4rem;
+    background: var(--surface-container-highest);
+    font-size: .78rem;
+    color: var(--on-surface-variant);
+  }
+
+  @media (max-width: 920px) {
+    .about-hero { grid-template-columns: 1fr; }
+  }
+</style>

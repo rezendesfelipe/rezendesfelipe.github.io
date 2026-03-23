@@ -1,63 +1,120 @@
 ---
-import AboutHeroImage from '../assets/blog-placeholder-about.jpg';
-import Layout from '../layouts/BlogPost.astro';
+import BaseHead from '../components/BaseHead.astro';
+import SiteNav from '../components/SiteNav.astro';
+import SiteFooter from '../components/SiteFooter.astro';
+import cvFile from '../assets/CV_CA_FELIPE-REZENDE_ENG_26.pdf';
+import { SITE_TITLE } from '../consts';
 ---
 
-<Layout
-	title="About Me"
-	description="Lorem ipsum dolor sit amet"
-	pubDate={new Date('August 08 2021')}
-	heroImage={AboutHeroImage}
->
-	<p>
-		Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut
-		labore et dolore magna aliqua. Vitae ultricies leo integer malesuada nunc vel risus commodo
-		viverra. Adipiscing enim eu turpis egestas pretium. Euismod elementum nisi quis eleifend quam
-		adipiscing. In hac habitasse platea dictumst vestibulum. Sagittis purus sit amet volutpat. Netus
-		et malesuada fames ac turpis egestas. Eget magna fermentum iaculis eu non diam phasellus
-		vestibulum lorem. Varius sit amet mattis vulputate enim. Habitasse platea dictumst quisque
-		sagittis. Integer quis auctor elit sed vulputate mi. Dictumst quisque sagittis purus sit amet.
-	</p>
+<html lang="pt-BR">
+	<head>
+		<BaseHead title={`About · ${SITE_TITLE}`} description="Sobre Felipe Rezende, trajetória e certificações." />
+	</head>
+	<body>
+		<SiteNav lang="pt" active="about" />
 
-	<p>
-		Morbi tristique senectus et netus. Id semper risus in hendrerit gravida rutrum quisque non
-		tellus. Habitasse platea dictumst quisque sagittis purus sit amet. Tellus molestie nunc non
-		blandit massa. Cursus vitae congue mauris rhoncus. Accumsan tortor posuere ac ut. Fringilla urna
-		porttitor rhoncus dolor. Elit ullamcorper dignissim cras tincidunt lobortis. In cursus turpis
-		massa tincidunt dui ut ornare lectus. Integer feugiat scelerisque varius morbi enim nunc.
-		Bibendum neque egestas congue quisque egestas diam. Cras ornare arcu dui vivamus arcu felis
-		bibendum. Dignissim suspendisse in est ante in nibh mauris. Sed tempus urna et pharetra pharetra
-		massa massa ultricies mi.
-	</p>
+		<main class="about-page">
+			<section class="about-hero container-wide">
+				<div>
+					<p class="about-kicker">Cloud Infrastructure Architect</p>
+					<h1>Architecting <span>Resilient</span> Digital Foundations.</h1>
+					<p>
+						Felipe Rezende é Cloud Infrastructure Architect focado em Azure, com experiência em ambientes multi-cloud,
+						automação, segurança e engenharia de plataformas.
+					</p>
+					<div class="about-actions">
+						<a class="btn" href={cvFile} download>Download CV</a>
+						<a class="btn btn--ghost" href="https://www.linkedin.com/in/rezendesfelipe/" target="_blank" rel="noopener">Connect on LinkedIn</a>
+					</div>
+				</div>
+				<div class="about-photo">
+					<img src="/profile.jpg" alt="Felipe Rezende" />
+				</div>
+			</section>
 
-	<p>
-		Mollis nunc sed id semper risus in. Convallis a cras semper auctor neque. Diam sit amet nisl
-		suscipit. Lacus viverra vitae congue eu consequat ac felis donec. Egestas integer eget aliquet
-		nibh praesent tristique magna sit amet. Eget magna fermentum iaculis eu non diam. In vitae
-		turpis massa sed elementum. Tristique et egestas quis ipsum suspendisse ultrices. Eget lorem
-		dolor sed viverra ipsum. Vel turpis nunc eget lorem dolor sed viverra. Posuere ac ut consequat
-		semper viverra nam. Laoreet suspendisse interdum consectetur libero id faucibus. Diam phasellus
-		vestibulum lorem sed risus ultricies tristique. Rhoncus dolor purus non enim praesent elementum
-		facilisis. Ultrices tincidunt arcu non sodales neque. Tempus egestas sed sed risus pretium quam
-		vulputate. Viverra suspendisse potenti nullam ac tortor vitae purus faucibus ornare. Fringilla
-		urna porttitor rhoncus dolor purus non. Amet dictum sit amet justo donec enim.
-	</p>
+			<section class="section container-wide">
+				<div class="section__header"><h2>Professional Timeline</h2></div>
+				<ul class="timeline">
+					<li><strong>Senior Cloud Consultant</strong> · SoftwareOne <span>Dec 2025 - Present</span></li>
+					<li><strong>Cloud Solutions Architect Lead</strong> · Mars <span>Jul 2025 - Nov 2025</span></li>
+					<li><strong>Team Lead</strong> · SoftwareOne <span>Feb 2023 - Apr 2025</span></li>
+					<li><strong>Teacher</strong> · FIAP <span>May 2024 - Dec 2025</span></li>
+				</ul>
+			</section>
 
-	<p>
-		Mattis ullamcorper velit sed ullamcorper morbi tincidunt. Tortor posuere ac ut consequat semper
-		viverra. Tellus mauris a diam maecenas sed enim ut sem viverra. Venenatis urna cursus eget nunc
-		scelerisque viverra mauris in. Arcu ac tortor dignissim convallis aenean et tortor at. Curabitur
-		gravida arcu ac tortor dignissim convallis aenean et tortor. Egestas tellus rutrum tellus
-		pellentesque eu. Fusce ut placerat orci nulla pellentesque dignissim enim sit amet. Ut enim
-		blandit volutpat maecenas volutpat blandit aliquam etiam. Id donec ultrices tincidunt arcu. Id
-		cursus metus aliquam eleifend mi.
-	</p>
+			<section class="section container-wide">
+				<div class="section__header"><h2>Certificações e Stack</h2></div>
+				<div class="about-chips">
+					<span>AWS Solutions Architect – Professional</span>
+					<span>Google Professional Cloud Architect</span>
+					<span>Azure Solutions Architect Expert (AZ-305)</span>
+					<span>DevOps Engineer Expert (AZ-400)</span>
+					<span>Terraform</span>
+					<span>Kubernetes (AKS)</span>
+					<span>GitHub Actions</span>
+					<span>Azure Governance</span>
+				</div>
+			</section>
+		</main>
 
-	<p>
-		Tempus quam pellentesque nec nam aliquam sem. Risus at ultrices mi tempus imperdiet. Id porta
-		nibh venenatis cras sed felis eget velit. Ipsum a arcu cursus vitae. Facilisis magna etiam
-		tempor orci eu lobortis elementum. Tincidunt dui ut ornare lectus sit. Quisque non tellus orci
-		ac. Blandit libero volutpat sed cras. Nec tincidunt praesent semper feugiat nibh sed pulvinar
-		proin gravida. Egestas integer eget aliquet nibh praesent tristique magna.
-	</p>
-</Layout>
+		<SiteFooter lang="pt" />
+	</body>
+</html>
+
+<style>
+	.about-page { padding-top: 6.8rem; }
+	.about-hero {
+		display: grid;
+		grid-template-columns: 1.15fr .85fr;
+		gap: 2.5rem;
+		align-items: center;
+		padding-bottom: 1rem;
+	}
+	.about-kicker {
+		display: inline-flex;
+		padding: .35rem .65rem;
+		margin: 0 0 1rem;
+		background: rgba(0, 27, 32, .6);
+		color: var(--primary);
+		font-size: .72rem;
+		letter-spacing: .12em;
+		text-transform: uppercase;
+	}
+	h1 { margin: 0 0 1rem; font-size: clamp(2.2rem, 6vw, 4.5rem); line-height: 1.02; }
+	h1 span { color: var(--primary); }
+	p { color: var(--muted); max-width: 62ch; }
+	.about-actions { display: flex; gap: .8rem; flex-wrap: wrap; margin-top: 1.25rem; }
+	.about-photo {
+		border-radius: .75rem;
+		overflow: hidden;
+		background: var(--surface-container-high);
+		box-shadow: var(--ambient-shadow);
+	}
+	.about-photo img { width: 100%; height: 100%; object-fit: cover; display: block; }
+
+	.timeline { list-style: none; margin: 0; padding: 0; display: grid; gap: .85rem; }
+	.timeline li {
+		background: var(--surface-container-high);
+		border-radius: .5rem;
+		padding: .85rem 1rem;
+		color: var(--text);
+		display: flex;
+		justify-content: space-between;
+		gap: 1rem;
+		flex-wrap: wrap;
+	}
+	.timeline span { color: var(--muted); font-size: .88rem; }
+
+	.about-chips { display: flex; flex-wrap: wrap; gap: .55rem; }
+	.about-chips span {
+		padding: .35rem .6rem;
+		border-radius: .4rem;
+		background: var(--surface-container-highest);
+		font-size: .78rem;
+		color: var(--on-surface-variant);
+	}
+
+	@media (max-width: 920px) {
+		.about-hero { grid-template-columns: 1fr; }
+	}
+</style>
