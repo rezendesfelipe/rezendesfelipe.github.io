@@ -30,8 +30,9 @@ const blog = defineCollection({
 		}),
 });
 const projects = defineCollection({
-  type: 'content',
+	loader: glob({ base: './src/content/projects', pattern: '**/*.{md,mdx}' }),
   schema: z.object({
+		lang: z.enum(['pt', 'en']).default('pt'),
     title: z.string(),
     description: z.string(),
     // link do projeto (GitHub, demo, etc.)
@@ -49,7 +50,7 @@ const projects = defineCollection({
 const langSchema = z.enum(['pt', 'en']);
 
 const certifications = defineCollection({
-  type: 'content',
+	loader: glob({ base: './src/content/certifications', pattern: '**/*.{md,mdx}' }),
   schema: z.object({
     lang: langSchema.default('pt'),
     title: z.string(),
