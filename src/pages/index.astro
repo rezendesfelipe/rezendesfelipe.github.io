@@ -35,7 +35,17 @@ const featuredProjects = (await getCollection('projects'))
           </p>
           <div class="home-hero__actions">
             <a class="btn" href="#projetos">Explore Projetos</a>
-            <a class="btn btn--ghost" href="/about/">Ver Perfil</a>
+            <a class="btn btn--ghost" href="/about/">Ver Roadmap</a>
+          </div>
+          <div class="hero-stats">
+            <div>
+              <div class="hero-stats__value">8+</div>
+              <div class="hero-stats__label">Years Exp</div>
+            </div>
+            <div>
+              <div class="hero-stats__label">Cloud Stack</div>
+              <div class="hero-stats__icons">☁️ ⚙️ 🚀</div>
+            </div>
           </div>
         </div>
 
@@ -48,13 +58,16 @@ const featuredProjects = (await getCollection('projects'))
     <main class="container-wide">
       <section id="projetos" class="section">
         <div class="section__header">
-          <h2>Projetos em destaque</h2>
+          <h2>Innovative Projects</h2>
         </div>
         <ul class="blog-grid">
           {featuredProjects.map((project) => (
             <li class="blog-card">
               <a href={project.data.url} target="_blank" rel="noopener" class="blog-card__link">
                 <div class="blog-card__body">
+                  <div class="project-tags">
+                    {(project.data.tags ?? []).slice(0, 2).map((tag) => <span>{tag}</span>)}
+                  </div>
                   <h3 class="blog-card__title">{project.data.title}</h3>
                   <p class="blog-card__desc">{project.data.description}</p>
                 </div>
@@ -66,7 +79,7 @@ const featuredProjects = (await getCollection('projects'))
 
       <section class="section">
         <div class="section__header">
-          <h2>Últimos insights</h2>
+          <h2>Latest Insights</h2>
           <a class="link" href="/blog/">Ver todos →</a>
         </div>
 
@@ -84,7 +97,7 @@ const featuredProjects = (await getCollection('projects'))
           </a>
         )}
 
-        <ul class="home-posts-grid" style="margin-top:1.5rem;">
+        <ul class="home-posts-grid home-posts-grid--compact" style="margin-top:1.5rem;">
           {secondaryPosts.map((post) => (
             <li>
               <a href={`/blog/${post.id}/`} class="blog-card__link">
@@ -162,6 +175,49 @@ const featuredProjects = (await getCollection('projects'))
     display: flex;
     gap: .85rem;
     flex-wrap: wrap;
+  }
+  .hero-stats {
+    margin-top: 2.5rem;
+    padding-top: 1.25rem;
+    border-top: 1px solid rgba(69, 70, 77, 0.35);
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 1rem;
+    max-width: 420px;
+  }
+  .hero-stats__value {
+    font-size: 2rem;
+    font-weight: 700;
+    font-family: var(--font-display);
+    color: var(--primary);
+  }
+  .hero-stats__label {
+    font-size: .68rem;
+    letter-spacing: .12em;
+    text-transform: uppercase;
+    color: var(--on-surface-variant);
+  }
+  .hero-stats__icons { margin-top: .45rem; font-size: 1rem; }
+
+  .project-tags {
+    display: flex;
+    gap: .4rem;
+    margin-bottom: .65rem;
+    flex-wrap: wrap;
+  }
+  .project-tags span {
+    padding: .15rem .45rem;
+    font-size: .62rem;
+    letter-spacing: .08em;
+    text-transform: uppercase;
+    border: 1px solid rgba(47, 217, 244, 0.2);
+    color: var(--primary);
+    border-radius: .2rem;
+    background: rgba(47, 217, 244, 0.08);
+  }
+
+  .home-posts-grid--compact .blog-card__body {
+    min-height: 132px;
   }
   .home-hero__media {
     border-radius: .75rem;

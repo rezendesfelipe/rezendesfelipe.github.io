@@ -9,44 +9,25 @@ const base = lang === 'en' ? '/en' : '';
 const copy = lang === 'en'
   ? 'All rights reserved.'
   : 'Todos os direitos reservados.';
-const navLabel = lang === 'en' ? 'Navigation' : 'Navegação';
-const contentLabel = lang === 'en' ? 'Content' : 'Conteúdo';
-const contactLabel = lang === 'en' ? 'Contact' : 'Contato';
+const builtText = lang === 'en' ? 'Built for the Neon Architect.' : 'Construído para o Neon Architect.';
 ---
 
 <footer class="footer container-wide">
-  <div class="footer__grid">
+  <div class="footer__bottom" style="margin-top:0;padding-top:0;border-top:none;">
     <div>
-      <p class="footer__brand-name">Felipe Rezende</p>
-      <p class="footer__tagline">Cloud and DevOps Architect.</p>
+      <p class="footer__brand-name" style="font-size:1.2rem;color:var(--primary);font-family:var(--font-display);letter-spacing:-.03em;">FR</p>
+      <p class="footer__tagline">Rio de Janeiro, Brazil [UTC-3]</p>
     </div>
-    <div>
-      <p class="footer__col-title">{navLabel}</p>
-      <ul class="footer__links">
-        <li><a href={lang === 'en' ? '/en/' : '/'}>Home</a></li>
-        <li><a href={`${base}/about/`}>About</a></li>
-        <li><a href={`${base}/contact/`}>Contact</a></li>
-      </ul>
+    <ul class="footer__links" style="flex-direction:row;gap:1.2rem;flex-wrap:wrap;">
+      <li><a href="https://www.linkedin.com/in/rezendesfelipe/" target="_blank" rel="noopener">LinkedIn</a></li>
+      <li><a href="https://github.com/rezendesfelipe" target="_blank" rel="noopener">GitHub</a></li>
+      <li><a href={`${base}/blog/`}>Blog</a></li>
+      <li><a href="/rss.xml">RSS</a></li>
+      <li><a href="/sitemap-index.xml">Sitemap</a></li>
+    </ul>
+    <div style="text-align:right;">
+      <p class="footer__copy">© {new Date().getFullYear()} Felipe Rezende. {copy}</p>
+      <span class="footer__made">{builtText}</span>
     </div>
-    <div>
-      <p class="footer__col-title">{contentLabel}</p>
-      <ul class="footer__links">
-        <li><a href={`${base}/blog/`}>Blog</a></li>
-        <li><a href="/rss.xml">RSS</a></li>
-        <li><a href="/sitemap-index.xml">Sitemap</a></li>
-      </ul>
-    </div>
-    <div>
-      <p class="footer__col-title">{contactLabel}</p>
-      <ul class="footer__links">
-        <li><a href="https://www.linkedin.com/in/rezendesfelipe/" target="_blank" rel="noopener">LinkedIn</a></li>
-        <li><a href="https://github.com/rezendesfelipe" target="_blank" rel="noopener">GitHub</a></li>
-        <li><a href="mailto:frezende21@gmail.com">frezende21@gmail.com</a></li>
-      </ul>
-    </div>
-  </div>
-  <div class="footer__bottom">
-    <p class="footer__copy">© {new Date().getFullYear()} Felipe Rezende. {copy}</p>
-    <span class="footer__made">built with <a href="https://astro.build" target="_blank" rel="noopener">astro</a></span>
   </div>
 </footer>

@@ -13,11 +13,13 @@ const base = lang === 'en' ? '/en' : '';
 const homeHref = lang === 'en' ? '/en/' : '/';
 const aboutHref = `${base}/about/`;
 const contactHref = `${base}/contact/`;
+const blogHref = `${base}/blog/`;
 
 const labels = {
   home: lang === 'en' ? 'Home' : 'Home',
   about: lang === 'en' ? 'About' : 'About',
   contact: lang === 'en' ? 'Contact' : 'Contact',
+  blog: lang === 'en' ? 'Blog' : 'Blog',
   hire: lang === 'en' ? 'Hire Me' : 'Hire Me',
 };
 ---
@@ -31,6 +33,7 @@ const labels = {
     <div class="topbar__center-links">
       <a href={homeHref} class:list={{ active: active === 'home' }}>{labels.home}</a>
       <a href={aboutHref} class:list={{ active: active === 'about' }}>{labels.about}</a>
+      <a href={blogHref} class:list={{ active: active === 'blog' }}>{labels.blog}</a>
       <a href={contactHref} class:list={{ active: active === 'contact' }}>{labels.contact}</a>
     </div>
 

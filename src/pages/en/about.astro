@@ -34,12 +34,40 @@ import { SITE_TITLE } from '../../consts';
 
       <section class="section container-wide">
         <div class="section__header"><h2>Professional Timeline</h2></div>
-        <ul class="timeline">
-          <li><strong>Senior Cloud Consultant</strong> · SoftwareOne <span>Dec 2025 - Present</span></li>
-          <li><strong>Cloud Solutions Architect Lead</strong> · Mars <span>Jul 2025 - Nov 2025</span></li>
-          <li><strong>Team Lead</strong> · SoftwareOne <span>Feb 2023 - Apr 2025</span></li>
-          <li><strong>Teacher</strong> · FIAP <span>May 2024 - Dec 2025</span></li>
-        </ul>
+        <div class="timeline">
+          <article class="timeline__item">
+            <span class="timeline__dot"></span>
+            <div class="timeline__content">
+              <p class="timeline__period">Dec 2025 - Present</p>
+              <h3>Senior Cloud Consultant · SoftwareOne</h3>
+              <p>Driving cloud transformation initiatives and enterprise architecture design at scale.</p>
+            </div>
+          </article>
+          <article class="timeline__item">
+            <span class="timeline__dot"></span>
+            <div class="timeline__content">
+              <p class="timeline__period">Jul 2025 - Nov 2025</p>
+              <h3>Cloud Solutions Architect Lead · Mars</h3>
+              <p>Led Azure-native migration architecture and modernization strategies for enterprise systems.</p>
+            </div>
+          </article>
+          <article class="timeline__item">
+            <span class="timeline__dot"></span>
+            <div class="timeline__content">
+              <p class="timeline__period">Feb 2023 - Apr 2025</p>
+              <h3>Team Lead · SoftwareOne</h3>
+              <p>Mentored architecture squads and supported mission-critical multi-cloud environments.</p>
+            </div>
+          </article>
+          <article class="timeline__item">
+            <span class="timeline__dot timeline__dot--alt"></span>
+            <div class="timeline__content timeline__content--dashed">
+              <p class="timeline__period">May 2024 - Dec 2025</p>
+              <h3>Teacher · FIAP</h3>
+              <p>Teaching cloud architecture and platform engineering for upcoming professionals.</p>
+            </div>
+          </article>
+        </div>
       </section>
 
       <section class="section container-wide">
@@ -92,18 +120,67 @@ import { SITE_TITLE } from '../../consts';
   }
   .about-photo img { width: 100%; height: 100%; object-fit: cover; display: block; }
 
-  .timeline { list-style: none; margin: 0; padding: 0; display: grid; gap: .85rem; }
-  .timeline li {
-    background: var(--surface-container-high);
-    border-radius: .5rem;
-    padding: .85rem 1rem;
-    color: var(--text);
-    display: flex;
-    justify-content: space-between;
+  .timeline {
+    position: relative;
+    display: grid;
     gap: 1rem;
-    flex-wrap: wrap;
   }
-  .timeline span { color: var(--muted); font-size: .88rem; }
+  .timeline::before {
+    content: '';
+    position: absolute;
+    left: .38rem;
+    top: .6rem;
+    bottom: .6rem;
+    width: 1px;
+    background: linear-gradient(to bottom, rgba(47, 217, 244, .55), rgba(69, 70, 77, .3));
+  }
+  .timeline__item {
+    position: relative;
+    padding-left: 1.75rem;
+  }
+  .timeline__dot {
+    position: absolute;
+    left: 0;
+    top: .8rem;
+    width: .75rem;
+    height: .75rem;
+    border-radius: 999px;
+    background: var(--primary);
+    box-shadow: 0 0 0 6px rgba(47, 217, 244, .1);
+  }
+  .timeline__dot--alt {
+    background: var(--accent-ai);
+    box-shadow: 0 0 0 6px rgba(123, 208, 255, .12);
+  }
+  .timeline__content {
+    background: rgba(34, 42, 61, .45);
+    backdrop-filter: blur(12px);
+    border: 1px solid rgba(69, 70, 77, .35);
+    border-left: 2px solid var(--primary);
+    border-radius: .6rem;
+    padding: .9rem 1rem;
+  }
+  .timeline__content--dashed {
+    border-style: dashed;
+    border-left-style: solid;
+  }
+  .timeline__period {
+    margin: 0 0 .2rem;
+    font-size: .68rem;
+    color: var(--primary);
+    letter-spacing: .12em;
+    text-transform: uppercase;
+  }
+  .timeline__content h3 {
+    margin: 0 0 .35rem;
+    font-size: 1rem;
+    font-family: var(--font-display);
+  }
+  .timeline__content p {
+    margin: 0;
+    max-width: none;
+    font-size: .88rem;
+  }
 
   .about-chips { display: flex; flex-wrap: wrap; gap: .55rem; }
   .about-chips span {

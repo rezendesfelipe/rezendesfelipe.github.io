@@ -1,3 +1,5 @@
+@import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&family=Manrope:wght@300;400;500;600;700&display=swap');
+
 @font-face {
   font-family: 'Geist Sans';
   src: url('/fonts/GeistSans-Variable.woff2') format('woff2');
@@ -15,14 +17,25 @@
 }
 
 :root {
-  --bg: #1A1A1A;
-  --panel: #242424;
-  --text: #F0F0F0;
-  --muted: #B0B0B0;
-  --border: rgba(255, 255, 255, 0.10);
-  --accent: #0078D4;
-  --accent-ai: #00FFC0;
-  --font-sans: 'Geist Sans', system-ui, sans-serif;
+  --bg: #0b1326;
+  --panel: #222a3d;
+  --text: #dae2fd;
+  --muted: #c6c6cd;
+  --border: #45464d;
+  --accent: #2fd9f4;
+  --accent-ai: #7bd0ff;
+  --primary: #2fd9f4;
+  --on-primary: #00363e;
+  --surface-container-lowest: #060e20;
+  --surface-container-low: #131b2e;
+  --surface-container: #171f33;
+  --surface-container-high: #222a3d;
+  --surface-container-highest: #2d3449;
+  --on-surface-variant: #c6c6cd;
+  --ambient-shadow: 0 20px 50px rgba(0, 0, 0, 0.5);
+  --cyan-glow: 0 0 15px rgba(47, 217, 244, 0.3);
+  --font-display: 'Space Grotesk', 'Geist Sans', system-ui, sans-serif;
+  --font-sans: 'Manrope', 'Geist Sans', system-ui, sans-serif;
   --font-mono: 'Geist Mono', 'Courier New', monospace;
 }
 
@@ -75,7 +88,9 @@ code:not(pre code) {
 
 /* ─── Topbar / Navbar ──────────────────────────────────── */
 .topbar {
-  position: sticky;
+  position: fixed;
+  left: 0;
+  right: 0;
   top: 0;
   z-index: 100;
   background: rgba(6, 14, 32, 0.55);
@@ -103,7 +118,7 @@ code:not(pre code) {
 .topbar__brand:hover { color: var(--text); }
 
 .topbar__logo {
-  height: 34px;
+  height: 32px;
   width: auto;
   display: block;
 }
@@ -125,6 +140,8 @@ code:not(pre code) {
   color: var(--muted);
   font-size: .9rem;
   font-family: var(--font-display);
+  text-transform: uppercase;
+  letter-spacing: .05em;
   letter-spacing: .01em;
   transition: color .15s;
 }
@@ -134,8 +151,8 @@ code:not(pre code) {
 
 .topbar__center-links a.active {
   color: var(--primary);
-  text-decoration: underline;
-  text-underline-offset: 0.25rem;
+  border-bottom: 2px solid var(--primary);
+  padding-bottom: .2rem;
 }
 
 .topbar__actions {
@@ -158,7 +175,7 @@ code:not(pre code) {
   border-radius: .375rem;
   color: var(--primary);
   background: rgba(47, 217, 244, .1);
-  outline: 1px solid rgba(47, 217, 244, .25);
+  border: 1px solid rgba(47, 217, 244, .25);
   box-shadow: 0 0 15px rgba(47, 217, 244, 0.2);
   transition: background .2s, color .2s, box-shadow .2s;
 }
@@ -332,21 +349,21 @@ code:not(pre code) {
   justify-content: center;
   padding: .55rem 1rem;
   border-radius: 8px;
-  background: var(--accent);
-  color: #ffffff;
+  background: var(--primary);
+  color: var(--on-primary);
   font-weight: 600;
   font-size: .9rem;
   text-decoration: none;
   transition: opacity .15s;
 }
-.btn:hover { opacity: .88; color: #ffffff; }
+.btn:hover { box-shadow: var(--cyan-glow); color: var(--on-primary); }
 
 .btn--ghost {
-  background: transparent;
+  background: var(--surface-container-high);
   color: var(--text);
   border: 1px solid var(--border);
 }
-.btn--ghost:hover { border-color: var(--accent); color: var(--text); }
+.btn--ghost:hover { border-color: var(--primary); color: var(--text); background: var(--surface-container-highest); }
 
 /* ─── Grid & Cards ───────────────────────────────────── */
 .grid {
@@ -491,6 +508,7 @@ code:not(pre code) {
 /* ─── Footer ─────────────────────────────────────────── */
 .footer {
   padding: 3rem 0 1.5rem;
+  background: var(--surface-container-lowest);
   border-top: 1px solid var(--border);
   margin-top: 1rem;
 }
@@ -516,7 +534,7 @@ code:not(pre code) {
   font-weight: 600;
   letter-spacing: .07em;
   text-transform: uppercase;
-  color: var(--muted);
+  color: var(--on-surface-variant);
   margin: 0 0 .75rem;
 }
 .footer__links {
@@ -530,7 +548,7 @@ code:not(pre code) {
 .footer__links a {
   text-decoration: none;
   font-size: .875rem;
-  color: var(--muted);
+  color: var(--on-surface-variant);
   transition: color .15s;
   display: inline-flex;
   align-items: center;
@@ -566,12 +584,12 @@ code:not(pre code) {
 }
 .footer__copy {
   font-size: .8rem;
-  color: var(--muted);
+  color: var(--on-surface-variant);
   margin: 0;
 }
 .footer__made {
   font-size: .8rem;
-  color: var(--muted);
+  color: var(--on-surface-variant);
   font-family: var(--font-mono);
 }
 .footer__made a { color: var(--accent); text-decoration: none; }
@@ -613,6 +631,22 @@ code:not(pre code) {
   max-width: 1200px;
   margin: 0 auto;
   padding: 0 1.5rem;
+}
+
+.pixel-grid {
+  background-image: radial-gradient(circle, #2fd9f4 1px, transparent 1px);
+  background-size: 32px 32px;
+  opacity: 0.05;
+}
+
+.glow-sm {
+  box-shadow: 0 0 15px rgba(47, 217, 244, 0.3);
+}
+
+.glass-card {
+  background: rgba(34, 42, 61, 0.4);
+  backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.05);
 }
 
 /* ─── Blog Hero ──────────────────────────────────────── */
