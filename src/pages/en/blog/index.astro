@@ -34,6 +34,7 @@ const categories = [...new Set(allPosts.map((p) => p.data.category).filter(Boole
         <div class="blog-layout">
           <section>
             <div class="blog-filter glass">
+              <span class="blog-filter-label">Quick Tags:</span>
               <div class="blog-filter-tags" id="tag-filter">
                 <button class="tag tag--active" data-tag="">All</button>
                 {allTags.slice(0, 6).map((tag) => <button class="tag" data-tag={tag}>{tag}</button>)}
@@ -109,20 +110,23 @@ const categories = [...new Set(allPosts.map((p) => p.data.category).filter(Boole
           <aside class="blog-sidebar">
             <div class="glass sidebar-card">
               <h3>Search Archives</h3>
-              <input type="search" placeholder="Keywords, topics..." disabled />
+              <input type="search" placeholder="Keywords, topics..." />
             </div>
             <div class="glass sidebar-card">
               <h3>Categories</h3>
-              <ul>
-                {categories.map((cat) => <li>{cat}</li>)}
+              <ul class="sidebar-cats">
+                {categories.map((cat) => (
+                  <li>
+                    <span>{cat}</span>
+                    <strong>{allPosts.filter((p) => p.data.category === cat).length}</strong>
+                  </li>
+                ))}
               </ul>
             </div>
-            <div class="glass sidebar-card">
-              <h3>Newsletter</h3>
-              <p class="muted">Subscribe via RSS or follow on LinkedIn.</p>
-              <a href="/rss.xml" class="btn btn--ghost">RSS Feed</a>
-            </div>
           </aside>
+        </div>
+        <div class="blog-archive-cta">
+          <button class="btn btn--ghost" type="button">View Archives</button>
         </div>
       </div>
     </main>
@@ -179,7 +183,10 @@ const categories = [...new Set(allPosts.map((p) => p.data.category).filter(Boole
 </html>
 
 <style>
-  .blog-page { padding-top: 7rem; }
+  .blog-page {
+    padding-top: 7rem;
+    padding-bottom: 4.5rem;
+  }
   .blog-header { margin-bottom: 2rem; }
   .blog-header h1 { margin: 0 0 .65rem; font-size: clamp(2.2rem, 5vw, 4.5rem); }
   .blog-header h1 span { color: var(--primary); font-style: italic; }
@@ -205,6 +212,14 @@ const categories = [...new Set(allPosts.map((p) => p.data.category).filter(Boole
     align-items: center;
     flex-wrap: wrap;
   }
+  .blog-filter-label {
+    font-size: .62rem;
+    letter-spacing: .16em;
+    text-transform: uppercase;
+    color: var(--on-surface-variant);
+    font-family: var(--font-display);
+    margin-right: .35rem;
+  }
   .blog-filter-tags { display: flex; gap: .45rem; flex-wrap: wrap; }
   .blog-search { min-width: 250px; }
 
@@ -213,6 +228,20 @@ const categories = [...new Set(allPosts.map((p) => p.data.category).filter(Boole
   .sidebar-card h3 { margin: 0 0 .8rem; font-size: .95rem; }
   .sidebar-card ul { list-style: none; margin: 0; padding: 0; display: grid; gap: .45rem; }
   .sidebar-card li { color: var(--muted); font-size: .88rem; }
+  .sidebar-cats li {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background: rgba(23, 31, 51, .45);
+    border: 1px solid rgba(69, 70, 77, .25);
+    border-radius: .45rem;
+    padding: .45rem .55rem;
+  }
+  .sidebar-cats li strong {
+    color: var(--primary);
+    font-size: .68rem;
+    letter-spacing: .06em;
+  }
   .sidebar-card input {
     width: 100%;
     border: none;
@@ -220,6 +249,11 @@ const categories = [...new Set(allPosts.map((p) => p.data.category).filter(Boole
     padding: .7rem .8rem;
     background: var(--surface-container-highest);
     color: var(--muted);
+  }
+  .blog-archive-cta {
+    margin-top: 2rem;
+    display: flex;
+    justify-content: center;
   }
 
   @media (max-width: 1100px) {

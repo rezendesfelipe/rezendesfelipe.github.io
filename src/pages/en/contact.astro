@@ -24,11 +24,11 @@ import { SITE_TITLE } from '../../consts';
           <section class="contact-form-wrap">
             <form class="contact-form" onsubmit="event.preventDefault()">
               <div>
-                <label>Name</label>
+                <label>Identity Name</label>
                 <input type="text" placeholder="Your name" />
               </div>
               <div>
-                <label>Email</label>
+                <label>Source Email</label>
                 <input type="email" placeholder="name@domain.com" />
               </div>
               <div>
@@ -36,7 +36,7 @@ import { SITE_TITLE } from '../../consts';
                 <input type="text" placeholder="Cloud migration, platform engineering..." />
               </div>
               <div>
-                <label>Message</label>
+                <label>Message Payload</label>
                 <textarea rows="5" placeholder="Describe your goals and challenges"></textarea>
               </div>
               <button class="btn" type="submit">Initialize Transmission</button>
@@ -98,7 +98,8 @@ import { SITE_TITLE } from '../../consts';
     background: rgba(34, 42, 61, .45);
     backdrop-filter: blur(28px);
     border-radius: .75rem;
-    outline: 1px solid var(--border);
+    border: 1px solid rgba(69, 70, 77, .4);
+    border-left: 2px solid rgba(47, 217, 244, .35);
     padding: 1.2rem;
   }
   .contact-form { display: grid; gap: .9rem; }
@@ -118,6 +119,7 @@ import { SITE_TITLE } from '../../consts';
     background: var(--surface-container-highest);
     color: var(--text);
     font: inherit;
+    border: none;
     border-bottom: 2px solid transparent;
     border-radius: .25rem;
     outline: none;
@@ -128,7 +130,7 @@ import { SITE_TITLE } from '../../consts';
     background: var(--surface-container-high);
     border-radius: .75rem;
     padding: 1rem;
-    outline: 1px solid var(--border);
+    border: 1px solid rgba(69, 70, 77, .35);
   }
   .contact-card h3 { margin: 0 0 .75rem; font-size: 1.1rem; }
   .contact-card p { color: var(--muted); margin: .7rem 0; }
@@ -137,8 +139,12 @@ import { SITE_TITLE } from '../../consts';
     padding: .5rem .75rem;
     text-decoration: none;
     color: var(--muted);
-    outline: 1px solid var(--border);
+    border: 1px solid rgba(69, 70, 77, .35);
     border-radius: .35rem;
+    text-transform: uppercase;
+    letter-spacing: .08em;
+    font-size: .68rem;
+    font-family: var(--font-display);
   }
   .contact-links a:hover { color: var(--primary); box-shadow: var(--cyan-glow); }
 

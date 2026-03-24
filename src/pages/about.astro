@@ -4,11 +4,73 @@ import SiteNav from '../components/SiteNav.astro';
 import SiteFooter from '../components/SiteFooter.astro';
 import cvFile from '../assets/CV_CA_FELIPE-REZENDE_ENG_26.pdf';
 import { SITE_TITLE } from '../consts';
+
+const timeline = [
+	{
+		period: 'Dez 2025 — Atual',
+		role: 'Senior Cloud Consultant · SoftwareOne',
+		summary: 'Liderando iniciativas de transformação cloud e arquitetura corporativa em grande escala.',
+	},
+	{
+		period: 'Jul 2025 — Nov 2025',
+		role: 'Cloud Solutions Architect Lead · Mars',
+		summary: 'Desenho de arquiteturas Azure-native para migração de workloads e modernização de plataformas.',
+	},
+	{
+		period: 'Fev 2023 — Abr 2025',
+		role: 'Team Lead · SoftwareOne',
+		summary: 'Mentoria técnica e condução de ambientes mission-critical em contexto multi-cloud.',
+	},
+	{
+		period: 'Mai 2024 — Dez 2025',
+		role: 'Professor · FIAP',
+		summary: 'Formação de novos profissionais em cloud, arquitetura e práticas de plataforma.',
+	},
+	{
+		period: '2019 — 2022',
+		role: 'Evolução Profissional em Cloud',
+		summary: 'Atuação contínua em administração, segurança e automação de ambientes Azure com expansão para multi-cloud.',
+	},
+];
+
+const certifications = [
+	{ badge: 'AWS', title: 'AWS Certified Solutions Architect – Professional', period: '04/2024 – 04/2027', verifyUrl: 'https://www.credly.com/badges/73e82779-8329-4dd5-bbcd-546f1e41f73d' },
+	{ badge: 'AWS', title: 'AWS Certified Solutions – Associate', period: '12/2022 – 12/2025', verifyUrl: 'https://www.credly.com/badges/4a0a0e01-446d-4b94-8c33-032d0e28a3fe' },
+	{ badge: 'GCP', title: 'Google - Professional Cloud Architect Certification', period: '10/2024 – 10/2026', verifyUrl: 'https://www.credly.com/badges/63e9158b-eb3b-4b4a-9cf4-e2879db320af' },
+	{ badge: 'GCP', title: 'Google - Associate Cloud Engineer Certification', period: '11/2024 – 11/2027', verifyUrl: 'https://www.credly.com/badges/2daa72a3-4b00-43bc-850c-ec4d9f3453c2' },
+	{ badge: 'Azure', title: 'Azure Solutions Architect Expert (AZ-305)', period: '12/2024 – 12/2025', verifyUrl: 'https://www.credly.com/badges/a5a444c7-d39f-4ad9-aea4-bbfb4c4f0a42', msVerifyUrl: 'https://learn.microsoft.com/api/credentials/share/en-us/rezendesfelipe/9F66B30DAD48E3AC?sharingId=2B6A9F34C6D1FFD7' },
+	{ badge: 'Azure', title: 'DevOps Engineer Expert (AZ-400)', period: '09/2024 – 09/2025', verifyUrl: 'https://www.credly.com/badges/a1ab5729-5fb0-48dc-9ce4-4eec02f570ce', msVerifyUrl: 'https://learn.microsoft.com/api/credentials/share/en-us/rezendesfelipe/94BF76F2254CC078?sharingId=2B6A9F34C6D1FFD7' },
+	{ badge: 'Azure', title: 'Azure Administrator (AZ-104)', period: '10/2019 – 10/2025', verifyUrl: 'https://www.credly.com/badges/626cde72-c84f-4c83-98bc-a8f6518d07fb', msVerifyUrl: 'https://learn.microsoft.com/api/credentials/share/en-us/rezendesfelipe/6920CC7BE0990940?sharingId=2B6A9F34C6D1FFD7' },
+	{ badge: 'Azure', title: 'Azure Security Engineer Associate (AZ-500)', period: '10/2019 – 10/2025', verifyUrl: 'https://www.credly.com/badges/dc6750ac-644c-47e2-b9a8-43fdd4f751f6', msVerifyUrl: 'https://learn.microsoft.com/api/credentials/share/en-us/rezendesfelipe/7F432DE421A3CBB2?sharingId=2B6A9F34C6D1FFD7' },
+	{ badge: 'Azure', title: 'Azure AI Fundamentals (AI-900)', period: '06/2024', verifyUrl: 'https://www.credly.com/badges/49da122d-f00e-4eda-ac66-1201baf4a967', msVerifyUrl: 'https://learn.microsoft.com/api/credentials/share/en-us/rezendesfelipe/8F78C7E227A67877?sharingId=2B6A9F34C6D1FFD7' },
+	{ badge: 'Azure', title: 'Security, Compliance, and Identity Fundamentals (SC-900)', period: '04/2022', verifyUrl: 'https://www.credly.com/badges/1f686e20-fb13-4b04-88d0-3248b8a7b1c7' },
+	{ badge: 'GitHub', title: 'GitHub Foundations', period: '01/2025 – 01/2028', verifyUrl: 'https://www.credly.com/badges/68561262-16a6-4708-a452-d9a70f53199c' },
+	{ badge: 'Linux', title: 'LFC108: Cybersecurity Essentials', period: '01/2024', verifyUrl: 'https://www.credly.com/badges/d4f2fe3c-04a4-4e5a-a4ef-8fb826b30456' },
+];
+
+const techStack = [
+	{ label: 'Azure', icon: 'https://cdn.jsdelivr.net/gh/devicons/devicon/icons/azure/azure-original.svg' },
+	{ label: 'AWS', icon: 'https://cdn.jsdelivr.net/gh/devicons/devicon/icons/amazonwebservices/amazonwebservices-original-wordmark.svg' },
+	{ label: 'GCP', icon: 'https://cdn.jsdelivr.net/gh/devicons/devicon/icons/googlecloud/googlecloud-original.svg' },
+	{ label: 'Terraform', icon: 'https://cdn.jsdelivr.net/gh/devicons/devicon/icons/terraform/terraform-original.svg' },
+	{ label: 'Azure DevOps', icon: 'https://cdn.jsdelivr.net/gh/devicons/devicon/icons/azuredevops/azuredevops-original.svg' },
+	{ label: 'Ansible', icon: 'https://cdn.jsdelivr.net/gh/devicons/devicon/icons/ansible/ansible-original.svg' },
+	{ label: 'Copilot', icon: 'https://cdn.simpleicons.org/githubcopilot/2FD9F4' },
+	{ label: 'Cloud Code', icon: 'https://cdn.jsdelivr.net/gh/devicons/devicon/icons/googlecloud/googlecloud-original.svg' },
+	{ label: 'GPT', icon: 'https://cdn.jsdelivr.net/gh/devicons/devicon/icons/openapi/openapi-original.svg' },
+	{ label: 'GitHub', icon: 'https://cdn.simpleicons.org/github/2FD9F4' },
+];
+
+const languages = [
+	'English – C1 (Fluent)',
+	'Spanish – B2 (Basic)',
+	'Brazilian Portuguese - Native',
+];
 ---
 
 <html lang="pt-BR">
 	<head>
-		<BaseHead title={`About · ${SITE_TITLE}`} description="Sobre Felipe Rezende, trajetória e certificações." />
+		<BaseHead title={`Sobre · ${SITE_TITLE}`} description="Sobre Felipe Rezende, trajetória profissional, certificações e stack técnica." />
 	</head>
 	<body>
 		<SiteNav lang="pt" active="about" />
@@ -16,15 +78,15 @@ import { SITE_TITLE } from '../consts';
 		<main class="about-page">
 			<section class="about-hero container-wide">
 				<div>
-					<p class="about-kicker">Cloud Infrastructure Architect</p>
-					<h1>Architecting <span>Resilient</span> Digital Foundations.</h1>
+					<p class="about-kicker">Arquiteto de Infraestrutura Cloud</p>
+					<h1>Construindo <span>Fundações Digitais</span> Resilientes.</h1>
 					<p>
-						Felipe Rezende é Cloud Infrastructure Architect focado em Azure, com experiência em ambientes multi-cloud,
+						Felipe Rezende é Arquiteto de Infraestrutura Cloud focado em Azure, com experiência em ambientes multi-cloud,
 						automação, segurança e engenharia de plataformas.
 					</p>
 					<div class="about-actions">
-						<a class="btn" href={cvFile} download>Download CV</a>
-						<a class="btn btn--ghost" href="https://www.linkedin.com/in/rezendesfelipe/" target="_blank" rel="noopener">Connect on LinkedIn</a>
+						<a class="btn" href={cvFile} download>Baixar CV</a>
+						<a class="btn btn--ghost" href="https://www.linkedin.com/in/rezendesfelipe/" target="_blank" rel="noopener">Conectar no LinkedIn</a>
 					</div>
 				</div>
 				<div class="about-photo">
@@ -32,56 +94,60 @@ import { SITE_TITLE } from '../consts';
 				</div>
 			</section>
 
-			<section class="section container-wide">
-				<div class="section__header"><h2>Professional Timeline</h2></div>
+			<section class="section container-wide about-section">
+				<div class="section__header"><h2>Linha do Tempo Profissional</h2></div>
 				<div class="timeline">
-					<article class="timeline__item">
-						<span class="timeline__dot"></span>
-						<div class="timeline__content">
-							<p class="timeline__period">Dec 2025 - Present</p>
-							<h3>Senior Cloud Consultant · SoftwareOne</h3>
-							<p>Liderando iniciativas de transformação cloud e arquitetura corporativa de alta escala.</p>
-						</div>
-					</article>
-					<article class="timeline__item">
-						<span class="timeline__dot"></span>
-						<div class="timeline__content">
-							<p class="timeline__period">Jul 2025 - Nov 2025</p>
-							<h3>Cloud Solutions Architect Lead · Mars</h3>
-							<p>Desenho de arquiteturas Azure-native para migração de workloads e modernização.</p>
-						</div>
-					</article>
-					<article class="timeline__item">
-						<span class="timeline__dot"></span>
-						<div class="timeline__content">
-							<p class="timeline__period">Feb 2023 - Apr 2025</p>
-							<h3>Team Lead · SoftwareOne</h3>
-							<p>Mentoria técnica e condução de ambientes mission-critical em contexto multi-cloud.</p>
-						</div>
-					</article>
-					<article class="timeline__item">
-						<span class="timeline__dot timeline__dot--alt"></span>
-						<div class="timeline__content timeline__content--dashed">
-							<p class="timeline__period">May 2024 - Dec 2025</p>
-							<h3>Teacher · FIAP</h3>
-							<p>Formação de novos profissionais em cloud, arquitetura e práticas de plataforma.</p>
-						</div>
-					</article>
+					{timeline.map((item) => (
+						<article class="timeline__item">
+							<span class="timeline__dot"></span>
+							<div class="timeline__content">
+								<p class="timeline__period">{item.period}</p>
+								<h3>{item.role}</h3>
+								<p>{item.summary}</p>
+							</div>
+						</article>
+					))}
 				</div>
 			</section>
 
-			<section class="section container-wide">
-				<div class="section__header"><h2>Certificações e Stack</h2></div>
-				<div class="about-chips">
-					<span>AWS Solutions Architect – Professional</span>
-					<span>Google Professional Cloud Architect</span>
-					<span>Azure Solutions Architect Expert (AZ-305)</span>
-					<span>DevOps Engineer Expert (AZ-400)</span>
-					<span>Terraform</span>
-					<span>Kubernetes (AKS)</span>
-					<span>GitHub Actions</span>
-					<span>Azure Governance</span>
-				</div>
+			<section class="section container-wide about-section about-section--certs">
+				<div class="section__header"><h2>Certificações</h2></div>
+				<ul class="cert-list">
+					{certifications.map((cert) => (
+						<li class="cert-item">
+							<a class="cert-badge cert-badge--link" href={cert.verifyUrl} target="_blank" rel="noopener noreferrer">{cert.badge}</a>
+							<div>
+								<p class="cert-title">{cert.title}</p>
+								<p class="cert-period">{cert.period}</p>
+								<div class="cert-links">
+									<a href={cert.verifyUrl} target="_blank" rel="noopener noreferrer">Validar badge</a>
+									{cert.msVerifyUrl && (
+										<a href={cert.msVerifyUrl} target="_blank" rel="noopener noreferrer">Validar no Microsoft Learn</a>
+									)}
+								</div>
+							</div>
+						</li>
+					))}
+				</ul>
+			</section>
+
+			<section class="section container-wide about-section">
+				<div class="section__header"><h2>Tech Stack</h2></div>
+				<ul class="stack-grid">
+					{techStack.map((item) => (
+						<li class="stack-item">
+							<img src={item.icon} alt={item.label} width="22" height="22" loading="lazy" decoding="async" />
+							<span>{item.label}</span>
+						</li>
+					))}
+				</ul>
+			</section>
+
+			<section class="section container-wide about-section about-section--languages">
+				<div class="section__header"><h2>Idiomas</h2></div>
+				<ul class="language-list">
+					{languages.map((language) => <li>{language}</li>)}
+				</ul>
 			</section>
 		</main>
 
@@ -90,13 +156,16 @@ import { SITE_TITLE } from '../consts';
 </html>
 
 <style>
-	.about-page { padding-top: 6.8rem; }
+	.about-page {
+		padding-top: 6.8rem;
+		padding-bottom: 3.5rem;
+	}
 	.about-hero {
 		display: grid;
 		grid-template-columns: 1.15fr .85fr;
 		gap: 2.5rem;
 		align-items: center;
-		padding-bottom: 1rem;
+		padding-bottom: 2rem;
 	}
 	.about-kicker {
 		display: inline-flex;
@@ -120,10 +189,19 @@ import { SITE_TITLE } from '../consts';
 	}
 	.about-photo img { width: 100%; height: 100%; object-fit: cover; display: block; }
 
+	.about-section {
+		margin-top: 2.5rem;
+	}
+	.about-section--certs,
+	.about-section--languages {
+		margin-top: 3.25rem;
+	}
+
 	.timeline {
 		position: relative;
 		display: grid;
-		gap: 1rem;
+		gap: 1.1rem;
+		max-width: 920px;
 	}
 	.timeline::before {
 		content: '';
@@ -158,11 +236,7 @@ import { SITE_TITLE } from '../consts';
 		border: 1px solid rgba(69, 70, 77, .35);
 		border-left: 2px solid var(--primary);
 		border-radius: .6rem;
-		padding: .9rem 1rem;
-	}
-	.timeline__content--dashed {
-		border-style: dashed;
-		border-left-style: solid;
+		padding: 1rem 1.1rem;
 	}
 	.timeline__period {
 		margin: 0 0 .2rem;
@@ -182,16 +256,123 @@ import { SITE_TITLE } from '../consts';
 		font-size: .88rem;
 	}
 
-	.about-chips { display: flex; flex-wrap: wrap; gap: .55rem; }
-	.about-chips span {
-		padding: .35rem .6rem;
-		border-radius: .4rem;
-		background: var(--surface-container-highest);
-		font-size: .78rem;
+	.cert-list {
+		list-style: none;
+		margin: 0;
+		padding: 0;
+		display: grid;
+		gap: .75rem;
+	}
+	.cert-item {
+		display: grid;
+		grid-template-columns: auto 1fr;
+		gap: .75rem;
+		align-items: start;
+		padding: .85rem 1rem;
+		border: 1px solid rgba(69, 70, 77, .35);
+		border-radius: .6rem;
+		background: rgba(34, 42, 61, .35);
+	}
+	.cert-badge {
+		display: inline-flex;
+		align-items: center;
+		justify-content: center;
+		min-width: 64px;
+		height: 1.5rem;
+		padding: 0 .5rem;
+		font-size: .68rem;
+		font-family: var(--font-display);
+		letter-spacing: .08em;
+		text-transform: uppercase;
+		border-radius: 999px;
+		background: rgba(47, 217, 244, .1);
+		color: var(--primary);
+		border: 1px solid rgba(47, 217, 244, .35);
+	}
+	.cert-badge--link {
+		text-decoration: none;
+		transition: background .15s, color .15s, border-color .15s;
+	}
+	.cert-badge--link:hover {
+		background: var(--primary);
+		color: var(--on-primary);
+		border-color: var(--primary);
+	}
+	.cert-title {
+		margin: 0;
+		color: var(--text);
+		font-size: .92rem;
+		max-width: none;
+	}
+	.cert-period {
+		margin: .25rem 0 0;
+		font-size: .8rem;
 		color: var(--on-surface-variant);
+		max-width: none;
+	}
+	.cert-links {
+		display: flex;
+		flex-wrap: wrap;
+		gap: .4rem .8rem;
+		margin-top: .4rem;
+	}
+	.cert-links a {
+		color: var(--primary);
+		font-size: .78rem;
+		text-decoration: none;
+		border-bottom: 1px dotted rgba(47, 217, 244, .45);
+	}
+	.cert-links a:hover {
+		color: var(--text);
+		border-bottom-color: var(--text);
+	}
+
+	.stack-grid {
+		list-style: none;
+		margin: 0;
+		padding: 0;
+		display: grid;
+		grid-template-columns: repeat(2, minmax(0, 1fr));
+		gap: .65rem;
+	}
+	.stack-item {
+		display: flex;
+		align-items: center;
+		gap: .6rem;
+		padding: .6rem .75rem;
+		background: rgba(34, 42, 61, .35);
+		border: 1px solid rgba(69, 70, 77, .35);
+		border-radius: .55rem;
+	}
+	.stack-item img {
+		width: 22px;
+		height: 22px;
+		object-fit: contain;
+		flex: 0 0 22px;
+	}
+	.stack-item span {
+		font-size: .9rem;
+		color: var(--text);
+	}
+
+	.language-list {
+		list-style: none;
+		padding: 0;
+		margin: 0;
+		display: grid;
+		gap: .55rem;
+	}
+	.language-list li {
+		padding: .65rem .8rem;
+		border-left: 2px solid var(--primary);
+		background: rgba(34, 42, 61, .3);
+		color: var(--text);
+		border-radius: .4rem;
+		font-size: .9rem;
 	}
 
 	@media (max-width: 920px) {
 		.about-hero { grid-template-columns: 1fr; }
+		.stack-grid { grid-template-columns: 1fr; }
 	}
 </style>
