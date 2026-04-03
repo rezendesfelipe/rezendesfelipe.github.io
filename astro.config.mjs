@@ -4,6 +4,6 @@ import sitemap from '@astrojs/sitemap';
 import { defineConfig } from 'astro/config';
 
 export default defineConfig({
-  site: 'https://rezendesfelipe.github.io',
+  site: 'https://rezendesfelipe.com',
   integrations: [mdx(), sitemap()],
 });
