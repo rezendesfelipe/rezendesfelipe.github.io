@@ -6,7 +6,12 @@ import SiteNav from '../../../components/SiteNav.astro';
 import SiteFooter from '../../../components/SiteFooter.astro';
 import { SITE_TITLE, SITE_DESCRIPTION } from '../../../consts';
 
-const allPosts = (await getCollection('blog', (p) => (p.data.lang ?? 'pt') === 'en' && !p.data.draft)).sort(
+const now = new Date();
+const allPosts = (await getCollection('blog', (p) =>
+  (p.data.lang ?? 'pt') === 'en' &&
+  !p.data.draft &&
+  p.data.pubDate <= now
+)).sort(
   (a, b) => b.data.pubDate.valueOf() - a.data.pubDate.valueOf(),
 );
 
