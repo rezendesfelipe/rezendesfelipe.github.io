@@ -32,14 +32,14 @@ const categories = [...new Set(allPosts.map((p) => p.data.category).filter(Boole
     <main class="blog-page">
       <div class="container-wide">
         <header class="blog-header">
-          <h1>Latest <span>Insights</span></h1>
-          <p>Deep dives em cloud architecture, automação e engenharia de plataformas.</p>
+          <h1>Últimas <span>Publicações</span></h1>
+          <p>Artigos sobre cloud, automação e engenharia de plataformas.</p>
         </header>
 
         <div class="blog-layout">
           <section>
             <div class="blog-filter glass">
-              <span class="blog-filter-label">Quick Tags:</span>
+              <span class="blog-filter-label">Tags:</span>
               <div class="blog-filter-tags" id="tag-filter">
                 <button class="tag tag--active" data-tag="">Todos</button>
                 {allTags.slice(0, 6).map((tag) => <button class="tag" data-tag={tag}>{tag}</button>)}
