@@ -26,3 +26,5 @@ pnpm-debug.log*
 # Obsidian management folder
 src/content/.obsidian/
 src/content/.trash/
+src/content/_painel/
+src/content/_templates/
