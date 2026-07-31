@@ -1,0 +1,45 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="740" viewBox="0 0 1200 740" role="img" aria-labelledby="title desc">
+  <title id="title">Arquitetura de contexto em camadas</title>
+  <desc id="desc">Cinco camadas empilhadas separam contexto de trabalho, estado estruturado, memória de longo prazo, recuperação sob demanda e registro de auditoria. Uma seta de composição liga as camadas de cima para baixo, enquanto setas laterais mostram evidência entrando no contexto de trabalho e decisões saindo para a auditoria.</desc>
+  <defs>
+    <style>text{font-family:Manrope,'Geist Sans',Arial,sans-serif;fill:#dae2fd}.title{font-family:'Space Grotesk','Geist Sans',Arial,sans-serif;font-size:28px;font-weight:700}.kicker{font-family:'Space Grotesk','Geist Sans',Arial,sans-serif;font-size:12px;font-weight:700;letter-spacing:2px;fill:#2fd9f4}.label{font-family:'Space Grotesk','Geist Sans',Arial,sans-serif;font-size:16px;font-weight:700}.body{font-size:13px;fill:#c6c6cd}.edge{fill:none;stroke:#2fd9f4;stroke-width:2.2;marker-end:url(#a)}.evi{fill:none;stroke:#5bbfae;stroke-width:2;stroke-dasharray:6 5;marker-end:url(#c)}.dec{fill:none;stroke:#7bd0ff;stroke-width:2;stroke-dasharray:6 5;marker-end:url(#a2)}</style>
+    <marker id="a" markerWidth="9" markerHeight="8" refX="8" refY="4" orient="auto"><path d="M0 0L9 4L0 8Z" fill="#2fd9f4"/></marker>
+    <marker id="c" markerWidth="9" markerHeight="8" refX="8" refY="4" orient="auto"><path d="M0 0L9 4L0 8" fill="none" stroke="#5bbfae"/></marker>
+    <marker id="a2" markerWidth="9" markerHeight="8" refX="8" refY="4" orient="auto"><path d="M0 0L9 4L0 8" fill="none" stroke="#7bd0ff"/></marker>
+  </defs>
+  <rect width="1200" height="740" fill="#0b1326"/><circle cx="1080" cy="80" r="230" fill="#2fd9f4" opacity=".035"/>
+  <text x="60" y="56" class="kicker">ARQUITETURA EM CAMADAS</text>
+  <text x="60" y="94" class="title">Cinco camadas separam o que é temporário do que é persistente</text>
+  <rect x="60" y="125" width="1080" height="430" rx="16" fill="#171f33" stroke="#45464d"/>
+  <text x="100" y="158" class="kicker">CADA CAMADA TEM UM PAPEL PRÓPRIO NA COMPOSIÇÃO DO CONTEXTO</text>
+
+  <rect x="140" y="180" width="900" height="74" rx="10" fill="#222a3d" stroke="#2fd9f4" stroke-width="2"/>
+  <text x="170" y="211" class="label">Contexto de trabalho</text><text x="170" y="233" class="body">objetivo, instruções e evidência da decisão atual — vive só durante a chamada</text>
+
+  <rect x="140" y="268" width="900" height="74" rx="10" fill="#222a3d" stroke="#7bd0ff"/>
+  <text x="170" y="299" class="label">Estado estruturado</text><text x="170" y="321" class="body">progresso, tarefas e decisões em formato consultável e atualizável</text>
+
+  <rect x="140" y="356" width="900" height="74" rx="10" fill="#222a3d" stroke="#8dc63f"/>
+  <text x="170" y="387" class="label">Memória de longo prazo</text><text x="170" y="409" class="body">convenções estáveis e aprendizados já validados entre execuções</text>
+
+  <rect x="140" y="444" width="900" height="74" rx="10" fill="#222a3d" stroke="#5bbfae"/>
+  <text x="170" y="475" class="label">Recuperação sob demanda</text><text x="170" y="497" class="body">busca e seleciona apenas o recorte relevante para a pergunta atual</text>
+
+  <rect x="140" y="532" width="900" height="74" rx="10" fill="#222a3d" stroke="#7bd0ff"/>
+  <text x="170" y="563" class="label">Registro de auditoria</text><text x="170" y="585" class="body">trilha de decisões, fontes e versões usadas em cada resposta</text>
+
+  <path d="M590 254V268" class="edge"/>
+  <path d="M590 342V356" class="edge"/>
+  <path d="M590 430V444" class="edge"/>
+  <path d="M590 518V532" class="edge"/>
+  <text x="612" y="266" class="body">compõe</text>
+
+  <path d="M140 481H95V217H140" class="evi"/>
+  <text x="60" y="352" class="body" transform="rotate(-90 60 352)" text-anchor="middle">evidência recuperada</text>
+
+  <path d="M1040 217H1085V569H1040" class="dec"/>
+  <text x="1140" y="396" class="body" transform="rotate(90 1140 396)" text-anchor="middle">decisão registrada</text>
+
+  <rect x="90" y="655" width="1010" height="1" fill="#45464d"/>
+  <text x="90" y="675" class="body">A separação em camadas reduz acúmulo desnecessário na janela ativa e melhora a rastreabilidade de cada decisão.</text>
+</svg>

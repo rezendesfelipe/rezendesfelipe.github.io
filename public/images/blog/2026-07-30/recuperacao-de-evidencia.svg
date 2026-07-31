@@ -1,0 +1,44 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="570" viewBox="0 0 1200 570" role="img" aria-labelledby="title desc">
+  <title id="title">Recuperação de evidência para decisão</title>
+  <desc id="desc">Pipeline da esquerda para a direita: a pergunta atual passa por busca, rankeamento e recorte antes de entrar no contexto do modelo, que responde com citação. A fonte primária continua disponível abaixo do recorte para validação e auditoria.</desc>
+  <defs>
+    <style>text{font-family:Manrope,'Geist Sans',Arial,sans-serif;fill:#dae2fd}.title{font-family:'Space Grotesk','Geist Sans',Arial,sans-serif;font-size:28px;font-weight:700}.kicker{font-family:'Space Grotesk','Geist Sans',Arial,sans-serif;font-size:12px;font-weight:700;letter-spacing:2px;fill:#2fd9f4}.label{font-family:'Space Grotesk','Geist Sans',Arial,sans-serif;font-size:15px;font-weight:700}.body{font-size:12.5px;fill:#c6c6cd}.edge{fill:none;stroke:#2fd9f4;stroke-width:2.2;marker-end:url(#a)}.src{fill:none;stroke:#5bbfae;stroke-width:2;stroke-dasharray:6 5;marker-end:url(#c)}</style>
+    <marker id="a" markerWidth="9" markerHeight="8" refX="8" refY="4" orient="auto"><path d="M0 0L9 4L0 8Z" fill="#2fd9f4"/></marker>
+    <marker id="c" markerWidth="9" markerHeight="8" refX="8" refY="4" orient="auto"><path d="M0 0L9 4L0 8" fill="none" stroke="#5bbfae"/></marker>
+  </defs>
+  <rect width="1200" height="570" fill="#0b1326"/><circle cx="1100" cy="60" r="220" fill="#2fd9f4" opacity=".035"/>
+  <text x="60" y="56" class="kicker">PIPELINE DE RECUPERAÇÃO</text>
+  <text x="60" y="94" class="title">A evidência é buscada, ranqueada e recortada antes de entrar no contexto</text>
+  <rect x="60" y="125" width="1080" height="390" rx="16" fill="#171f33" stroke="#45464d"/>
+
+  <rect x="90" y="210" width="150" height="90" rx="10" fill="#222a3d" stroke="#2fd9f4" stroke-width="2"/>
+  <text x="165" y="245" text-anchor="middle" class="label">Pergunta atual</text><text x="165" y="266" text-anchor="middle" class="body">intenção da</text><text x="165" y="282" text-anchor="middle" class="body">decisão</text>
+
+  <rect x="262" y="210" width="150" height="90" rx="10" fill="#222a3d" stroke="#7bd0ff"/>
+  <text x="337" y="245" text-anchor="middle" class="label">Busca / RAG</text><text x="337" y="266" text-anchor="middle" class="body">consulta fontes</text><text x="337" y="282" text-anchor="middle" class="body">candidatas</text>
+
+  <rect x="434" y="210" width="150" height="90" rx="10" fill="#222a3d" stroke="#8dc63f"/>
+  <text x="509" y="245" text-anchor="middle" class="label">Rankeamento</text><text x="509" y="266" text-anchor="middle" class="body">ordena por</text><text x="509" y="282" text-anchor="middle" class="body">relevância</text>
+
+  <rect x="606" y="210" width="150" height="90" rx="10" fill="#222a3d" stroke="#5bbfae" stroke-width="2"/>
+  <text x="681" y="245" text-anchor="middle" class="label">Recorte relevante</text><text x="681" y="266" text-anchor="middle" class="body">seleciona o</text><text x="681" y="282" text-anchor="middle" class="body">trecho útil</text>
+
+  <rect x="778" y="210" width="150" height="90" rx="10" fill="#222a3d" stroke="#2fd9f4" stroke-width="2"/>
+  <text x="853" y="245" text-anchor="middle" class="label">Contexto do modelo</text><text x="853" y="266" text-anchor="middle" class="body">recebe só o</text><text x="853" y="282" text-anchor="middle" class="body">necessário</text>
+
+  <rect x="950" y="210" width="150" height="90" rx="10" fill="#222a3d" stroke="#7bd0ff"/>
+  <text x="1025" y="245" text-anchor="middle" class="label">Resposta com</text><text x="1025" y="261" text-anchor="middle" class="label">citação</text><text x="1025" y="282" text-anchor="middle" class="body">referencia a fonte</text>
+
+  <path d="M240 255H262" class="edge"/>
+  <path d="M412 255H434" class="edge"/>
+  <path d="M584 255H606" class="edge"/>
+  <path d="M756 255H778" class="edge"/>
+  <path d="M928 255H950" class="edge"/>
+
+  <rect x="571" y="360" width="220" height="70" rx="10" fill="#171f33" stroke="#5bbfae"/>
+  <text x="681" y="391" text-anchor="middle" class="label">Fonte primária</text><text x="681" y="413" text-anchor="middle" class="body">disponível para validação e auditoria</text>
+  <path d="M681 360V300" class="src"/>
+
+  <rect x="90" y="465" width="1010" height="1" fill="#45464d"/>
+  <text x="90" y="485" class="body">A recuperação injeta só o recorte necessário no contexto — a fonte completa continua acessível para checagem.</text>
+</svg>

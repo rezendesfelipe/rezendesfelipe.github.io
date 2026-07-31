@@ -1,0 +1,476 @@
+<mxfile host="Electron" agent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) draw.io/26.1.1 Chrome/132.0.6834.210 Electron/34.3.3 Safari/537.36" version="26.1.1" pages="10">
+  <diagram id="workspace" name="01 Espaço de trabalho — arquitetura de contexto">
+    <mxGraphModel dx="1262" dy="621" grid="0" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1200" pageHeight="650" background="#0b1326" math="0" shadow="0">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+        <mxCell id="title" value="A janela de contexto é o espaço de trabalho da decisão atual" style="text;html=1;fontSize=28;fontStyle=1;fontFamily=Space Grotesk;fontColor=#dae2fd;align=left;" parent="1" vertex="1">
+          <mxGeometry x="60" y="60" width="900" height="40" as="geometry" />
+        </mxCell>
+        <mxCell id="event" value="Evento&#xa;usuário ou sistema" style="rounded=1;html=1;fillColor=#222a3d;strokeColor=#45464d;fontColor=#dae2fd;" parent="1" vertex="1">
+          <mxGeometry x="80" y="220" width="150" height="70" as="geometry" />
+        </mxCell>
+        <mxCell id="orch" value="Orquestrador&#xa;seleciona o contexto" style="rounded=1;html=1;fillColor=#222a3d;strokeColor=#2fd9f4;strokeWidth=2;fontColor=#dae2fd;" parent="1" vertex="1">
+          <mxGeometry x="310" y="205" width="190" height="100" as="geometry" />
+        </mxCell>
+        <mxCell id="state" value="Estado estruturado" style="shape=cylinder3;html=1;fillColor=#171f33;strokeColor=#7bd0ff;fontColor=#dae2fd;" parent="1" vertex="1">
+          <mxGeometry x="90" y="390" width="180" height="70" as="geometry" />
+        </mxCell>
+        <mxCell id="retrieve" value="Recuperação&#xa;evidência sob demanda" style="rounded=1;html=1;fillColor=#171f33;strokeColor=#5bbfae;fontColor=#dae2fd;" parent="1" vertex="1">
+          <mxGeometry x="330" y="390" width="180" height="70" as="geometry" />
+        </mxCell>
+        <mxCell id="memory" value="Memória curada" style="shape=cylinder3;html=1;fillColor=#171f33;strokeColor=#8dc63f;fontColor=#dae2fd;" parent="1" vertex="1">
+          <mxGeometry x="570" y="390" width="180" height="70" as="geometry" />
+        </mxCell>
+        <mxCell id="model" value="Janela temporária&#xa;Objetivo + estado + evidência&#xa;&#xa;Modelo" style="rounded=1;html=1;fillColor=#222a3d;strokeColor=#2fd9f4;strokeWidth=2;fontColor=#dae2fd;" parent="1" vertex="1">
+          <mxGeometry x="800" y="205" width="260" height="140" as="geometry" />
+        </mxCell>
+        <mxCell id="audit" value="Auditoria&#xa;fontes, decisão e versão" style="rounded=1;html=1;fillColor=#171f33;strokeColor=#7bd0ff;fontColor=#dae2fd;" parent="1" vertex="1">
+          <mxGeometry x="830" y="516" width="200" height="70" as="geometry" />
+        </mxCell>
+        <mxCell id="e1" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;endArrow=block;strokeColor=#2fd9f4;" parent="1" source="event" target="orch" edge="1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e2" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;endArrow=block;strokeColor=#7bd0ff;" parent="1" source="state" target="model" edge="1">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="180" y="478" />
+              <mxPoint x="930" y="478" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="e3" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;endArrow=block;strokeColor=#5bbfae;" parent="1" source="retrieve" target="model" edge="1">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="420" y="477" />
+              <mxPoint x="930" y="477" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="e4" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;endArrow=block;strokeColor=#8dc63f;" parent="1" source="memory" target="model" edge="1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e5" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;endArrow=block;strokeColor=#2fd9f4;" parent="1" source="model" target="audit" edge="1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+  <diagram id="pr" name="02 Revisão de PR — workflow paralelo">
+    <mxGraphModel dx="544" dy="563" grid="0" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1200" pageHeight="690" background="#0b1326" math="0" shadow="0">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+        <mxCell id="title" value="Revisão de pull request: contexto particionado, evidência preservada" style="text;html=1;fontSize=28;fontStyle=1;fontFamily=Space Grotesk;fontColor=#dae2fd;align=left;" parent="1" vertex="1">
+          <mxGeometry x="60" y="60" width="1000" height="40" as="geometry" />
+        </mxCell>
+        <mxCell id="input" value="PR + políticas + estado" style="rounded=1;html=1;fillColor=#171f33;strokeColor=#45464d;fontColor=#dae2fd;" parent="1" vertex="1">
+          <mxGeometry x="80" y="210" width="190" height="70" as="geometry" />
+        </mxCell>
+        <mxCell id="triage" value="Triar e montar recortes&#xa;contexto mínimo por análise" style="rounded=1;html=1;fillColor=#222a3d;strokeColor=#2fd9f4;strokeWidth=2;fontColor=#dae2fd;" parent="1" vertex="1">
+          <mxGeometry x="390" y="200" width="250" height="90" as="geometry" />
+        </mxCell>
+        <mxCell id="test" value="Testes" style="rounded=1;html=1;fillColor=#171f33;strokeColor=#7bd0ff;fontColor=#dae2fd;" parent="1" vertex="1">
+          <mxGeometry x="250" y="390" width="140" height="60" as="geometry" />
+        </mxCell>
+        <mxCell id="impact" value="Impacto" style="rounded=1;html=1;fillColor=#171f33;strokeColor=#7bd0ff;fontColor=#dae2fd;" parent="1" vertex="1">
+          <mxGeometry x="440" y="390" width="140" height="60" as="geometry" />
+        </mxCell>
+        <mxCell id="style" value="Estilo" style="rounded=1;html=1;fillColor=#171f33;strokeColor=#7bd0ff;fontColor=#dae2fd;" parent="1" vertex="1">
+          <mxGeometry x="630" y="390" width="140" height="60" as="geometry" />
+        </mxCell>
+        <mxCell id="docs" value="Documentação" style="rounded=1;html=1;fillColor=#171f33;strokeColor=#7bd0ff;fontColor=#dae2fd;" parent="1" vertex="1">
+          <mxGeometry x="820" y="390" width="140" height="60" as="geometry" />
+        </mxCell>
+        <mxCell id="finding" value="Achados rastreáveis&#xa;fonte + hunk + regra" style="rounded=1;html=1;fillColor=#222a3d;strokeColor=#5bbfae;strokeWidth=2;fontColor=#dae2fd;" parent="1" vertex="1">
+          <mxGeometry x="480" y="540" width="260" height="70" as="geometry" />
+        </mxCell>
+        <mxCell id="e1" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;endArrow=block;strokeColor=#2fd9f4;" parent="1" source="input" target="triage" edge="1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e2" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;endArrow=block;strokeColor=#2fd9f4;" parent="1" source="triage" target="test" edge="1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e3" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;endArrow=block;strokeColor=#2fd9f4;" parent="1" source="triage" target="impact" edge="1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e4" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;endArrow=block;strokeColor=#2fd9f4;" parent="1" source="triage" target="style" edge="1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e5" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;endArrow=block;strokeColor=#2fd9f4;" parent="1" source="triage" target="docs" edge="1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e6" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;endArrow=block;strokeColor=#5bbfae;" parent="1" source="impact" target="finding" edge="1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+  <diagram id="support" name="03 Atendimento — sequência de recuperação">
+    <mxGraphModel dx="631" dy="311" grid="0" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1200" pageHeight="620" background="#0b1326" math="0" shadow="0">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+        <mxCell id="title" value="Atendimento: contexto seletivo por decisão, não histórico completo" style="text;html=1;fontSize=28;fontStyle=1;fontFamily=Space Grotesk;fontColor=#dae2fd;align=left;" parent="1" vertex="1">
+          <mxGeometry x="60" y="60" width="1000" height="40" as="geometry" />
+        </mxCell>
+        <mxCell id="client" value="Cliente" style="shape=umlLifeline;perimeter=lifelinePerimeter;html=1;fillColor=#171f33;strokeColor=#45464d;fontColor=#dae2fd;size=54;" parent="1" vertex="1">
+          <mxGeometry x="80" y="130" width="110" height="380" as="geometry" />
+        </mxCell>
+        <mxCell id="bot" value="Bot" style="shape=umlLifeline;perimeter=lifelinePerimeter;html=1;fillColor=#222a3d;strokeColor=#2fd9f4;fontColor=#dae2fd;size=54;" parent="1" vertex="1">
+          <mxGeometry x="300" y="130" width="110" height="380" as="geometry" />
+        </mxCell>
+        <mxCell id="state" value="Estado" style="shape=umlLifeline;perimeter=lifelinePerimeter;html=1;fillColor=#171f33;strokeColor=#7bd0ff;fontColor=#dae2fd;size=54;" parent="1" vertex="1">
+          <mxGeometry x="520" y="130" width="110" height="380" as="geometry" />
+        </mxCell>
+        <mxCell id="kb" value="Conhecimento" style="shape=umlLifeline;perimeter=lifelinePerimeter;html=1;fillColor=#171f33;strokeColor=#5bbfae;fontColor=#dae2fd;size=54;" parent="1" vertex="1">
+          <mxGeometry x="740" y="130" width="130" height="380" as="geometry" />
+        </mxCell>
+        <mxCell id="model" value="Modelo" style="shape=umlLifeline;perimeter=lifelinePerimeter;html=1;fillColor=#222a3d;strokeColor=#2fd9f4;fontColor=#dae2fd;size=54;" parent="1" vertex="1">
+          <mxGeometry x="980" y="130" width="110" height="380" as="geometry" />
+        </mxCell>
+        <mxCell id="e3" value="buscar trechos úteis" style="html=1;endArrow=block;strokeColor=#2fd9f4;fontColor=#c6c6cd;" parent="1" source="bot" target="kb" edge="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint y="360" as="sourcePoint" />
+            <mxPoint y="360" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="e1" value="pergunta atual" style="html=1;endArrow=block;strokeColor=#2fd9f4;fontColor=#c6c6cd;" parent="1" source="client" target="bot" edge="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint y="220" as="sourcePoint" />
+            <mxPoint y="220" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="e2" value="consultar pedido e resumo" style="html=1;endArrow=block;strokeColor=#2fd9f4;fontColor=#c6c6cd;" parent="1" source="bot" target="state" edge="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint y="280" as="sourcePoint" />
+            <mxPoint y="280" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="e4" value="intenção + estado + evidência" style="html=1;endArrow=block;strokeColor=#2fd9f4;fontColor=#c6c6cd;" parent="1" source="bot" target="model" edge="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint y="440" as="sourcePoint" />
+            <mxPoint y="440" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+  <diagram id="budget" name="04 Orçamento de contexto — barra proporcional">
+    <mxGraphModel dx="756" dy="563" grid="0" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1200" pageHeight="570" background="#0b1326" math="0" shadow="0">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+        <mxCell id="title" value="Orçamento de contexto: reserve espaço antes de consumir a janela" style="text;html=1;fontSize=28;fontStyle=1;fontFamily=Space Grotesk;fontColor=#dae2fd;align=left;" parent="1" vertex="1">
+          <mxGeometry x="70" y="60" width="1000" height="40" as="geometry" />
+        </mxCell>
+        <mxCell id="b1" value="Instruções" style="html=1;fillColor=#2fd9f4;strokeColor=#0b1326;fontColor=#00363e;fontStyle=1;" parent="1" vertex="1">
+          <mxGeometry x="100" y="200" width="155" height="80" as="geometry" />
+        </mxCell>
+        <mxCell id="b2" value="Estado" style="html=1;fillColor=#7bd0ff;strokeColor=#0b1326;fontColor=#00363e;fontStyle=1;" parent="1" vertex="1">
+          <mxGeometry x="255" y="200" width="170" height="80" as="geometry" />
+        </mxCell>
+        <mxCell id="b3" value="Evidências" style="html=1;fillColor=#5bbfae;strokeColor=#0b1326;fontColor=#00363e;fontStyle=1;" parent="1" vertex="1">
+          <mxGeometry x="425" y="200" width="375" height="80" as="geometry" />
+        </mxCell>
+        <mxCell id="b4" value="Histórico" style="html=1;fillColor=#8dc63f;strokeColor=#0b1326;fontColor=#00363e;fontStyle=1;" parent="1" vertex="1">
+          <mxGeometry x="800" y="200" width="185" height="80" as="geometry" />
+        </mxCell>
+        <mxCell id="b5" value="Reserva" style="html=1;fillColor=#222a3d;strokeColor=#2fd9f4;fontColor=#dae2fd;fontStyle=1;" parent="1" vertex="1">
+          <mxGeometry x="985" y="200" width="115" height="80" as="geometry" />
+        </mxCell>
+        <mxCell id="rule" value="&lt;b&gt;REGRA DE OPERAÇÃO&lt;/b&gt;&lt;br&gt;Não use toda a capacidade disponível. Preserve margem para resposta, ferramentas e recuperação corretiva." style="rounded=1;html=1;align=left;spacingLeft=30;fillColor=#222a3d;strokeColor=#45464d;fontColor=#dae2fd;" parent="1" vertex="1">
+          <mxGeometry x="70" y="350" width="1060" height="110" as="geometry" />
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+  <diagram id="observability" name="05 Observabilidade — pipeline de sinais">
+    <mxGraphModel dx="1262" dy="621" grid="0" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1200" pageHeight="670" background="#0b1326" math="0" shadow="0">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+        <mxCell id="title" value="Observabilidade: capacidade, qualidade, proveniência e custo" style="text;html=1;fontSize=28;fontStyle=1;fontFamily=Space Grotesk;fontColor=#dae2fd;align=left;" parent="1" vertex="1">
+          <mxGeometry x="60" y="60" width="1000" height="40" as="geometry" />
+        </mxCell>
+        <mxCell id="agent" value="Execução do agente" style="rounded=1;html=1;fillColor=#222a3d;strokeColor=#2fd9f4;strokeWidth=2;fontColor=#dae2fd;" parent="1" vertex="1">
+          <mxGeometry x="90" y="250" width="190" height="80" as="geometry" />
+        </mxCell>
+        <mxCell id="tel" value="Telemetria&#xa;tokens · custo · latência" style="rounded=1;html=1;fillColor=#171f33;strokeColor=#7bd0ff;fontColor=#dae2fd;" parent="1" vertex="1">
+          <mxGeometry x="380" y="170" width="220" height="80" as="geometry" />
+        </mxCell>
+        <mxCell id="eval" value="Avaliação&#xa;aderência · qualidade · uso" style="rounded=1;html=1;fillColor=#171f33;strokeColor=#5bbfae;fontColor=#dae2fd;" parent="1" vertex="1">
+          <mxGeometry x="380" y="380" width="220" height="80" as="geometry" />
+        </mxCell>
+        <mxCell id="ops" value="Visão operacional&#xa;consumo + qualidade + proveniência" style="rounded=1;html=1;fillColor=#222a3d;strokeColor=#2fd9f4;strokeWidth=2;fontColor=#dae2fd;" parent="1" vertex="1">
+          <mxGeometry x="700" y="250" width="250" height="80" as="geometry" />
+        </mxCell>
+        <mxCell id="gates" value="Gates&#xa;limiares e política" style="rounded=1;html=1;fillColor=#171f33;strokeColor=#8dc63f;fontColor=#dae2fd;" parent="1" vertex="1">
+          <mxGeometry x="1020" y="250" width="120" height="80" as="geometry" />
+        </mxCell>
+        <mxCell id="e1" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;endArrow=block;strokeColor=#2fd9f4;" parent="1" source="agent" target="tel" edge="1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e2" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;endArrow=block;strokeColor=#2fd9f4;" parent="1" source="agent" target="eval" edge="1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e3" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;endArrow=block;strokeColor=#7bd0ff;" parent="1" source="tel" target="ops" edge="1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e4" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;endArrow=block;strokeColor=#5bbfae;" parent="1" source="eval" target="ops" edge="1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e5" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;endArrow=block;strokeColor=#2fd9f4;" parent="1" source="ops" target="gates" edge="1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+  <diagram id="lifecycle" name="06 Ciclo de decisão — fluxograma">
+    <mxGraphModel dx="1402" dy="690" grid="0" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1200" pageHeight="620" background="#0b1326" math="0" shadow="0">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+        <mxCell id="title" value="O contexto é recomposto a cada decisão relevante" style="text;html=1;fontSize=28;fontStyle=1;fontFamily=Space Grotesk;fontColor=#dae2fd;align=left;" parent="1" vertex="1">
+          <mxGeometry x="60" y="60" width="900" height="40" as="geometry" />
+        </mxCell>
+        <mxCell id="plan" value="Planejar" style="ellipse;html=1;fillColor=#222a3d;strokeColor=#2fd9f4;fontColor=#dae2fd;" parent="1" vertex="1">
+          <mxGeometry x="90" y="250" width="130" height="60" as="geometry" />
+        </mxCell>
+        <mxCell id="select" value="Selecionar contexto" style="rounded=1;html=1;fillColor=#222a3d;strokeColor=#7bd0ff;fontColor=#dae2fd;" parent="1" vertex="1">
+          <mxGeometry x="290" y="240" width="190" height="80" as="geometry" />
+        </mxCell>
+        <mxCell id="run" value="Executar" style="rounded=1;html=1;fillColor=#222a3d;strokeColor=#5bbfae;fontColor=#dae2fd;" parent="1" vertex="1">
+          <mxGeometry x="550" y="240" width="150" height="80" as="geometry" />
+        </mxCell>
+        <mxCell id="validate" value="Validar" style="rounded=1;html=1;fillColor=#222a3d;strokeColor=#2fd9f4;fontColor=#dae2fd;" parent="1" vertex="1">
+          <mxGeometry x="770" y="240" width="150" height="80" as="geometry" />
+        </mxCell>
+        <mxCell id="decision" value="Evidência&#xa;suficiente?" style="rhombus;html=1;fillColor=#222a3d;strokeColor=#8dc63f;fontColor=#dae2fd;" parent="1" vertex="1">
+          <mxGeometry x="970" y="230" width="130" height="100" as="geometry" />
+        </mxCell>
+        <mxCell id="recover" value="Recuperar fonte primária" style="rounded=1;html=1;fillColor=#222a3d;strokeColor=#7bd0ff;fontColor=#dae2fd;" parent="1" vertex="1">
+          <mxGeometry x="515" y="123" width="220" height="60" as="geometry" />
+        </mxCell>
+        <mxCell id="record" value="Registrar decisão e proveniência" style="rounded=1;html=1;fillColor=#222a3d;strokeColor=#2fd9f4;fontColor=#dae2fd;" parent="1" vertex="1">
+          <mxGeometry x="910" y="412" width="250" height="60" as="geometry" />
+        </mxCell>
+        <mxCell id="e1" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;endArrow=block;strokeColor=#2fd9f4;" parent="1" source="plan" target="select" edge="1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e2" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;endArrow=block;strokeColor=#2fd9f4;" parent="1" source="select" target="run" edge="1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e3" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;endArrow=block;strokeColor=#2fd9f4;" parent="1" source="run" target="validate" edge="1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e4" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;endArrow=block;strokeColor=#2fd9f4;" parent="1" source="validate" target="decision" edge="1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e5" value="sim" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;endArrow=block;strokeColor=#2fd9f4;fontColor=#c6c6cd;" parent="1" source="decision" target="record" edge="1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e6" value="não" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;endArrow=block;dashed=1;strokeColor=#7bd0ff;fontColor=#c6c6cd;" parent="1" source="decision" target="recover" edge="1">
+          <mxGeometry x="-0.7179" relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="1035" y="152" />
+            </Array>
+            <mxPoint as="offset" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="e7" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;endArrow=block;dashed=1;strokeColor=#7bd0ff;" parent="1" source="recover" target="select" edge="1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+  <diagram id="middle" name="07 Lost in the Middle — gráfico conceitual">
+    <mxGraphModel dx="1262" dy="621" grid="0" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1200" pageHeight="650" background="#0b1326" math="0" shadow="0">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+        <mxCell id="curve" value="" style="shape=arc;html=1;strokeWidth=6;strokeColor=#2fd9f4;fillColor=none;startArrow=none;endArrow=none;" parent="1" vertex="1">
+          <mxGeometry x="200" y="190" width="780" height="220" as="geometry" />
+        </mxCell>
+        <mxCell id="title" value="Lost in the Middle: posição também altera a utilidade do contexto" style="text;html=1;fontSize=28;fontStyle=1;fontFamily=Space Grotesk;fontColor=#dae2fd;align=left;" parent="1" vertex="1">
+          <mxGeometry x="70" y="60" width="1000" height="40" as="geometry" />
+        </mxCell>
+        <mxCell id="axis-y" value="Uso correto da evidência" style="text;html=1;fontColor=#dae2fd;fontStyle=1;rotation=-90;" parent="1" vertex="1">
+          <mxGeometry x="80" y="265" width="180" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="risk" value="Zona de maior risco&#xa;menor atenção" style="rounded=1;html=1;fillColor=#222a3d;strokeColor=#7bd0ff;fontColor=#dae2fd;" parent="1" vertex="1">
+          <mxGeometry x="490" y="350" width="220" height="70" as="geometry" />
+        </mxCell>
+        <mxCell id="start" value="Início&#xa;alta atenção" style="rounded=1;html=1;fillColor=#2fd9f4;strokeColor=#2fd9f4;fontColor=#00363e;fontStyle=1;" parent="1" vertex="1">
+          <mxGeometry x="150" y="190" width="180" height="70" as="geometry" />
+        </mxCell>
+        <mxCell id="end" value="Fim&#xa;alta atenção" style="rounded=1;html=1;fillColor=#2fd9f4;strokeColor=#2fd9f4;fontColor=#00363e;fontStyle=1;" parent="1" vertex="1">
+          <mxGeometry x="850" y="190" width="180" height="70" as="geometry" />
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+  <diagram id="layers" name="08 Camadas de contexto — arquitetura em faixas">
+    <mxGraphModel dx="756" dy="563" grid="0" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1200" pageHeight="740" background="#0b1326" math="0" shadow="0">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+        <mxCell id="title" value="Cinco camadas separam o que é temporário do que é persistente" style="text;html=1;fontSize=28;fontStyle=1;fontFamily=Space Grotesk;fontColor=#dae2fd;align=left;" parent="1" vertex="1">
+          <mxGeometry x="60" y="60" width="1000" height="40" as="geometry" />
+        </mxCell>
+        <mxCell id="panel" value="" style="rounded=1;arcSize=5;html=1;fillColor=#171f33;strokeColor=#45464d;" parent="1" vertex="1">
+          <mxGeometry x="60" y="125" width="1080" height="430" as="geometry" />
+        </mxCell>
+        <mxCell id="band1" value="Contexto de trabalho&#xa;objetivo, instruções e evidência da decisão atual" style="rounded=1;html=1;fillColor=#222a3d;strokeColor=#2fd9f4;strokeWidth=2;fontColor=#dae2fd;align=left;spacingLeft=20;" parent="1" vertex="1">
+          <mxGeometry x="140" y="180" width="900" height="74" as="geometry" />
+        </mxCell>
+        <mxCell id="band2" value="Estado estruturado&#xa;progresso, tarefas e decisões em formato consultável" style="rounded=1;html=1;fillColor=#222a3d;strokeColor=#7bd0ff;fontColor=#dae2fd;align=left;spacingLeft=20;" parent="1" vertex="1">
+          <mxGeometry x="140" y="268" width="900" height="74" as="geometry" />
+        </mxCell>
+        <mxCell id="band3" value="Memória de longo prazo&#xa;convenções estáveis e aprendizados já validados" style="rounded=1;html=1;fillColor=#222a3d;strokeColor=#8dc63f;fontColor=#dae2fd;align=left;spacingLeft=20;" parent="1" vertex="1">
+          <mxGeometry x="140" y="356" width="900" height="74" as="geometry" />
+        </mxCell>
+        <mxCell id="band4" value="Recuperação sob demanda&#xa;busca e injeta só o recorte relevante para a pergunta atual" style="rounded=1;html=1;fillColor=#222a3d;strokeColor=#5bbfae;fontColor=#dae2fd;align=left;spacingLeft=20;" parent="1" vertex="1">
+          <mxGeometry x="140" y="444" width="900" height="74" as="geometry" />
+        </mxCell>
+        <mxCell id="band5" value="Registro de auditoria&#xa;trilha de decisões, fontes e versões" style="rounded=1;html=1;fillColor=#222a3d;strokeColor=#7bd0ff;fontColor=#dae2fd;align=left;spacingLeft=20;" parent="1" vertex="1">
+          <mxGeometry x="140" y="532" width="900" height="74" as="geometry" />
+        </mxCell>
+        <mxCell id="c1" style="html=1;endArrow=block;strokeColor=#2fd9f4;exitX=0.5;exitY=1;entryX=0.5;entryY=0;" parent="1" source="band1" target="band2" edge="1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="c2" style="html=1;endArrow=block;strokeColor=#2fd9f4;exitX=0.5;exitY=1;entryX=0.5;entryY=0;" parent="1" source="band2" target="band3" edge="1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="c3" style="html=1;endArrow=block;strokeColor=#2fd9f4;exitX=0.5;exitY=1;entryX=0.5;entryY=0;" parent="1" source="band3" target="band4" edge="1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="c4" style="html=1;endArrow=block;strokeColor=#2fd9f4;exitX=0.5;exitY=1;entryX=0.5;entryY=0;" parent="1" source="band4" target="band5" edge="1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="evi" value="evidência recuperada" style="html=1;endArrow=block;dashed=1;strokeColor=#5bbfae;fontColor=#c6c6cd;exitX=0;exitY=0.5;entryX=0;entryY=0.5;rounded=1;" parent="1" source="band4" target="band1" edge="1">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="95" y="481" />
+              <mxPoint x="95" y="217" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="dec" value="decisão registrada" style="html=1;endArrow=block;dashed=1;strokeColor=#7bd0ff;fontColor=#c6c6cd;exitX=1;exitY=0.5;entryX=1;entryY=0.5;rounded=1;" parent="1" source="band1" target="band5" edge="1">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="1085" y="217" />
+              <mxPoint x="1085" y="569" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="note" value="A separação em camadas reduz acúmulo desnecessário na janela ativa e melhora a rastreabilidade." style="text;html=1;fontColor=#c6c6cd;fontSize=13;align=left;" parent="1" vertex="1">
+          <mxGeometry x="90" y="655" width="1000" height="24" as="geometry" />
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+  <diagram id="retrieval" name="09 Recuperação de evidência — pipeline">
+    <mxGraphModel dx="756" dy="563" grid="0" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1200" pageHeight="570" background="#0b1326" math="0" shadow="0">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+        <mxCell id="title" value="A evidência é buscada, ranqueada e recortada antes de entrar no contexto" style="text;html=1;fontSize=28;fontStyle=1;fontFamily=Space Grotesk;fontColor=#dae2fd;align=left;" parent="1" vertex="1">
+          <mxGeometry x="60" y="60" width="1000" height="40" as="geometry" />
+        </mxCell>
+        <mxCell id="panel" value="" style="rounded=1;arcSize=5;html=1;fillColor=#171f33;strokeColor=#45464d;" parent="1" vertex="1">
+          <mxGeometry x="60" y="125" width="1080" height="390" as="geometry" />
+        </mxCell>
+        <mxCell id="q" value="Pergunta atual&#xa;intenção da decisão" style="rounded=1;html=1;fillColor=#222a3d;strokeColor=#2fd9f4;strokeWidth=2;fontColor=#dae2fd;" parent="1" vertex="1">
+          <mxGeometry x="90" y="210" width="150" height="90" as="geometry" />
+        </mxCell>
+        <mxCell id="rag" value="Busca / RAG&#xa;consulta fontes candidatas" style="rounded=1;html=1;fillColor=#222a3d;strokeColor=#7bd0ff;fontColor=#dae2fd;" parent="1" vertex="1">
+          <mxGeometry x="262" y="210" width="150" height="90" as="geometry" />
+        </mxCell>
+        <mxCell id="rank" value="Rankeamento&#xa;ordena por relevância" style="rounded=1;html=1;fillColor=#222a3d;strokeColor=#8dc63f;fontColor=#dae2fd;" parent="1" vertex="1">
+          <mxGeometry x="434" y="210" width="150" height="90" as="geometry" />
+        </mxCell>
+        <mxCell id="chunk" value="Recorte relevante&#xa;seleciona o trecho útil" style="rounded=1;html=1;fillColor=#222a3d;strokeColor=#5bbfae;strokeWidth=2;fontColor=#dae2fd;" parent="1" vertex="1">
+          <mxGeometry x="606" y="210" width="150" height="90" as="geometry" />
+        </mxCell>
+        <mxCell id="ctx" value="Contexto do modelo&#xa;recebe só o necessário" style="rounded=1;html=1;fillColor=#222a3d;strokeColor=#2fd9f4;strokeWidth=2;fontColor=#dae2fd;" parent="1" vertex="1">
+          <mxGeometry x="778" y="210" width="150" height="90" as="geometry" />
+        </mxCell>
+        <mxCell id="resp" value="Resposta com citação&#xa;referencia a fonte" style="rounded=1;html=1;fillColor=#222a3d;strokeColor=#7bd0ff;fontColor=#dae2fd;" parent="1" vertex="1">
+          <mxGeometry x="950" y="210" width="150" height="90" as="geometry" />
+        </mxCell>
+        <mxCell id="p1" style="html=1;endArrow=block;strokeColor=#2fd9f4;" parent="1" source="q" target="rag" edge="1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="p2" style="html=1;endArrow=block;strokeColor=#2fd9f4;" parent="1" source="rag" target="rank" edge="1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="p3" style="html=1;endArrow=block;strokeColor=#2fd9f4;" parent="1" source="rank" target="chunk" edge="1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="p4" style="html=1;endArrow=block;strokeColor=#2fd9f4;" parent="1" source="chunk" target="ctx" edge="1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="p5" style="html=1;endArrow=block;strokeColor=#2fd9f4;" parent="1" source="ctx" target="resp" edge="1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="src" value="Fonte primária&#xa;disponível para validação e auditoria" style="rounded=1;html=1;fillColor=#171f33;strokeColor=#5bbfae;fontColor=#dae2fd;" parent="1" vertex="1">
+          <mxGeometry x="571" y="360" width="220" height="70" as="geometry" />
+        </mxCell>
+        <mxCell id="psrc" style="html=1;endArrow=block;dashed=1;strokeColor=#5bbfae;exitX=0.5;exitY=0;entryX=0.5;entryY=1;" parent="1" source="src" target="chunk" edge="1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="note" value="A recuperação injeta só o recorte necessário no contexto — a fonte completa continua acessível para checagem." style="text;html=1;fontColor=#c6c6cd;fontSize=13;align=left;" parent="1" vertex="1">
+          <mxGeometry x="90" y="465" width="1000" height="24" as="geometry" />
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+  <diagram id="compression" name="10 Compressão e retenção — árvore de decisão">
+    <mxGraphModel dx="1262" dy="621" grid="0" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1200" pageHeight="600" background="#0b1326" math="0" shadow="0">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+        <mxCell id="title" value="Compressão é decisão de arquitetura, não apenas redução de texto" style="text;html=1;fontSize=28;fontStyle=1;fontFamily=Space Grotesk;fontColor=#dae2fd;align=left;" parent="1" vertex="1">
+          <mxGeometry x="60" y="60" width="1000" height="40" as="geometry" />
+        </mxCell>
+        <mxCell id="panel" value="" style="rounded=1;arcSize=5;html=1;fillColor=#171f33;strokeColor=#45464d;" parent="1" vertex="1">
+          <mxGeometry x="60" y="125" width="1080" height="430" as="geometry" />
+        </mxCell>
+        <mxCell id="input" value="Informação de entrada&#xa;novo conteúdo a incorporar" style="rounded=1;html=1;fillColor=#222a3d;strokeColor=#2fd9f4;strokeWidth=2;fontColor=#dae2fd;" parent="1" vertex="1">
+          <mxGeometry x="490" y="136" width="200" height="64" as="geometry" />
+        </mxCell>
+        <mxCell id="decision" value="Critério de retenção?" style="rhombus;html=1;fillColor=#222a3d;strokeColor=#8dc63f;strokeWidth=2;fontColor=#dae2fd;" parent="1" vertex="1">
+          <mxGeometry x="515" y="250" width="150" height="84" as="geometry" />
+        </mxCell>
+        <mxCell id="summarize" value="Resumir&#xa;critério: alta frequência, baixa criticidade&#xa;reduz volume, perde o detalhe literal" style="rounded=1;html=1;fillColor=#222a3d;strokeColor=#7bd0ff;fontColor=#dae2fd;" parent="1" vertex="1">
+          <mxGeometry x="90" y="360" width="300" height="130" as="geometry" />
+        </mxCell>
+        <mxCell id="structured" value="Manter estruturado&#xa;critério: precisa ser consultado e atualizado&#xa;vira estado, não texto livre" style="rounded=1;html=1;fillColor=#222a3d;strokeColor=#8dc63f;fontColor=#dae2fd;" parent="1" vertex="1">
+          <mxGeometry x="440" y="360" width="300" height="130" as="geometry" />
+        </mxCell>
+        <mxCell id="pointer" value="Manter integralmente + ponteiro&#xa;critério: exige auditoria ou citação literal&#xa;fonte original acessível sob demanda" style="rounded=1;html=1;fillColor=#222a3d;strokeColor=#2fd9f4;strokeWidth=2;fontColor=#dae2fd;" parent="1" vertex="1">
+          <mxGeometry x="790" y="360" width="300" height="130" as="geometry" />
+        </mxCell>
+        <mxCell id="di" style="html=1;endArrow=block;strokeColor=#2fd9f4;" parent="1" edge="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="590" y="198" as="sourcePoint" />
+            <mxPoint x="590" y="249" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="d1" style="html=1;endArrow=block;strokeColor=#2fd9f4;exitX=0;exitY=0.5;entryX=0.5;entryY=0;" parent="1" source="decision" target="summarize" edge="1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="d2" style="html=1;endArrow=block;strokeColor=#2fd9f4;exitX=0.5;exitY=1;entryX=0.5;entryY=0;" parent="1" source="decision" target="structured" edge="1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="d3" style="html=1;endArrow=block;strokeColor=#2fd9f4;exitX=1;exitY=0.5;entryX=0.5;entryY=0;" parent="1" source="decision" target="pointer" edge="1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="note" value="A escolha entre resumir, estruturar ou preservar depende de frequência, criticidade e necessidade de auditoria." style="text;html=1;fontColor=#c6c6cd;fontSize=13;align=left;" parent="1" vertex="1">
+          <mxGeometry x="90" y="515" width="1000" height="24" as="geometry" />
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>
