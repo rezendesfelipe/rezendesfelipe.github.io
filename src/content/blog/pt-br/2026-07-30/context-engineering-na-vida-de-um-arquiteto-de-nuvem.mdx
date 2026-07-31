@@ -1,0 +1,368 @@
+---
+title: Context Engineering na vida de um Arquiteto de Nuvem
+description: O que muda na forma de arquitetar sistemas com IA quando o contexto vira o recurso mais escasso do pipeline visto pelos olhos de quem já lida com esse tipo de restrição em cloud.
+pubDate: 2026-07-30
+lang: pt
+tags:
+  - ai
+  - ia-aplicada
+  - ia-agentes
+  - context-engineering
+  - arquitetura-cloud
+  - llmops
+category: IA Aplicada
+draft: false
+---
+
+# Context engineering: o novo capacity planning para arquiteturas de IA
+
+Passei anos desenhando arquiteturas em que o recurso escasso era óbvio: CPU, memória, IOPS, largura de banda. Você media, dimensionava, colocava alertas e monitorava.
+
+Context engineering trouxe um recurso escasso novo para o vocabulário de arquitetura: a janela de contexto de um modelo.
+
+Ela se comporta de um jeito diferente dos recursos clássicos. Um servidor sem memória falha. Um disco cheio gera erro. Uma janela de contexto mal gerenciada pode continuar aceitando chamadas, retornando texto fluente e, ainda assim, entregar decisões progressivamente piores.
+
+O modelo esquece uma instrução importante do início da conversa. Recupera evidência irrelevante. Perde precisão em uma tarefa longa. Repete uma conclusão que já deveria estar resolvida.
+
+E o problema mais incômodo é que isso nem sempre aparece em um dashboard.
+
+É possível instrumentar tokens de entrada, tokens de saída e proximidade do limite máximo do modelo. Mas essas métricas medem **capacidade**, não **qualidade**. Um agente pode permanecer muito abaixo do limite técnico da janela e, ainda assim, falhar porque recebeu informação demais, informação contraditória ou a informação certa na posição errada.
+
+> Contexto não é apenas capacidade disponível. É a seleção de informação que determina a qualidade de uma decisão.
+
+### Context engineering não é prompt engineering com nome bonito
+
+Prompt engineering resolve um problema pontual: como formular uma pergunta para obter a melhor resposta em uma chamada isolada.
+
+Context engineering resolve outra categoria de problema: decidir, ao longo de uma sessão inteira — ou de um agente que opera durante horas — o que entra na janela de contexto, o que fica fora dela, quando comprimir, quando recuperar evidência e o que precisa persistir entre chamadas.
+
+
+Nos primeiros anos de aplicações com LLMs, prompting era o componente principal do trabalho de engenharia porque as interações eram relativamente simples: uma pergunta, uma resposta, poucas rodadas. Conforme os sistemas evoluíram para agentes que planejam, usam ferramentas, recuperam documentos e executam tarefas em várias etapas, tornou-se necessário administrar o contexto completo disponível ao modelo em cada inferência.
+
+Para quem vem de arquitetura de sistemas, a analogia mais direta é:
+
+| Conceito em sistemas tradicionais | Equivalente em sistemas com LLM |
+| --- | --- |
+| Query eficiente | Prompt bem formulado |
+| Cache | Contexto de trabalho |
+| Banco de dados | Estado persistente |
+| Busca indexada | RAG e recuperação de evidências |
+| Arquivamento / cold storage | Memória de longo prazo |
+| Observabilidade | Telemetria, proveniência e avaliação |
+| Capacity planning | Orçamento de contexto |
+
+Prompt engineering é escrever uma query melhor.
+
+Context engineering é desenhar a estratégia inteira de cache, persistência, recuperação e invalidação: o que fica quente, o que pode ser resumido, o que precisa permanecer fora da janela e quando recuperar a fonte original.
+
+### A janela de contexto é espaço de trabalho, não memória
+
+Um erro comum em arquiteturas de IA é usar a janela do modelo como se ela fosse banco de dados, fila, cache, memória semântica, histórico de auditoria e mecanismo de coordenação ao mesmo tempo e ela não deveria ser nada disso.
+
+
+
+A janela é o espaço de trabalho temporário da decisão atual.
+
+<figure>
+    <img src="/images/blog/2026-07-30/contexto-como-espaco-de-trabalho.svg" alt="Um orquestrador reúne estado estruturado, evidência recuperada e memória curada para compor a janela temporária de contexto do modelo; a decisão é registrada para auditoria." loading="lazy" />
+    <figcaption>Figura 1 — Janela de contexto como espaço de trabalho. A janela de contexto contém apenas o que é necessário para a decisão atual: instruções, objetivo, evidência imediata e restrições ativas. Estado, memória, auditoria e fontes vivem fora dela e são trazidos apenas quando necessários.</figcaption>
+</figure>
+
+> A janela do modelo é o espaço de trabalho da decisão atual. Estado, memória, evidências e auditoria devem existir fora dela.
+
+Uma arquitetura de contexto madura separa pelo menos cinco responsabilidades.
+
+| Componente | Pergunta que responde | Exemplo |
+| --- | --- | --- |
+| Contexto de trabalho | “Do que o modelo precisa agora?” | Diff atual, objetivo da tarefa e instruções específicas |
+| Estado estruturado | “Em que ponto do processo estamos?” | Checklist de revisão, testes executados e comentários emitidos |
+| Memória de longo prazo | “O que vale reter para usos futuros?” | Convenções recorrentes e preferências estáveis do repositório |
+| Recuperação sob demanda | “Que evidência externa é relevante para esta decisão?” | Trecho da documentação, política de estilo ou código relacionado |
+| Registro de auditoria | “Por que o agente decidiu isso?” | Fontes usadas, versão do prompt, ferramentas chamadas e evidências citadas |
+
+<figure>
+    <img src="/images/blog/2026-07-30/arquitetura-em-camadas.svg" alt="Cinco faixas horizontais empilhadas mostram contexto de trabalho, estado estruturado, memória de longo prazo, recuperação sob demanda e registro de auditoria, ligadas por uma seta de composição e setas laterais de evidência e decisão." loading="lazy" />
+    <figcaption>Figura 2 — Arquitetura de contexto em camadas. A arquitetura separa contexto de trabalho, estado estruturado, memória de longo prazo, recuperação sob demanda e trilha de auditoria. Essa separação reduz acúmulo desnecessário na janela e melhora rastreabilidade.</figcaption>
+</figure>
+
+Essa separação evita que um histórico crescente seja carregado repetidamente apenas porque não existe outro lugar para guardar informação.
+
+### O recurso tem três limites, não um
+
+Quando se fala em janela de contexto, o limite técnico do modelo costuma dominar a conversa. Mas arquiteturalmente existem pelo menos três limites.
+
+#### Limite duro
+
+É a capacidade máxima de tokens que o modelo aceita entre entrada e saída. A entrada inclui instruções, histórico, resultados de ferramentas, documentos recuperados e a pergunta atual. A saída é o espaço que ainda precisa sobrar para a resposta ou para uma nova chamada de ferramenta.
+
+Ultrapassá-lo produz erro, truncamento ou outro comportamento definido pelo provedor. Uma aplicação que envia 100 mil tokens de documentos para uma janela de 128 mil tokens, mas reserva 16 mil para a resposta, já excedeu seu orçamento efetivo: $100\,000 + 16\,000 > 128\,000$.
+
+Ele influencia o desenho porque exige reserva explícita. Sem ela, uma busca que retorna um documento adicional, um histórico um pouco maior ou uma resposta mais longa pode fazer uma execução antes válida falhar no meio do fluxo. É o limite mais fácil de medir e o mais próximo da noção clássica de capacidade.
+
+#### Limite econômico
+
+É o ponto em que custo e latência deixam de ser aceitáveis para a tarefa, embora a chamada ainda caiba tecnicamente na janela.
+
+Por exemplo: um assistente de suporte pode aceitar uma resposta em poucos segundos e com baixo custo por atendimento. Carregar 80 mil tokens de histórico e base de conhecimento em cada mensagem talvez não viole o limite duro, mas multiplica o custo por conversa, aumenta o tempo até a resposta e reduz a capacidade de atender usuários simultâneos. Em um agente noturno que prepara relatórios, a mesma escolha pode ser economicamente aceitável; em uma tela de checkout, não.
+
+O limite econômico influencia a arquitetura ao forçar escolhas de produto: quais tarefas justificam recuperação ampla, qual latência é aceitável, quando resumir, quando usar um modelo menor e quando interromper uma investigação que deixou de compensar. Ele é calculado por política de serviço, não pelo provedor do modelo.
+
+#### Limite de qualidade
+
+É o ponto em que adicionar mais contexto deixa de ajudar — ou passa a prejudicar a decisão.
+
+
+Um agente pode receber toda a documentação da empresa, todo o histórico de uma conversa e todos os arquivos de um repositório. Ainda assim, isso não significa que ele conseguirá identificar, priorizar e usar corretamente a evidência relevante.
+
+A pergunta correta não é:
+
+> “Quanto contexto cabe?”
+
+É:
+
+> “Qual é o menor contexto suficiente, bem posicionado e verificável, para esta decisão?”
+
+### Exemplo prático: um agente que revisa pull requests
+
+Imagine um agente configurado para revisar pull requests automaticamente em um repositório grande.
+
+A abordagem ingênua é carregar o diff inteiro, o histórico completo de commits, a documentação do projeto, regras de estilo e comentários anteriores em uma única chamada.
+
+Em repositórios pequenos, isso pode parecer funcionar. Em repositórios maiores, surgem sintomas conhecidos:
+
+- o agente sugere mudanças em arquivo que não faz parte do PR;
+- repete comentários já emitidos;
+- ignora uma instrução de estilo presente no início do contexto;
+- mistura mudanças não relacionadas;
+- cita uma regra sem localizar a evidência que a sustenta;
+- prioriza detalhes cosméticos e perde uma alteração crítica de comportamento.
+
+A solução não é simplesmente aumentar a janela.
+
+É decompor a tarefa e controlar o fluxo de informação.
+
+<figure>
+    <img src="/images/blog/2026-07-30/revisao-de-pr-com-contexto.svg" alt="O orquestrador recebe o pull request, políticas e estado; distribui recortes para análises de testes, estilo, impacto e documentação; os resultados se tornam achados rastreáveis." loading="lazy" />
+    <figcaption>Figura 3 — Revisão de PR com contexto seletivo. No fluxo de revisão, o orquestrador distribui tarefas para subagentes especializados e coleta achados com vínculo explícito à evidência original. O objetivo é produzir conclusões rastreáveis, não apenas respostas plausíveis.</figcaption>
+</figure>
+
+Na arquitetura governada, o orquestrador não mantém o diff completo como contexto permanente.
+
+Ele mantém:
+
+- o objetivo da revisão;
+- um resumo estruturado do progresso;
+- um índice do PR;
+- os achados já produzidos;
+- referências para a evidência original.
+
+Os subagentes recebem somente o recorte necessário para a tarefa. Um avalia os testes; outro verifica regras de estilo; outro analisa impacto em contratos, APIs ou dependências; outro verifica se documentação e exemplos continuam coerentes.
+
+O orquestrador recebe conclusões rastreáveis, não necessariamente todo o material bruto produzido por cada etapa.
+
+Mas existe uma regra importante: **resumos não substituem evidência primária.**
+
+Quando precisa confirmar uma conclusão, o orquestrador deve recuperar o *hunk*, o arquivo, o teste ou a regra que sustenta aquela afirmação. Em um *diff*, um *hunk* é um bloco contíguo de linhas alteradas, normalmente acompanhado de algumas linhas de contexto antes e depois da mudança. É a menor unidade prática para mostrar ao revisor o que mudou sem carregar o arquivo inteiro.
+
+<figure>
+    <img src="/images/blog/2026-07-30/recuperacao-de-evidencia.svg" alt="Pipeline da esquerda para a direita: pergunta atual, busca ou RAG, rankeamento, recorte relevante, contexto do modelo e resposta com citação, com a fonte primária disponível abaixo do recorte." loading="lazy" />
+    <figcaption>Figura 4 — Recuperação de evidência para decisão. A recuperação parte de uma pergunta, busca as fontes relevantes, seleciona os trechos úteis e injeta apenas o recorte necessário no contexto. A fonte primária continua disponível para validação e auditoria.</figcaption>
+</figure>
+
+Cada achado relevante deveria preservar:
+
+- origem;
+- arquivo, linha ou trecho;
+- commit ou versão;
+- regra aplicada;
+- agente ou etapa que produziu o achado;
+- nível de confiança;
+- evidência usada na conclusão.
+
+Isso transforma uma resposta plausível em uma decisão verificável.
+
+### Outro exemplo: um bot de suporte ao cliente
+
+A mesma lógica aparece em produtos com IA.
+
+Um bot de suporte que tenta manter o histórico completo da conversa mais toda a base de conhecimento da empresa dentro da janela, rodada após rodada, tende a degradar depois de algumas interações.
+
+A arquitetura mais saudável separa responsabilidades:
+
+1. mantém na janela apenas o objetivo e um resumo compacto da conversa;
+2. armazena dados estruturados do atendimento fora do contexto;
+3. busca sob demanda apenas os documentos relevantes para a pergunta atual;
+4. preserva citações e fontes para respostas que podem afetar o cliente;
+5. descarta do contexto ativo o material que não ajuda na decisão atual.
+
+<figure>
+    <img src="/images/blog/2026-07-30/suporte-com-contexto-seletivo.svg" alt="Um cliente conversa com um bot que consulta o estado do atendimento e a base de conhecimento antes de montar contexto seletivo para o modelo." loading="lazy" />
+    <figcaption>Figura 5 — Bot de suporte com estado fora da janela. No suporte, a conversa curta e o objetivo atual ficam na janela, enquanto o histórico completo, o estado do atendimento e a base de conhecimento ficam fora dela. O bot consulta esses elementos sob demanda e responde com fontes.</figcaption>
+</figure>
+
+O princípio é o mesmo do PR reviewer, aplicado a outro domínio: o modelo não precisa carregar tudo. Ele precisa receber a informação certa para decidir agora.
+
+### Compressão é uma decisão de arquitetura
+
+Sumarizar histórico de conversa é, na prática, uma forma de compressão com perda.
+
+Isso não é necessariamente ruim. Sistemas de observabilidade fazem algo semelhante quando aplicam *downsampling* em métricas antigas: preservam tendências e descartam granularidade para reduzir custo.
+
+Mas há uma diferença importante: métricas agregadas podem servir para análise histórica; não necessariamente para investigação forense.
+
+Com contexto acontece o mesmo.
+
+Um resumo pode ser ótimo para manter orientação geral, mas inadequado para sustentar uma decisão crítica.
+
+> Se um resumo omite uma exceção, uma negação, uma prioridade ou a origem de uma afirmação, ele não está apenas carregando menos informação. Ele está alterando o espaço de decisão do agente.
+
+Por isso, uma estratégia de compressão madura precisa definir:
+
+- o que pode ser resumido;
+- o que precisa permanecer estruturado;
+- o que exige retenção integral;
+- o que deve conservar ponteiro para a fonte original;
+- quando um resumo precisa ser refeito;
+- quando a decisão exige recuperar evidência primária.
+
+<figure>
+    <img src="/images/blog/2026-07-30/compressao-e-retencao.svg" alt="Uma informação de entrada passa por um critério de decisão que a envia para um de três destinos: resumir, manter estruturada ou manter integralmente com ponteiro para a fonte original." loading="lazy" />
+    <figcaption>Figura 6 — Compressão e retenção. A figura mostra três destinos possíveis para informação contextual: resumir, manter estruturada ou manter integralmente com referência para a fonte original. Compressão é uma decisão de arquitetura, não só uma redução de texto.</figcaption>
+</figure>
+
+Uma boa regra prática é:
+
+> Use resumos para orientar. Use a fonte original para decidir, justificar ou auditar.
+
+### Mais contexto não é sempre melhor
+
+A intuição de que “mais informação gera respostas melhores” parece natural, mas não se sustenta em todos os casos.
+
+O estudo *Lost in the Middle*, de Liu e colegas, mostrou que modelos de linguagem podem ter desempenho melhor quando a informação relevante aparece no início ou no fim do contexto, e pior quando ela está no meio de um contexto longo.
+
+<figure>
+    <img src="/images/blog/2026-07-30/lost-in-the-middle.svg" alt="Gráfico conceitual em curva U: o uso correto de evidência é maior no início e no fim da janela de contexto e menor na região central." loading="lazy" />
+    <figcaption>Figura 7 — Lost in the Middle no contexto. O gráfico conceitual ilustra que a evidência relevante tende a ser melhor usada quando aparece no início ou no fim do contexto, e pior quando fica no meio de uma janela longa. Isso orienta a ordem de apresentação do conteúdo. A curva comunica a tendência observada; ela não reproduz valores experimentais do estudo.</figcaption>
+</figure>
+
+Esse fenômeno muda decisões práticas de design:
+
+- coloque instruções invariantes e regras de segurança no início;
+- coloque a evidência decisiva perto da etapa em que ela será usada;
+- evite enterrar exceções críticas no meio de material auxiliar;
+- não repita contexto apenas por precaução; repetição também compete por atenção;
+- separe evidência de ruído, contexto histórico e material de referência.
+
+A meta não é preencher toda a janela disponível.
+
+A meta é construir uma janela que maximize relevância, legibilidade e capacidade de decisão.
+
+### Orçamento de contexto
+
+Arquiteturas tradicionais definem orçamento de CPU, memória, conexões, latência e custo.
+
+Sistemas de agentes também precisam de orçamento de contexto.
+
+<figure>
+    <img src="/images/blog/2026-07-30/orcamento-de-contexto.svg" alt="Uma barra de orçamento da janela de contexto divide o espaço entre instruções, estado, evidências, histórico e reserva para resposta e recuperação corretiva." loading="lazy" />
+    <figcaption>Figura 8 — Orçamento de contexto. O orçamento de contexto distribui a janela entre instruções, estado, evidências, histórico resumido e reserva para resposta. A figura mostra que o problema não é só caber nos tokens, mas caber com qualidade e custo aceitáveis.</figcaption>
+</figure>
+
+Os percentuais variam conforme modelo e tarefa, mas a ideia é constante: reserve espaço conscientemente.
+
+| Categoria | Função | Pergunta de revisão |
+| --- | --- | --- |
+| Instruções | Define regras e objetivos | Isso é realmente invariável? |
+| Estado | Mantém progresso e decisões | Pode ser estruturado fora da janela? |
+| Evidências | Sustenta a decisão atual | Esta fonte é necessária agora? |
+| Histórico resumido | Preserva continuidade | O resumo mantém exceções e decisões relevantes? |
+| Reserva | Permite resposta e correção | Há espaço para o agente descobrir que precisa buscar mais? |
+
+Sem orçamento, sistemas tendem a crescer por acumulação: mais documentos, mais histórico, mais regras, mais resultados de ferramentas. Até que a qualidade caia sem uma falha explícita.
+
+### Contexto também precisa de observabilidade
+
+Se context engineering é uma disciplina de arquitetura, ela precisa ser operável.
+
+Medir apenas o número de tokens não basta.
+
+Uma arquitetura de agentes deveria registrar de onde veio cada bloco de contexto, por que ele foi selecionado, quanto espaço consumiu e se ele contribuiu para a decisão final.
+
+<figure>
+    <img src="/images/blog/2026-07-30/observabilidade-de-contexto.svg" alt="A execução do agente produz telemetria de tokens, qualidade, proveniência, custo e latência; esses sinais alimentam uma visão operacional, gates e revisão humana." loading="lazy" />
+    <figcaption>Figura 9 — Observabilidade de contexto. O painel agrega métricas de custo, latência, ocupação da janela, recuperação útil, citações, contradições e correções humanas. O foco é medir aderência à tarefa, não apenas volume de tokens.</figcaption>
+</figure>
+
+Algumas métricas úteis:
+
+- percentual da janela ocupado por instruções, estado, evidências e histórico;
+- custo e latência por tarefa concluída;
+- taxa de recuperação útil do RAG;
+- número de documentos recuperados versus documentos efetivamente citados;
+- taxa de replanejamento ou repetição de etapas;
+- número de instruções contraditórias presentes no contexto;
+- respostas corrigidas por usuários ou revisores;
+- precisão por profundidade de conversa;
+- precisão por posição da evidência no contexto;
+- proporção de decisões críticas sustentadas por fonte primária;
+- taxa de falhas em que a informação correta estava disponível, mas não foi usada.
+
+A distinção central é esta:
+
+> Tokens são uma métrica de infraestrutura. Aderência à tarefa é uma métrica de qualidade.
+
+Nenhuma das duas substitui a outra.
+
+### O ciclo de vida de uma decisão de agente
+
+Um sistema bem desenhado não monta contexto uma vez e espera que ele sirva para todo o fluxo.
+
+Ele recompõe contexto a cada decisão relevante.
+
+<figure>
+    <img src="/images/blog/2026-07-30/ciclo-de-decisao-do-agente.svg" alt="O agente planeja, seleciona contexto, executa e valida; se precisar de mais evidência, volta à seleção de contexto; quando conclui, registra a decisão e a fonte." loading="lazy" />
+    <figcaption>Figura 10 — Ciclo de decisão do agente. O agente recompõe contexto a cada decisão: recupera evidência, monta a entrada, chama o modelo, avalia o resultado e registra a trilha. Se a evidência não for suficiente, o ciclo volta para nova recuperação.</figcaption>
+</figure>
+
+Esse ciclo tem consequências importantes:
+
+- memória não deve ser atualizada automaticamente a partir de qualquer saída do modelo;
+- resumos precisam ter escopo e validade explícitos;
+- recuperação precisa considerar fonte, versão e atualidade;
+- decisões críticas precisam preservar a trilha de evidência;
+- avaliação deve verificar não só a resposta final, mas também o processo de seleção de contexto.
+
+Em outras palavras: contexto não é um payload estático. É uma dependência dinâmica da decisão.
+
+---
+
+## Conclusão
+
+Context engineering vai se tornar, para times que constroem produtos de IA, o que capacity planning já é para infraestrutura clássica: uma disciplina própria, com orçamento, métricas, revisão de arquitetura e critérios de promoção.
+
+Quem vem de cloud tem uma vantagem real.
+
+O vocabulário de recurso finito, particionamento, cache, degradação sob carga, observabilidade e controle de custo já está internalizado. A curva de aprendizado não é entender que contexto tem limite.
+
+É aceitar que esse recurso específico falha de modo semântico e probabilístico.
+
+Em sistemas tradicionais, capacidade insuficiente costuma falhar de forma visível: uma requisição expira, um nó fica sem memória, um disco enche.
+
+Em sistemas baseados em LLM, o esgotamento mais comum é mais sutil: o sistema continua respondendo, mas passa a considerar menos do que deveria, prioriza a evidência errada ou esquece restrições relevantes.
+
+Context engineering é a disciplina que trata esse risco como problema de arquitetura.
+
+Ela define orçamento, persistência, recuperação, compressão, proveniência, avaliação e operação.
+
+A pergunta não é quanto contexto um modelo suporta.
+
+É qual contexto uma decisão precisa, como recuperá-lo no momento certo e como provar que ele foi suficiente.
+
+---
+
+## Referências
+
+- Anthropic. [*Effective context engineering for AI agents*](https://www.anthropic.com/engineering/effective-context-engineering-for-ai-agents). Anthropic Engineering Blog, 2025.
+- Liu, N. F. et al. [*Lost in the Middle: How Language Models Use Long Contexts*](https://aclanthology.org/2024.tacl-1.9/). *Transactions of the Association for Computational Linguistics*, 2024.
+- Chroma. [*Context Rot: How Increasing Input Tokens Impacts LLM Performance*](https://trychroma.com/research/context-rot). Relatório técnico, 2025.
+- Lewis, P. et al. [*Retrieval-Augmented Generation for Knowledge-Intensive NLP Tasks*](https://arxiv.org/abs/2005.11401). NeurIPS, 2020.
