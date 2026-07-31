@@ -1,0 +1,365 @@
+
+---
+title: Context Engineering in a Cloud Architect Life
+description: What changes in the form of architecting systems with AI when the context becomes the most scarce in the pipeline, seen through the eyes of someone who already deals with that kind of constraint in cloud.
+pubDate: 2026-07-30
+lang: en
+tags:
+  - ai
+  - applied-ai
+  - ai-agents
+  - context-engineering
+  - cloud-architecture
+  - llmops
+category: Applied AI
+draft: false
+---
+
+# Context engineering: o novo capacity planning para arquiteturas de IA
+
+I spent years designing architectures where the scarce resource was obvious: CPU, memory, IOPS, bandwidth. You measured it, sized it, set up alerts, and monitored it.
+
+Context engineering brought a new scarce resource into an architect's vocabulary: a model's context window.
+
+It behaves differently from classic resources. A server without memory fails. A full disk throws an error. A poorly managed context window can keep accepting calls, keep returning fluent text, and still deliver progressively worse decisions.
+
+The model forgets an important instruction from the start of the conversation. Retrieves irrelevant evidence. Loses precision on a long task. Repeats a conclusion that should already have been resolved.
+
+And the most uncomfortable part is that this doesn't always show up on a dashboard.
+
+You can instrument input tokens, output tokens, and proximity to the model's maximum limit. But those metrics measure **capacity**, not **quality**. An agent can stay well under the window's technical limit and still fail because it received too much information, contradictory information, or the right information in the wrong position.
+
+> Context isn't just available capacity. It's the selection of information that determines the quality of a decision.
+
+### Context engineering isn't prompt engineering with a fancier name
+
+Prompt engineering solves a narrow problem: how to phrase a question to get the best response from a single, isolated call.
+
+Context engineering solves a different category of problem: deciding, across an entire session — or an agent operating for hours — what enters the context window, what stays out of it, when to compress, when to retrieve evidence, and what needs to persist across calls.
+
+In the early years of LLM applications, prompting was the main engineering task because interactions were relatively simple: one question, one answer, few turns. As systems evolved into agents that plan, use tools, retrieve documents, and execute multi-step tasks, it became necessary to manage the full context available to the model at every inference.
+
+For anyone coming from systems architecture, the most direct analogy is:
+
+| Concept in traditional systems | Equivalent in LLM-based systems |
+| --- | --- |
+| Efficient query | Well-formed prompt |
+| Cache | Working context |
+| Database | Persistent state |
+| Indexed search | RAG and evidence retrieval |
+| Archiving / cold storage | Long-term memory |
+| Observability | Telemetry, provenance, and evaluation |
+| Capacity planning | Context budget |
+
+Prompt engineering is writing a better query.
+
+Context engineering is designing the entire caching, persistence, retrieval, and invalidation strategy: what stays hot, what can be summarized, what needs to stay out of the window, and when to retrieve the original source.
+
+### The context window is working space, not memory
+
+A common mistake in AI architectures is using the model's window as if it were a database, a queue, a cache, semantic memory, an audit log, and a coordination mechanism all at once, and it shouldn't be any of those.
+
+The window is the temporary working space for the current decision.
+
+<figure>
+    <img src="/images/blog/2026-07-30/contexto-como-espaco-de-trabalho.svg" alt="An orchestrator gathers structured state, retrieved evidence, and curated memory to compose the model's temporary context window; the decision is logged for auditability." loading="lazy" />
+    <figcaption>Figure 1 — Context window as working space. The context window holds only what's needed for the current decision: instructions, goal, immediate evidence, and active constraints. State, memory, audit logs, and sources live outside it and are pulled in only when needed.</figcaption>
+</figure>
+
+> The model's window is the working space for the current decision. State, memory, evidence, and audit logs should live outside it.
+
+A mature context architecture separates at least five responsibilities.
+
+| Component | Question it answers | Example |
+| --- | --- | --- |
+| Working context | "What does the model need right now?" | Current diff, task goal, and specific instructions |
+| Structured state | "Where are we in the process?" | Review checklist, tests run, and comments issued |
+| Long-term memory | "What's worth retaining for future use?" | Recurring conventions and stable repository preferences |
+| On-demand retrieval | "What external evidence is relevant to this decision?" | Documentation excerpt, style policy, or related code |
+| Audit log | "Why did the agent decide this?" | Sources used, prompt version, tools called, and cited evidence |
+
+<figure>
+    <img src="/images/blog/2026-07-30/arquitetura-em-camadas.svg" alt="Five stacked horizontal bands show working context, structured state, long-term memory, on-demand retrieval, and audit log, connected by a composition arrow and side arrows for evidence and decision." loading="lazy" />
+    <figcaption>Figure 2 — Layered context architecture. The architecture separates working context, structured state, long-term memory, on-demand retrieval, and the audit trail. This separation reduces unnecessary buildup in the window and improves traceability.</figcaption>
+</figure>
+
+This separation prevents a growing history from being reloaded over and over simply because there's nowhere else to put it.
+
+### The resource has three limits, not one
+
+When people talk about context windows, the model's technical limit tends to dominate the conversation. But architecturally there are at least three limits.
+
+#### Hard limit
+
+This is the maximum number of tokens the model accepts between input and output. Input includes instructions, history, tool results, retrieved documents, and the current question. Output is the space that still needs to be left over for the response or for a new tool call.
+
+Exceeding it produces an error, truncation, or other provider-defined behavior. An application that sends 100,000 tokens of documents into a 128,000-token window but reserves 16,000 for the response has already exceeded its effective budget: $100\,000 + 16\,000 > 128\,000$.
+
+It shapes design because it demands explicit reservation. Without it, a search that returns one extra document, a slightly larger history, or a longer response can cause a previously valid run to fail midstream. It's the easiest limit to measure and the closest to the classic notion of capacity.
+
+#### Economic limit
+
+This is the point where cost and latency stop being acceptable for the task, even though the call still technically fits in the window.
+
+For example: a support assistant might tolerate a response taking a few seconds at low cost per interaction. Loading 80,000 tokens of history and knowledge base into every message might not violate the hard limit, but it multiplies cost per conversation, increases time to response, and reduces capacity to serve concurrent users. In an overnight agent preparing reports, the same choice might be economically fine; on a checkout screen, it isn't.
+
+The economic limit shapes architecture by forcing product decisions: which tasks justify broad retrieval, what latency is acceptable, when to summarize, when to use a smaller model, and when to stop an investigation that's no longer worth it. It's set by service policy, not by the model provider.
+
+#### Quality limit
+
+This is the point where adding more context stops helping, or starts hurting the decision.
+
+An agent can receive an entire company's documentation, a full conversation history, and every file in a repository. That still doesn't mean it will correctly identify, prioritize, and use the relevant evidence.
+
+The right question isn't:
+
+> "How much context fits?"
+
+It's:
+
+> "What's the smallest context that's sufficient, well positioned, and verifiable, for this decision?"
+
+### A practical example: an agent that reviews pull requests
+
+Imagine an agent set up to automatically review pull requests in a large repository.
+
+The naive approach loads the entire diff, the full commit history, project documentation, style rules, and prior comments into a single call.
+
+In small repositories, this can seem to work. In larger ones, familiar symptoms show up:
+
+- the agent suggests changes to a file that isn't part of the PR;
+- it repeats comments it already made;
+- it ignores a style instruction present at the start of the context;
+- it mixes up unrelated changes;
+- it cites a rule without locating the evidence behind it;
+- it prioritizes cosmetic details and misses a critical behavior change.
+
+The fix isn't simply a bigger window.
+
+It's breaking the task apart and controlling the flow of information.
+
+<figure>
+    <img src="/images/blog/2026-07-30/revisao-de-pr-com-contexto.svg" alt="The orchestrator receives the pull request, policies, and state; it distributes slices to test, style, impact, and documentation checks; the results become traceable findings." loading="lazy" />
+    <figcaption>Figure 3 — PR review with selective context. In the review flow, the orchestrator distributes tasks to specialized subagents and collects findings with an explicit link back to the original evidence. The goal is traceable conclusions, not just plausible-sounding answers.</figcaption>
+</figure>
+
+In the governed architecture, the orchestrator doesn't keep the full diff as permanent context.
+
+It keeps:
+
+- the goal of the review;
+- a structured summary of progress;
+- an index of the PR;
+- findings already produced;
+- references to the original evidence.
+
+Subagents receive only the slice they need for their task. One evaluates tests; another checks style rules; another analyzes impact on contracts, APIs, or dependencies; another checks whether documentation and examples still line up.
+
+The orchestrator receives traceable conclusions, not necessarily all the raw material produced at each step.
+
+But there's an important rule: **summaries don't replace primary evidence.**
+
+When it needs to confirm a conclusion, the orchestrator must retrieve the *hunk*, the file, the test, or the rule behind that claim. In a *diff*, a *hunk* is a contiguous block of changed lines, usually with a few lines of surrounding context before and after the change. It's the smallest practical unit for showing a reviewer what changed without loading the entire file.
+
+<figure>
+    <img src="/images/blog/2026-07-30/recuperacao-de-evidencia.svg" alt="Pipeline from left to right: current question, search or RAG, ranking, relevant excerpt, model context, and cited answer, with the primary source available below the excerpt." loading="lazy" />
+    <figcaption>Figure 4 — Retrieving evidence for a decision. Retrieval starts from a question, searches relevant sources, selects the useful excerpts, and injects only the necessary slice into the context. The primary source stays available for validation and auditing.</figcaption>
+</figure>
+
+Every relevant finding should preserve:
+
+- origin;
+- file, line, or excerpt;
+- commit or version;
+- rule applied;
+- agent or step that produced the finding;
+- confidence level;
+- evidence used in the conclusion.
+
+This turns a plausible-sounding answer into a verifiable decision.
+
+### Another example: a customer support bot
+
+The same logic shows up in AI products.
+
+A support bot that tries to keep the full conversation history plus the entire company knowledge base inside the window, turn after turn, tends to degrade after a few exchanges.
+
+The healthier architecture separates responsibilities:
+
+1. keeps only the goal and a compact summary of the conversation in the window;
+2. stores structured support data outside the context;
+3. retrieves on demand only the documents relevant to the current question;
+4. preserves citations and sources for answers that can affect the customer;
+5. drops from the active context whatever doesn't help the current decision.
+
+<figure>
+    <img src="/images/blog/2026-07-30/suporte-com-contexto-seletivo.svg" alt="A customer chats with a bot that queries support state and the knowledge base before assembling selective context for the model." loading="lazy" />
+    <figcaption>Figure 5 — Support bot with state outside the window. In support, the short conversation and current goal stay in the window, while full history, support state, and the knowledge base stay outside it. The bot queries them on demand and answers with sources.</figcaption>
+</figure>
+
+The principle is the same as the PR reviewer, applied to a different domain: the model doesn't need to load everything. It needs to receive the right information to decide right now.
+
+### Compression is an architecture decision
+
+Summarizing conversation history is, in practice, a form of lossy compression.
+
+That's not necessarily bad. Observability systems do something similar when they apply *downsampling* to old metrics: they preserve trends and discard granularity to cut cost.
+
+But there's an important difference: aggregated metrics can serve historical analysis; they don't necessarily serve forensic investigation.
+
+The same happens with context.
+
+A summary can be great for keeping general orientation, but inadequate for supporting a critical decision.
+
+> If a summary omits an exception, a denial, a priority, or the origin of a claim, it isn't just carrying less information. It's changing the agent's decision space.
+
+Because of that, a mature compression strategy needs to define:
+
+- what can be summarized;
+- what needs to stay structured;
+- what requires full retention;
+- what should keep a pointer to the original source;
+- when a summary needs to be redone;
+- when the decision requires retrieving primary evidence.
+
+<figure>
+    <img src="/images/blog/2026-07-30/compressao-e-retencao.svg" alt="An incoming piece of information passes through a decision criterion that routes it to one of three destinations: summarize, keep structured, or keep in full with a pointer to the original source." loading="lazy" />
+    <figcaption>Figure 6 — Compression and retention. The figure shows three possible destinations for contextual information: summarize, keep structured, or keep in full with a reference to the original source. Compression is an architecture decision, not just a text reduction.</figcaption>
+</figure>
+
+A good rule of thumb is:
+
+> Use summaries to orient. Use the original source to decide, justify, or audit.
+
+### More context isn't always better
+
+The intuition that "more information produces better answers" feels natural, but it doesn't hold up in every case.
+
+The *Lost in the Middle* study, by Liu and colleagues, showed that language models can perform better when relevant information appears at the start or end of the context, and worse when it sits in the middle of a long context.
+
+<figure>
+    <img src="/images/blog/2026-07-30/lost-in-the-middle.svg" alt="Conceptual U-shaped curve: correct evidence use is higher at the start and end of the context window and lower in the central region." loading="lazy" />
+    <figcaption>Figure 7 — Lost in the Middle in context. The conceptual chart illustrates that relevant evidence tends to be used better when it appears at the start or end of the context, and worse when it's buried in the middle of a long window. This shapes how content should be ordered. The curve communicates the observed trend; it doesn't reproduce the study's experimental values.</figcaption>
+</figure>
+
+This phenomenon changes practical design decisions:
+
+- put invariant instructions and safety rules at the start;
+- put decisive evidence close to the step where it will be used;
+- avoid burying critical exceptions in the middle of supporting material;
+- don't repeat context just as a precaution; repetition also competes for attention;
+- separate evidence from noise, historical context, and reference material.
+
+The goal isn't to fill the entire available window.
+
+The goal is to build a window that maximizes relevance, readability, and decision quality.
+
+### Context budget
+
+Traditional architectures define budgets for CPU, memory, connections, latency, and cost.
+
+Agent systems also need a context budget.
+
+<figure>
+    <img src="/images/blog/2026-07-30/orcamento-de-contexto.svg" alt="A context window budget bar splits the space between instructions, state, evidence, history, and reserve for response and corrective retrieval." loading="lazy" />
+    <figcaption>Figure 8 — Context budget. The context budget distributes the window across instructions, state, evidence, summarized history, and a reserve for the response. The figure shows that the problem isn't just fitting the tokens, but fitting them with acceptable quality and cost.</figcaption>
+</figure>
+
+The percentages vary by model and task, but the idea stays constant: reserve space deliberately.
+
+| Category | Function | Review question |
+| --- | --- | --- |
+| Instructions | Sets rules and goals | Is this actually invariant? |
+| State | Tracks progress and decisions | Can it be structured outside the window? |
+| Evidence | Supports the current decision | Is this source needed right now? |
+| Summarized history | Preserves continuity | Does the summary keep relevant exceptions and decisions? |
+| Reserve | Enables response and correction | Is there room for the agent to discover it needs to look further? |
+
+Without a budget, systems tend to grow by accumulation: more documents, more history, more rules, more tool outputs. Until quality drops without any explicit failure.
+
+### Context also needs observability
+
+If context engineering is an architecture discipline, it needs to be operable.
+
+Measuring token count alone isn't enough.
+
+An agent architecture should log where each block of context came from, why it was selected, how much space it consumed, and whether it contributed to the final decision.
+
+<figure>
+    <img src="/images/blog/2026-07-30/observabilidade-de-contexto.svg" alt="Agent execution produces telemetry on tokens, quality, provenance, cost, and latency; these signals feed an operational view, gates, and human review." loading="lazy" />
+    <figcaption>Figure 9 — Context observability. The dashboard aggregates metrics on cost, latency, window occupancy, useful retrieval, citations, contradictions, and human corrections. The focus is measuring task adherence, not just token volume.</figcaption>
+</figure>
+
+Some useful metrics:
+
+- percentage of the window taken up by instructions, state, evidence, and history;
+- cost and latency per completed task;
+- useful retrieval rate from RAG;
+- number of documents retrieved versus documents actually cited;
+- rate of replanning or step repetition;
+- number of contradictory instructions present in the context;
+- responses corrected by users or reviewers;
+- accuracy by conversation depth;
+- accuracy by position of the evidence in the context;
+- proportion of critical decisions backed by a primary source;
+- failure rate where the correct information was available but wasn't used.
+
+The core distinction is this:
+
+> Tokens are an infrastructure metric. Task adherence is a quality metric.
+
+Neither replaces the other.
+
+### The lifecycle of an agent decision
+
+A well-designed system doesn't assemble context once and expect it to serve the entire flow.
+
+It recomposes context at every relevant decision.
+
+<figure>
+    <img src="/images/blog/2026-07-30/ciclo-de-decisao-do-agente.svg" alt="The agent plans, selects context, executes, and validates; if it needs more evidence, it returns to context selection; when it concludes, it logs the decision and the source." loading="lazy" />
+    <figcaption>Figure 10 — Agent decision cycle. The agent recomposes context at every decision: retrieves evidence, assembles the input, calls the model, evaluates the result, and logs the trail. If the evidence isn't sufficient, the cycle returns to retrieval.</figcaption>
+</figure>
+
+This cycle has important consequences:
+
+- memory shouldn't be updated automatically from just any model output;
+- summaries need explicit scope and validity;
+- retrieval needs to account for source, version, and freshness;
+- critical decisions need to preserve the evidence trail;
+- evaluation should check not just the final answer, but also the context selection process.
+
+In other words: context isn't a static payload. It's a dynamic dependency of the decision.
+
+---
+
+## Conclusion
+
+Context engineering is going to become, for teams building AI products, what capacity planning already is for classic infrastructure: a discipline of its own, with budget, metrics, architecture review, and promotion criteria.
+
+Anyone coming from cloud has a real advantage here.
+
+The vocabulary of finite resources, partitioning, caching, degradation under load, observability, and cost control is already second nature. The learning curve isn't understanding that context has a limit.
+
+It's accepting that this particular resource fails semantically and probabilistically.
+
+In traditional systems, insufficient capacity usually fails visibly: a request times out, a node runs out of memory, a disk fills up.
+
+In LLM-based systems, exhaustion is usually more subtle: the system keeps responding, but starts considering less than it should, prioritizes the wrong evidence, or forgets relevant constraints.
+
+Context engineering is the discipline that treats that risk as an architecture problem.
+
+It defines budget, persistence, retrieval, compression, provenance, evaluation, and operations.
+
+The question isn't how much context a model supports.
+
+It's what context a decision needs, how to retrieve it at the right moment, and how to prove it was sufficient.
+
+---
+
+## References
+
+- Anthropic. [*Effective context engineering for AI agents*](https://www.anthropic.com/engineering/effective-context-engineering-for-ai-agents). Anthropic Engineering Blog, 2025.
+- Liu, N. F. et al. [*Lost in the Middle: How Language Models Use Long Contexts*](https://aclanthology.org/2024.tacl-1.9/). *Transactions of the Association for Computational Linguistics*, 2024.
+- Chroma. [*Context Rot: How Increasing Input Tokens Impacts LLM Performance*](https://trychroma.com/research/context-rot). Technical report, 2025.
+- Lewis, P. et al. [*Retrieval-Augmented Generation for Knowledge-Intensive NLP Tasks*](https://arxiv.org/abs/2005.11401). NeurIPS, 2020.

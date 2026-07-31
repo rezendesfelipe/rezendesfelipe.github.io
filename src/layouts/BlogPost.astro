@@ -64,9 +64,9 @@ const articleSchema = {
 
       .post-wrap {
         display: grid;
-        grid-template-columns: minmax(0, 1fr) 240px;
-        gap: 3rem;
-        max-width: 1100px;
+        grid-template-columns: minmax(0, 1fr) 190px;
+        gap: 5rem;
+        max-width: 1220px;
         margin: 0 auto;
         padding: 2.25rem 1.5rem 4rem;
       }
@@ -78,19 +78,19 @@ const articleSchema = {
         align-self: start;
         max-height: calc(100vh - 100px);
         overflow-y: auto;
-        padding: 1.25rem;
+        padding: 1rem;
         background: rgba(6, 14, 32, 0.5);
         outline: 1px solid var(--border);
         backdrop-filter: blur(24px);
         border-radius: 12px;
       }
       .toc-sidebar__title {
-        font-size: .75rem;
+        font-size: 11px;
         font-weight: 700;
         letter-spacing: .08em;
         text-transform: uppercase;
         color: var(--muted);
-        margin: 0 0 .75rem;
+        margin: 0 0 .65rem;
       }
       .toc-sidebar__list {
         list-style: none;
@@ -98,21 +98,21 @@ const articleSchema = {
         margin: 0;
         display: flex;
         flex-direction: column;
-        gap: .35rem;
+        gap: .3rem;
       }
       .toc-sidebar__list a {
         text-decoration: none;
         color: var(--muted);
-        font-size: .82rem;
+        font-size: 12px;
         line-height: 1.4;
         transition: color .15s;
         display: block;
       }
       .toc-sidebar__list a:hover { color: var(--accent); }
-      .toc-sidebar__list li.toc-h3 { padding-left: .75rem; }
+      .toc-sidebar__list li.toc-h3 { padding-left: .65rem; }
 
       /* ── Article ── */
-      .post-article { min-width: 0; }
+      .post-article { min-width: 0; max-width: 760px; margin: 0 auto; width: 100%; }
 
       /* breadcrumb */
       .post-breadcrumb {
@@ -215,7 +215,10 @@ const articleSchema = {
         line-height: 1.8;
         font-size: 1rem;
       }
-      .post-prose h2 {
+      /* NOTE: descendants here come from <slot /> (compiled MDX), so Astro
+         never stamps them with this component's scope attribute — every
+         selector below must wrap the tag in :global() or it silently no-ops. */
+      .post-prose :global(h2) {
         font-size: 1.62rem;
         font-weight: 700;
         margin: 2.75rem 0 .85rem;
@@ -223,22 +226,38 @@ const articleSchema = {
         color: var(--text);
         padding-bottom: .4rem;
       }
-      .post-prose h3 {
+      .post-prose :global(h3) {
         font-size: 1.28rem;
         font-weight: 600;
         margin: 1.95rem 0 .55rem;
         color: var(--text);
       }
-      .post-prose h4 {
+      .post-prose :global(h4) {
         font-size: 1rem;
         font-weight: 600;
         margin: 1.25rem 0 .4rem;
         color: var(--text);
       }
-      .post-prose p { margin: 0 0 1.1rem; }
-      .post-prose ul, .post-prose ol { margin: 0 0 1.1rem 1.5rem; }
-      .post-prose li { margin-bottom: .35rem; }
-      .post-prose blockquote {
+      .post-prose :global(p) { margin: 0 0 1.1rem; }
+      .post-prose :global(figure) { margin: 2rem 0; }
+      .post-prose :global(figure img) {
+        max-width: 100%;
+        height: auto;
+        display: block;
+        margin: 0 auto;
+        border-radius: 8px;
+      }
+      .post-prose :global(figcaption) {
+        font-size: .85rem;
+        line-height: 1.5;
+        color: var(--muted);
+        text-align: center;
+        margin-top: .65rem;
+        padding: 0 .5rem;
+      }
+      .post-prose :global(ul), .post-prose :global(ol) { margin: 0 0 1.1rem 1.5rem; }
+      .post-prose :global(li) { margin-bottom: .35rem; }
+      .post-prose :global(blockquote) {
         border-left: 3px solid var(--accent);
         padding: .75rem 1.25rem;
         margin: 1.5rem 0;
@@ -246,27 +265,27 @@ const articleSchema = {
         border-radius: 0 8px 8px 0;
         color: var(--muted);
       }
-      .post-prose blockquote p { margin: 0; }
-      .post-prose a { color: var(--accent); text-decoration: none; }
-      .post-prose a:hover { text-decoration: underline; }
-      .post-prose hr {
+      .post-prose :global(blockquote p) { margin: 0; }
+      .post-prose :global(a) { color: var(--accent); text-decoration: none; }
+      .post-prose :global(a):hover { text-decoration: underline; }
+      .post-prose :global(hr) {
         border: none;
         height: 1px;
         background: var(--border);
         margin: 2.5rem 0;
       }
-      .post-prose table {
+      .post-prose :global(table) {
         width: 100%;
         border-collapse: collapse;
         margin: 1.5rem 0;
         font-size: .9rem;
       }
-      .post-prose th, .post-prose td {
+      .post-prose :global(th), .post-prose :global(td) {
         outline: 1px solid var(--border);
         padding: .5rem .75rem;
         text-align: left;
       }
-      .post-prose th { background: var(--panel); font-weight: 600; }
+      .post-prose :global(th) { background: var(--panel); font-weight: 600; }
 
       /* ── Tags section ── */
       .post-tags { margin: 2rem 0; }
