@@ -1,13 +1,13 @@
 ---
 title: "Pipeline parameters: choose what to provision (Terraform, multiple tfstate files and modules)"
-description: "How to use YAML parameters in Azure DevOps and GitHub Actions to select which Terraform stacks run, why splitting state matters, and how it looks on a reference architecture with AKS and PostgreSQL in a private network, deployed with Helm."
+description: "How to use YAML parameters in Azure DevOps and GitHub Actions to select which Terraform stacks run, why splitting state matters, and how it looks on a reference architecture with AKS and PostgreSQL in a private network, deployed with GitOps (Argo CD)."
 pubDate: 2026-11-21
 author:
   name: "Felipe Rezende"
   role: "Cloud & DevOps Architect"
   url: "https://www.linkedin.com/in/rezendesfelipe/"
 category: "Cloud & DevOps"
-tags: ["terraform", "azure-devops", "github-actions", "iac", "tfstate", "modules", "aks", "helm", "postgresql", "private-link", "platform-engineering", "azure"]
+tags: ["terraform", "azure-devops", "github-actions", "iac", "tfstate", "modules", "aks", "argocd", "gitops", "postgresql", "private-link", "platform-engineering", "azure"]
 readingTime: "26 min"
 lang: "en"
 draft: true
@@ -16,7 +16,7 @@ draft: true
 > **TL;DR**
 > - Split infrastructure into independent *stacks*, each with its own `tfstate` and built on modules, and make the pipeline take parameters that say **what to run**, **where** and **with which action**.
 > - The gain: smaller blast radius, least privilege per stack, faster `plan` and a single pipeline to maintain.
-> - In the reference architecture (AKS and PostgreSQL in a private network), Terraform delivers the network, the cluster and the application's dedicated database. The application itself goes into the cluster through **Helm or manifests**, in another step of the same pipeline.
+> - In the reference architecture (AKS and PostgreSQL in a private network), Terraform delivers the network, the cluster and the application's dedicated database. The application itself goes into the cluster through **Argo CD** (GitOps), from manifests in a dedicated directory, `infra/argocd`. The pipeline only installs Argo CD, once per cluster.
 > - The same design works in Azure DevOps (`parameters`) and GitHub Actions (`workflow_dispatch` + `inputs`).
 > - Every argument comes with its source (HashiCorp, Microsoft, DORA and others). Where the link is my own analogy, the text says so.
 > - The cost: more moving parts, and dependencies between stacks that become your responsibility.
@@ -49,7 +49,7 @@ A heads-up: the code in this article is simplified to explain the idea. Adapt na
 ## The idea in one picture
 
 <figure>
-    <img src="/images/blog/2026-11-21/parametros-selecionam-stacks.svg" alt="A parameter panel (environment, instance, action and one checkbox per step) feeds a single pipeline that runs only the ticked steps: the vnet-prod-brs-01 and aks-prod-brs-01 stacks. The orders application stack and the Helm deploy are unticked and do not run. Each stack writes to its own tfstate, named after the resource, in the same Azure Storage container." loading="lazy" />
+    <img src="/images/blog/2026-11-21/parametros-selecionam-stacks.svg" alt="A parameter panel (environment, instance, action and one checkbox per step) feeds a single pipeline that runs only the ticked steps: the vnet-prod-brs-01 and aks-prod-brs-01 stacks. The orders application stack and the Argo CD bootstrap are unticked and do not run. Each stack writes to its own tfstate, named after the resource, in the same Azure Storage container." loading="lazy" />
     <figcaption>Figure 1 — Parameters choose what runs. Each stack has its own tfstate, so whatever wasn't selected is neither read nor changed.</figcaption>
 </figure>
 
@@ -98,8 +98,8 @@ DORA's [Deployment automation](https://dora.dev/capabilities/deployment-automati
 To keep the example from being abstract, I picked an architecture I run into often: an application on **AKS** with a **PostgreSQL** database dedicated to it, everything in a private network. The icons are the official Microsoft ones ([Azure Architecture Icons](https://learn.microsoft.com/en-us/azure/architecture/icons/), used according to the terms: no change to their shape and with the product name next to the icon).
 
 <figure>
-    <img src="/images/blog/2026-11-21/arquitetura-aks-postgresql-privada.svg" alt="Reference architecture in a private network: corporate network users enter through an internal ingress into the aks-prod-brs-01 cluster, inside the snet-aks subnet, where the orders pod deployed by Helm runs. The pod reaches the dedicated PostgreSQL pgsql-orders-prod-brs-01, in the delegated snet-postgres subnet, and, through Private Endpoints in snet-endpoints, the Key Vault. The cluster pulls images from the Container Registry through another Private Endpoint. Self-hosted agents in snet-agents run Terraform and Helm. Private DNS zones linked to the VNet resolve the names. Each resource is tagged with the Terraform stack that owns it: vnet-prod-brs-01, aks-prod-brs-01 or app-orders-prod-brs-01." loading="lazy" />
-    <figcaption>Figure 2 — Reference architecture. The pills show the Terraform stack that owns each resource. The pod enters the cluster through Helm, outside Terraform. The editable source is in draw.io.</figcaption>
+    <img src="/images/blog/2026-11-21/arquitetura-aks-postgresql-privada.svg" alt="Reference architecture in a private network: corporate network users enter through an internal ingress into the aks-prod-brs-01 cluster, inside the snet-aks subnet, where the orders pod runs. The pod reaches the dedicated PostgreSQL pgsql-orders-prod-brs-01, in the delegated snet-postgres subnet, and, through Private Endpoints in snet-endpoints, the Key Vault. The cluster pulls images from the Container Registry through another Private Endpoint. Self-hosted agents in snet-agents run Terraform and the Argo CD bootstrap. Argo CD, inside the cluster, syncs the manifests from a Git repository to the pod. Private DNS zones linked to the VNet resolve the names. Each resource is tagged with the Terraform stack that owns it: vnet-prod-brs-01, aks-prod-brs-01 or app-orders-prod-brs-01." loading="lazy" />
+    <figcaption>Figure 2 — Reference architecture. The pills show the Terraform stack that owns each resource. The pod enters the cluster through Argo CD, from Git, outside Terraform. The editable source is in draw.io.</figcaption>
 </figure>
 
 What the figure shows, and the documentation behind each decision:
@@ -107,7 +107,8 @@ What the figure shows, and the documentation behind each decision:
 - **AKS as a private cluster.** With `private_cluster_enabled`, the API server gets an internal IP and talks to the nodes through Azure Private Link, as the [AKS private clusters documentation](https://learn.microsoft.com/en-us/azure/aks/private-clusters) describes.
 - **PostgreSQL with network integration (private access).** The server sits in a **delegated** subnet that only it can use, at least `/28`, and needs a Private DNS zone whose name ends in `postgres.database.azure.com`. The [PostgreSQL networking documentation](https://learn.microsoft.com/en-us/azure/postgresql/flexible-server/concepts-networking-private) also says that, when creating through Terraform, you must create those zones yourself, and that the zone name can't be the same as the server's.
 - **Container Registry and Key Vault through Private Endpoints.** For ACR, private link requires the **Premium** SKU ([ACR docs](https://learn.microsoft.com/en-us/azure/container-registry/container-registry-private-link)). For Key Vault, the [Private Link docs](https://learn.microsoft.com/en-us/azure/key-vault/general/private-link-service) describe the same mechanism. The DNS zone and subresource names (`registry` and `vault`) are in the [private endpoint DNS zone table](https://learn.microsoft.com/en-us/azure/private-link/private-endpoint-dns).
-- **Self-hosted agents inside the VNet.** The pipeline has to reach two private things: the registry and the cluster API. The ACR docs warn that once public network access is disabled, instances of some Azure services, including Azure DevOps Services, can't reach it. And the [private cluster access](https://learn.microsoft.com/en-us/azure/aks/access-private-cluster) docs say `az aks command invoke` is not for programmatic access: for automated calls, they point to Bastion, VPN or ExpressRoute. That's why `snet-agents` appears in the figure, dashed: the agents themselves live outside this example's stacks.
+- **Self-hosted agents inside the VNet.** The pipeline has to reach private things: the cluster API (for the Argo CD bootstrap) and, if you close public access, the registry and the state account. The ACR docs warn that once public network access is disabled, instances of some Azure services, including Azure DevOps Services, can't reach it. And the [private cluster access](https://learn.microsoft.com/en-us/azure/aks/access-private-cluster) docs say `az aks command invoke` is not for programmatic access: for automated calls, they point to Bastion, VPN or ExpressRoute. That's why `snet-agents` appears in the figure, dashed: the agents themselves live outside this example's stacks.
+- **Argo CD inside the cluster, pulling from Git.** [Argo CD](https://argo-cd.readthedocs.io/en/stable/) is a Kubernetes controller that continuously compares the live state with the desired state, defined in the Git repository. Since it runs in the cluster and fetches changes from Git, the pipeline doesn't need to reach the private API on every deploy, only at bootstrap. That consequence for the private network is my own reading of the model the docs describe. The price shows in the figure: the cluster has to reach the Git repository (the "pull" arrow), which brings us back to the egress design I left out of scope.
 - **Out of scope, on purpose.** The cluster's egress design. The provider accepts `loadBalancer`, `userDefinedRouting`, `managedNATGateway`, `userAssignedNATGateway` and `none` in `outbound_type`. It is a separate decision, with a firewall or NAT, and I left it out to keep the example clean.
 
 ### Naming pattern
@@ -127,7 +128,7 @@ The question that defines the split into stacks is "who changes this, and how of
 | `vnet` | VNet, subnets, NSGs, Private DNS zones | `network` | `vnet-prod-brs-01.tfstate` |
 | `aks` | AKS, ACR and its Private Endpoint | `aks`, `acr`, `private-endpoint` | `aks-prod-brs-01.tfstate` |
 | `app-orders` | Dedicated PostgreSQL, Key Vault and its Private Endpoint, the application's identity | `postgresql`, `key-vault`, `private-endpoint`, `workload-identity` | `app-orders-prod-brs-01.tfstate` |
-| *(outside Terraform)* | The `orders` pod in the cluster | Helm chart or manifests | no state |
+| *(outside Terraform)* | Argo CD (bootstrap) and the `orders` pod in the cluster | Bootstrap script and manifests in `infra/argocd` | no state |
 
 Notice two details. The `private-endpoint` module is used by two stacks: that is the kind of reuse that justifies a module, and HashiCorp's refactoring guide recommends grouping into a module the set of resources you create in several configurations. And the `aks` stack also holds the ACR: it takes the name of its main resource, and the registry is a supporting resource of it.
 
@@ -140,9 +141,9 @@ Two decisions in this design deserve a justification.
 - **Pros:** blast radius per application (a mistake in the `app-orders` stack doesn't reach another application's database), privilege per application, sizing per application and complete removal when the application goes away.
 - **Cons:** more servers to pay for and operate (backup, patching, monitoring) and more resources in the delegated subnet. If many small applications share the same usage profile, a shared server may make more sense. Evaluate with your own numbers.
 
-**The pod enters the cluster through Helm or manifests, not Terraform.** The criterion is HashiCorp's own: group by volatility and separate stateful from stateless. The application changes several times a day and is stateless. The database changes rarely and holds data. If the pod were a Terraform resource, every new image version would go through `plan` and `apply` in the same state as the database. Keeping the deploy in Helm keeps the most frequent step of the flow away from the state that can least afford a mistake. This reading of HashiCorp's rule for the Helm case is mine. The page doesn't mention Helm.
+**The pod enters the cluster through Argo CD, not Terraform.** The criterion is HashiCorp's own: group by volatility and separate stateful from stateless. The application changes several times a day and is stateless. The database changes rarely and holds data. If the pod were a Terraform resource, every new image version would go through `plan` and `apply` in the same state as the database. With GitOps, the most frequent step of the flow becomes a commit to the manifests, and the state that can least afford a mistake stays away from it. This reading of HashiCorp's rule for the Argo CD case is mine. The page doesn't mention GitOps.
 
-In practice, the flow has four steps, in this order: `vnet`, `aks`, `app-orders` and `helm`. The pipeline lets you tick any subset.
+In practice, three Terraform stacks (`vnet`, `aks` and `app-orders`) and the Argo CD bootstrap (once per cluster) run through the pipeline, and you can tick any subset. After the bootstrap, the application evolves through Git.
 
 ### Repository layout
 
@@ -164,18 +165,18 @@ infra/
 │   ├── dev-brs-01.tfvars
 │   ├── hml-brs-01.tfvars
 │   └── prod-brs-01.tfvars
+├── argocd/                   # GitOps: Argo CD and the applications' manifests
+│   ├── bootstrap/
+│   ├── apps/
+│   └── manifests/
 ├── scripts/
 │   ├── tf.sh
-│   └── deploy-app.sh
+│   └── bootstrap-argocd.sh
 └── pipelines/
     ├── azure-pipelines.yml
     └── templates/
         ├── terraform-stack.yml
-        └── helm-deploy.yml
-deploy/
-└── orders/
-    ├── chart/                # Helm chart (or manifests/ for plain YAML)
-    └── values-prod-brs-01.yaml
+        └── argocd-bootstrap.yml
 ```
 
 The rule I follow:
@@ -539,63 +540,191 @@ If modules live in another repository, `source` points to a tag so the version i
 
 ---
 
-## Application deploy: Helm or manifests
+## Application deploy: Argo CD (GitOps)
 
-With the infrastructure up, the `orders` pod enters the cluster through Helm (or through `kubectl apply` of manifests, if you prefer plain YAML). What goes into the cluster lives in `deploy/orders/`, with the chart and one values file per instance:
+With the infrastructure up, the `orders` pod enters the cluster through **Argo CD**, which the [documentation](https://argo-cd.readthedocs.io/en/stable/) describes as a declarative GitOps continuous delivery tool for Kubernetes: Git is the source of truth for the desired state, and a controller continuously compares the live state against that desired state. Manifests can be Kustomize, Helm charts or a directory of YAML/JSON.
 
-```yaml
-# deploy/orders/values-prod-brs-01.yaml
-image:
-  repository: crprodbrs01.azurecr.io/orders
-  tag: "1.8.3"
+This changes two things in the pipeline. The application deploy stops being one of its steps and becomes a commit in Git. And the pipeline only installs Argo CD, once per cluster (the **bootstrap**).
 
-serviceAccount:
-  name: orders
-  annotations:
-    azure.workload.identity/client-id: "<app_client_id>"   # output of the app-orders stack
+### The `infra/argocd` directory
 
-podLabels:
-  azure.workload.identity/use: "true"                      # the chart applies it to the pods
+All the GitOps lives in a dedicated directory inside `infra/`:
 
-database:
-  host: "<postgres_fqdn>"                                  # output of the app-orders stack
-  name: orders
+```text
+infra/argocd/
+├── bootstrap/
+│   └── root-prod-brs-01.yaml        # root Application (app of apps), applied by the pipeline
+├── apps/
+│   └── prod-brs-01/
+│       └── orders.yaml              # Application for the orders application
+└── manifests/
+    └── orders/
+        ├── base/                    # ServiceAccount, Deployment, Service...
+        └── overlays/
+            └── prod-brs-01/
+                └── kustomization.yaml
 ```
 
-The two names Workload Identity requires are in the [AKS documentation](https://learn.microsoft.com/en-us/azure/aks/workload-identity-deploy-cluster): the `azure.workload.identity/client-id` annotation on the service account and the `azure.workload.identity/use: "true"` label on the pods. The `subject` of the `workload-identity` module above (`system:serviceaccount:orders:orders`) must match the chart's service account namespace and name.
+- `bootstrap/` is what the pipeline applies once: the instance's root Application.
+- `apps/` has one Application per application and per instance. The root watches this directory.
+- `manifests/` has what each Application syncs: a base and one overlay per instance.
 
-The deploy script is short:
+The root Application follows the *app of apps* pattern from the [cluster bootstrapping documentation](https://argo-cd.readthedocs.io/en/stable/operator-manual/cluster-bootstrapping/). The same page recommends looking at ApplicationSets, particularly the cluster generator, for most scenarios; I chose app of apps because it's simpler to show. The doc uses a Helm example and says you can use another tool, so I used a directory of manifests. I haven't run this specific format.
+
+```yaml
+# infra/argocd/bootstrap/root-prod-brs-01.yaml
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: root-prod-brs-01
+  namespace: argocd
+  finalizers:
+    - resources-finalizer.argocd.argoproj.io
+spec:
+  project: default
+  source:
+    repoURL: https://github.com/<org>/<repo>.git   # or the repository on Azure Repos
+    targetRevision: main
+    path: infra/argocd/apps/prod-brs-01
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: argocd
+  syncPolicy:
+    automated: {}      # no prune: the default is not to delete what left Git
+```
+
+The application's Application points to the instance's overlay. The format is that of a [minimal Application](https://argo-cd.readthedocs.io/en/stable/operator-manual/declarative-setup/), and the `resources-finalizer.argocd.argoproj.io` finalizer makes deleting the Application also delete the resources it manages (without it, the doc warns that doesn't happen):
+
+```yaml
+# infra/argocd/apps/prod-brs-01/orders.yaml
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: orders-prod-brs-01
+  namespace: argocd
+  finalizers:
+    - resources-finalizer.argocd.argoproj.io
+spec:
+  project: default
+  source:
+    repoURL: https://github.com/<org>/<repo>.git
+    targetRevision: main
+    path: infra/argocd/manifests/orders/overlays/prod-brs-01
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: orders
+  syncPolicy:
+    syncOptions:
+      - CreateNamespace=true
+    # no "automated": in prod the sync is manual, after the PR merge
+```
+
+The `CreateNamespace=true` option creates the destination namespace if it doesn't exist, as the [sync options doc](https://argo-cd.readthedocs.io/en/stable/user-guide/sync-options/) describes. In the example, prod has no `syncPolicy.automated`: merging the pull request updates Git, and syncing is a manual step. In dev and hml, I would use `automated`, which is optional. The [automated sync doc](https://argo-cd.readthedocs.io/en/stable/user-guide/auto_sync/) also warns that by default it doesn't delete resources that left Git: pruning is an explicit option.
+
+The manifests live in a base, with what is the same across all instances, and in one overlay per instance. Since there is a `kustomization.yaml` at the Application's path, Argo CD renders with Kustomize, as the [doc](https://argo-cd.readthedocs.io/en/stable/user-guide/kustomize/) describes. The two names Workload Identity requires are in the [AKS documentation](https://learn.microsoft.com/en-us/azure/aks/workload-identity-deploy-cluster): the `azure.workload.identity/client-id` annotation on the service account and the `azure.workload.identity/use: "true"` label on the pods.
+
+```yaml
+# infra/argocd/manifests/orders/base/serviceaccount.yaml
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: orders
+  annotations:
+    azure.workload.identity/client-id: "00000000-0000-0000-0000-000000000000"   # overridden in the overlay
+```
+
+```yaml
+# infra/argocd/manifests/orders/base/deployment.yaml (excerpt)
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: orders
+spec:
+  selector:
+    matchLabels:
+      app: orders
+  template:
+    metadata:
+      labels:
+        app: orders
+        azure.workload.identity/use: "true"
+    spec:
+      serviceAccountName: orders
+      containers:
+        - name: orders
+          image: orders
+          envFrom:
+            - configMapRef:
+                name: orders-config
+```
+
+```yaml
+# infra/argocd/manifests/orders/overlays/prod-brs-01/kustomization.yaml
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+resources:
+  - ../../base
+
+images:
+  - name: orders
+    newName: crprodbrs01.azurecr.io/orders
+    newTag: "1.8.3"
+
+configMapGenerator:
+  - name: orders-config
+    literals:
+      - DB_HOST=<postgres_fqdn>                  # output of the app-orders stack
+
+patches:
+  - target:
+      kind: ServiceAccount
+      name: orders
+    patch: |-
+      - op: replace
+        path: /metadata/annotations/azure.workload.identity~1client-id
+        value: "<app_client_id>"                 # output of the app-orders stack
+```
+
+The `subject` of the `workload-identity` module (`system:serviceaccount:orders:orders`) must match the Application's namespace and the service account name. The two overlay values that come from Terraform (`app_client_id` and `postgres_fqdn`) are outputs of the `app-orders` stack. How they reach Git is up to you: copy them in the pull request that changes Terraform, or have a pipeline step that opens that PR. What matters is that the bridge between Terraform and Git is explicit. Notice also that no secret goes into Git: the application reads Key Vault through Workload Identity.
+
+### The Argo CD bootstrap
+
+The script installs Argo CD with the command from the [installation documentation](https://argo-cd.readthedocs.io/en/stable/getting_started/) and applies the instance's root Application:
 
 ```bash
 #!/usr/bin/env bash
-# infra/scripts/deploy-app.sh  ->  deploy-app.sh <application> <env> <instance>
+# infra/scripts/bootstrap-argocd.sh  ->  bootstrap-argocd.sh <env> <instance>
 set -euo pipefail
 
-app="$1"; env="$2"; instance="$3"
+env="$1"; instance="$2"
 suffix="${env}-${instance}"                       # prod-brs-01
+argocd_version="v3.2.0"                           # pin the version; check the current one
 
 az aks get-credentials \
   --resource-group "rg-aks-${suffix}" \
   --name "aks-${suffix}" \
   --overwrite-existing
 
-helm upgrade --install "${app}" "deploy/${app}/chart" \
-  --namespace "${app}" --create-namespace \
-  --values "deploy/${app}/values-${suffix}.yaml" \
-  --rollback-on-failure \
-  --timeout 5m
+kubectl create namespace argocd --dry-run=client -o yaml | kubectl apply -f -
 
-# If you prefer manifests instead of Helm:
-# kubectl apply -n "${app}" -f "deploy/${app}/manifests/"
+kubectl apply -n argocd --server-side --force-conflicts \
+  -f "https://raw.githubusercontent.com/argoproj/argo-cd/${argocd_version}/manifests/install.yaml"
+
+kubectl apply -n argocd -f "infra/argocd/bootstrap/root-${suffix}.yaml"
 ```
 
-A few important points:
+A few points about it:
 
-- The `--rollback-on-failure` flag is the one the [current `helm upgrade` page](https://helm.sh/docs/helm/helm_upgrade/) documents: if the upgrade fails, Helm rolls back to the last successful release. In older Helm versions, the equivalent flag was `--atomic`. Check against the version you use.
-- `az aks get-credentials` depends on the agent reaching the cluster's private API. That's why the pipeline pool is self-hosted inside the VNet (see Figure 2). The [private cluster access](https://learn.microsoft.com/en-us/azure/aks/access-private-cluster) documentation says the client needs network and DNS access to the private endpoint, from the cluster VNet or a connected network.
-- If the cluster requires Entra ID authentication for `kubectl`, the kubeconfig may need an extra login step. I didn't verify that detail, so check the AKS documentation for your configuration.
-- The two values that come from Terraform (`app_client_id` and `postgres_fqdn`) are outputs of the `app-orders` stack. How they enter the Helm values is up to you: write them into the values file in the pull request that changes Terraform, or read the outputs in the pipeline before `helm upgrade`. What matters is that the bridge between the two steps is explicit.
-- Use a dedicated identity for the deploy, different from the one that runs Terraform. The one that applies infrastructure doesn't need to touch workloads, and the one that deploys the application doesn't need to create networks.
+- The doc uses `--server-side --force-conflicts` because some Argo CD CRDs (like ApplicationSet) exceed the annotation size limit of client-side `kubectl apply`. It also recommends pinning a version in production. `v3.2.0` is the example the doc itself uses, so check the current version.
+- `az aks get-credentials` needs network and DNS access to the private API. That's why the bootstrap runs on the VNet's self-hosted agent.
+- The agent and the cluster need to reach the origin of `install.yaml` and of the Argo CD images. In a closed environment, that goes into the egress design I left out of scope.
+- If the Git repository is private, Argo CD needs credentials. The [private repositories doc](https://argo-cd.readthedocs.io/en/stable/user-guide/private-repositories/) lists HTTPS, SSH and GitHub App. How to provision them is another subject that I didn't cover here.
+- Use a dedicated identity for the bootstrap, different from the one that runs Terraform. The one that applies infrastructure doesn't need to touch workloads, and the one that installs Argo CD doesn't need to create networks.
+
+### How the application changes afterwards
+
+A new `orders` version becomes a change to the overlay's `newTag`, in a pull request. The review of that PR is the deploy approval, and the repository's branch policy is the control. In prod, the next step is the manual sync. At no point does the infrastructure pipeline come into play, nor does it need to reach the cluster API.
 
 ---
 
@@ -643,8 +772,8 @@ parameters:
     type: boolean
     default: false
 
-  - name: helm
-    displayName: "helm · orders application deploy"
+  - name: argocd
+    displayName: "argocd · install and root Application (once per cluster)"
     type: boolean
     default: false
 
@@ -684,11 +813,10 @@ stages:
             - ${{ if eq(parameters.aks, true) }}:
                 - aks
 
-  - ${{ if eq(parameters.helm, true) }}:
-      - template: templates/helm-deploy.yml
+  - ${{ if eq(parameters.argocd, true) }}:
+      - template: templates/argocd-bootstrap.yml
         parameters:
-          stageName: helm
-          application: orders
+          stageName: argocd
           environment: ${{ parameters.environment }}
           instance: ${{ parameters.instance }}
           dependsOn:
@@ -711,7 +839,7 @@ parameters:
   - name: stacks
     displayName: Steps to run
     type: stringList
-    values: [vnet, aks, app-orders, helm]
+    values: [vnet, aks, app-orders, argocd]
     default: [vnet]
 
 stages:
@@ -798,14 +926,12 @@ stages:
                         SYSTEM_OIDCREQUESTURI: $(System.OidcRequestUri)
 ```
 
-And the Helm deploy template, which uses the same Environment (and therefore the same approvals) and a dedicated service connection:
+And the Argo CD bootstrap template, which uses the same Environment (and therefore the same approvals) and a dedicated service connection:
 
 ```yaml
-# infra/pipelines/templates/helm-deploy.yml
+# infra/pipelines/templates/argocd-bootstrap.yml
 parameters:
   - name: stageName
-    type: string
-  - name: application
     type: string
   - name: environment
     type: string
@@ -817,10 +943,10 @@ parameters:
 
 stages:
   - stage: ${{ parameters.stageName }}
-    displayName: "helm · ${{ parameters.application }}-${{ parameters.environment }}-${{ parameters.instance }}"
+    displayName: "argocd-bootstrap-${{ parameters.environment }}-${{ parameters.instance }}"
     dependsOn: ${{ parameters.dependsOn }}
     jobs:
-      - deployment: deploy
+      - deployment: bootstrap
         pool:
           name: private-agents
         environment: azure-${{ parameters.environment }}
@@ -830,20 +956,20 @@ stages:
               steps:
                 - checkout: self
                 - task: AzureCLI@2
-                  displayName: helm upgrade --install
+                  displayName: install Argo CD and the root Application
                   inputs:
-                    azureSubscription: sc-aks-deploy-${{ parameters.environment }}
+                    azureSubscription: sc-aks-bootstrap-${{ parameters.environment }}
                     scriptType: bash
                     scriptLocation: scriptPath
-                    scriptPath: infra/scripts/deploy-app.sh
-                    arguments: ${{ parameters.application }} ${{ parameters.environment }} ${{ parameters.instance }}
+                    scriptPath: infra/scripts/bootstrap-argocd.sh
+                    arguments: ${{ parameters.environment }} ${{ parameters.instance }}
 ```
 
 What's going on:
 
-- One **service connection per environment** for Terraform (`sc-terraform-dev`, `sc-terraform-prod`) and another for the application deploy (`sc-aks-deploy-prod`), ideally with identity federation. No stored secret.
+- One **service connection per environment** for Terraform (`sc-terraform-dev`, `sc-terraform-prod`) and another for the Argo CD bootstrap (`sc-aks-bootstrap-prod`), ideally with identity federation. No stored secret.
 - The pool is `private-agents`, a self-hosted pool inside the VNet. In an environment where ACR (and, if you also close it, the state account) doesn't accept public access, the Microsoft-hosted agent can't reach those resources, and the cluster API is private.
-- The `deployment` jobs use an Azure DevOps **Environment**. That's where you configure approvals and checks for `prod`. Who approves the `apply` and the production deploy is an Environment decision, not a YAML one. According to the [documentation](https://learn.microsoft.com/en-us/azure/devops/pipelines/process/approvals), approvals and checks aren't defined in the YAML and whoever edits the YAML can't change them; the resource administrators (Environment, service connection, etc.) manage them through the web interface.
+- The `deployment` jobs use an Azure DevOps **Environment**. That's where you configure approvals and checks for `prod`. Who approves the `apply` and the production bootstrap is an Environment decision, not a YAML one. According to the [documentation](https://learn.microsoft.com/en-us/azure/devops/pipelines/process/approvals), approvals and checks aren't defined in the YAML and whoever edits the YAML can't change them; the resource administrators (Environment, service connection, etc.) manage them through the web interface.
 - The `plan` is published as an artifact and `apply` applies **that** plan. What was reviewed is what gets applied, not a new plan computed after approval.
 
 ### The script both steps use
@@ -931,8 +1057,8 @@ on:
         description: "app-orders · dedicated PostgreSQL, Key Vault and identity"
         type: boolean
         default: false
-      helm:
-        description: "helm · orders application deploy"
+      argocd:
+        description: "argocd · install and root Application (once per cluster)"
         type: boolean
         default: false
 
@@ -970,12 +1096,11 @@ jobs:
       instance: ${{ inputs.instance }}
       action: ${{ inputs.action }}
 
-  helm:
+  argocd:
     needs: [aks, app-orders]
-    if: ${{ !cancelled() && !failure() && inputs.helm }}
-    uses: ./.github/workflows/helm-deploy.yml
+    if: ${{ !cancelled() && !failure() && inputs.argocd }}
+    uses: ./.github/workflows/argocd-bootstrap.yml
     with:
-      application: orders
       environment: ${{ inputs.environment }}
       instance: ${{ inputs.instance }}
 ```
@@ -1037,16 +1162,15 @@ jobs:
         run: terraform apply -input=false tfplan
 ```
 
-### The Helm deploy reusable workflow
+### The Argo CD bootstrap reusable workflow
 
 ```yaml
-# .github/workflows/helm-deploy.yml
-name: helm-deploy
+# .github/workflows/argocd-bootstrap.yml
+name: argocd-bootstrap
 
 on:
   workflow_call:
     inputs:
-      application: { type: string, required: true }
       environment: { type: string, required: true }
       instance:    { type: string, required: true }
 
@@ -1055,7 +1179,7 @@ permissions:
   contents: read
 
 jobs:
-  deploy:
+  bootstrap:
     runs-on: [self-hosted, linux, private-vnet]   # must reach the AKS private API
     environment: ${{ inputs.environment }}
     steps:
@@ -1063,15 +1187,15 @@ jobs:
 
       - uses: azure/login@v2
         with:
-          client-id: ${{ vars.AZURE_DEPLOY_CLIENT_ID }}   # the deploy's own identity
+          client-id: ${{ vars.AZURE_BOOTSTRAP_CLIENT_ID }}   # the bootstrap's own identity
           tenant-id: ${{ vars.AZURE_TENANT_ID }}
           subscription-id: ${{ vars.AZURE_SUBSCRIPTION_ID }}
 
-      - name: helm upgrade --install
-        run: ./infra/scripts/deploy-app.sh "${{ inputs.application }}" "${{ inputs.environment }}" "${{ inputs.instance }}"
+      - name: install Argo CD and the root Application
+        run: ./infra/scripts/bootstrap-argocd.sh "${{ inputs.environment }}" "${{ inputs.instance }}"
 ```
 
-The runner needs `az`, `helm` (and `kubectl`, if you use manifests) installed. The login uses the `azure/login` action, which is the flow [GitHub's documentation](https://docs.github.com/en/actions/how-tos/secure-your-work/security-harden-deployments/oidc-in-azure) shows, and `deploy-app.sh` is the same script as in Azure DevOps.
+The runner needs `az` and `kubectl` installed. The login uses the `azure/login` action, which is the flow [GitHub's documentation](https://docs.github.com/en/actions/how-tos/secure-your-work/security-harden-deployments/oidc-in-azure) shows, and `bootstrap-argocd.sh` is the same script as in Azure DevOps.
 
 The points that make a difference:
 
@@ -1121,13 +1245,15 @@ On coupling, DORA's [Loosely coupled teams](https://dora.dev/capabilities/loosel
 
 1. **A parameter is not a vault.** Microsoft warns that parameter values are expanded when the template is parsed and may show up in logs. Secrets don't go in parameters. The [*Seven Sins*](https://2019.icse-conferences.org/event/icse-2019-technical-papers-the-seven-sins-security-smells-in-infrastructure-as-code-scripts) study (Rahman, Parnin and Williams, ICSE 2019) analyzed 15,232 IaC scripts and found 21,201 security smell occurrences, 1,326 of them hard-coded passwords, and showed a hard-coded secret can persist for up to 98 months (median 20), so don't count on "we'll remove it later". The Azure DevOps documentation also says to validate and restrict allowed parameter values, apply least privilege and keep credentials in secret variables, Key Vault or variable groups.
 2. **Partial selection creates drift.** If someone ticks only the cluster step after a network change that wasn't applied, the plan will fail or, worse, be applied on top of an outdated base. I handle it with `plan` as the default action and a scheduled job that runs `plan` on everything to detect drift.
-3. **Execution and destroy order.** On create, the order is `vnet`, `aks`, `app-orders` and `helm`. On `destroy` it's the reverse, and the database holds data. So I simply don't offer `destroy` as an `action` value in `prod`.
-4. **Helm before the database.** Ticking only the `helm` step in an environment where the database or the identity doesn't exist yet makes the pod start without being able to connect. `dependsOn` protects you when the steps come in the same run. In a `helm`-only run, your own judgment protects you (and, if you want, a check on the Environment).
-5. **Stale Helm values.** `app_client_id` and `postgres_fqdn` come from Terraform. If someone recreates the database or the identity and forgets to update the values, the deploy comes up with old values. Treat the bridge between Terraform and Helm as part of the design, not a detail.
+3. **Execution and destroy order.** On create, the order is `vnet`, `aks`, `app-orders` and the `argocd` bootstrap. On `destroy` it's the reverse, and the database holds data. So I simply don't offer `destroy` as an `action` value in `prod`.
+4. **Application created before the database.** If the `orders` Application enters Git before the database and the identity exist, the pod starts without being able to connect. `dependsOn` protects the bootstrap when the steps come in the same run, but it doesn't protect a pull request that adds the Application later. The practical order is to apply the `app-orders` stack before merging the PR that creates the Application.
+5. **Stale Terraform values in the manifests.** `app_client_id` and `postgres_fqdn` come from Terraform. If someone recreates the database or the identity and forgets to update the overlay, Argo CD keeps syncing the old values, because as far as it is concerned Git is right. Treat the bridge between Terraform and Git as part of the design, not a detail.
 6. **Who can click "Run" is part of access control.** The parameter form is an infrastructure control interface. Restrict who can run the pipeline and protect the production Environment.
 7. **Splitting too much.** Twenty small states become twenty dependency points. Split by lifecycle and owner, not by size. It's Parnas's criterion, again.
 8. **Trigger runs use defaults.** If you attach the pipeline to a `trigger`, the automatic run uses the parameters' default values. Hence `trigger: none` in the example and `default: false` on the steps.
-9. **A private network also closes your pipeline's door.** With ACR without public access, the Microsoft-hosted agent can no longer reach it, as the ACR docs warn, and the cluster API only answers inside the network. Plan the self-hosted agent or runner inside the VNet from the start. If you also close public access on the state account, the same applies to `terraform init`.
+9. **A private network also closes your pipeline's door.** With ACR without public access, the Microsoft-hosted agent can no longer reach it, as the ACR docs warn, and the cluster API only answers inside the network. Plan the self-hosted agent or runner inside the VNet from the start. With Argo CD, the pipeline only needs the API at bootstrap, but the cluster now needs to reach out to Git. If you also close public access on the state account, the same applies to `terraform init`.
+10. **App of apps is an admin tool.** The Argo CD docs warn that creating Applications in arbitrary projects is an admin-level capability: only admins should have push access to the parent Application's repository, and pull requests need review, paying attention to each Application's `project` field. Protect the `infra/argocd/apps` path with a branch policy and reviewers.
+11. **Prune and finalizer have effects.** Automated sync doesn't delete resources that left Git unless you enable pruning. And, with the finalizer, deleting an Application also deletes what it manages. Decide this on purpose, especially in prod.
 
 ---
 
@@ -1141,16 +1267,18 @@ On coupling, DORA's [Loosely coupled teams](https://dora.dev/capabilities/loosel
 - One pipeline to maintain, with the same code in every instance.
 - Modules reused across stacks (the example's `private-endpoint`).
 - Dedicated database per application, with a lifecycle tied to the application.
-- Frequent application deploys kept apart from the state that can least afford a mistake.
+- Frequent application deploys (through Git) kept apart from the state that can least afford a mistake.
+- Auditable deploys: the commit history and the pull request review are the record and the approval.
 - Clear history: the run records what was selected, and the state name says what it holds.
 
 **Cons**
 
-- More moving parts to understand: modules, stacks, backends, templates, charts.
-- Dependencies between stacks become explicit and you have to manage them, including the Terraform → Helm bridge.
+- More moving parts to understand: modules, stacks, backends, templates, manifests.
+- Dependencies between stacks become explicit and you have to manage them, including the Terraform → manifests bridge.
 - Migrating from a big state needs planning (HashiCorp's [refactoring guide](https://developer.hashicorp.com/terraform/language/v1.16.x/state/refactor) says to run `terraform plan` on the source configuration and confirm it won't change anything).
 - Manual selection opens room for human error unless you add guard rails (approvals, allowed values, `plan` as default).
 - A database per application increases cost and operations.
+- One more component to operate (Argo CD) and a cluster that needs to reach the Git repository.
 - A wrong split trades one problem for another: coupling between states.
 - A private network requires agents inside the network and careful DNS design.
 
@@ -1165,10 +1293,12 @@ On coupling, DORA's [Loosely coupled teams](https://dora.dev/capabilities/loosel
 - [ ] `key` = `<stack>-<environment>-<region>-<seq>.tfstate`
 - [ ] Authentication through identity federation, no secrets
 - [ ] Parameters: `environment` and `instance` with a closed list, `action` defaulting to `plan`, one boolean per step
-- [ ] Approval on the production Environment, for Terraform and for Helm
+- [ ] Approval on the production Environment, for Terraform and for the Argo CD bootstrap
 - [ ] Saved `plan` applied as an artifact
 - [ ] Dedicated database as a module call in the application's stack, if that is your model
-- [ ] Application deploy through Helm or manifests, outside the state, with its own identity
+- [ ] Application deploy through Argo CD (GitOps), with manifests in `infra/argocd` and one Application per instance
+- [ ] Production deploy approval on the pull request (branch policy) and, if you prefer, manual sync
+- [ ] Argo CD bootstrap through the pipeline, once per cluster, with its own identity
 - [ ] Self-hosted agents or runners inside the VNet, if the network is private
 - [ ] Scheduled `plan` job to detect drift
 - [ ] Document the dependency order between steps
@@ -1183,8 +1313,11 @@ Yes, and you can iterate with `${{ each }}`, which shortens the YAML. The cost i
 **What if I want to run every step at once?**
 Tick them all. If that's the most common case, consider an `all` parameter or an execution profile, but keep individual selection available.
 
-**Why not deploy the pod with Terraform's Helm provider?**
-It's possible, and I'm not saying it's wrong. I prefer Helm in the pipeline because the application changes far more often than the database and the network, and HashiCorp's group-by-volatility rule points to keeping that step out of the infrastructure state. It's a design choice of mine. If your team deploys rarely and wants everything in the same plan, the Terraform path works too.
+**Why Argo CD, and not a pipeline deploy or Terraform's Helm provider?**
+Because the application changes far more often than the database and the network, and HashiCorp's group-by-volatility rule points to keeping that step out of the infrastructure state. Argo CD also keeps the cluster reconciled with Git, and the pipeline doesn't need to reach the private API on every deploy. It's a design choice of mine. If your team doesn't want to operate Argo CD, Helm in the pipeline works too, with the private API reachable by the agent.
+
+**Can I use Helm charts instead of Kustomize?**
+Yes. The Argo CD docs list Kustomize, Helm charts and directories of YAML as manifest formats. The Application points to the chart instead of the overlay, and the per-instance values live in Git.
 
 **Why does PostgreSQL use a delegated subnet and not a Private Endpoint?**
 Because I chose network integration (private access). The [documentation](https://learn.microsoft.com/en-us/azure/postgresql/flexible-server/concepts-networking-private) presents two networking options for PostgreSQL Flexible Server: private access (VNet integration, what I used) or public access with a Private Endpoint. Check what changes in each before creating the server.
@@ -1233,7 +1366,16 @@ If you only have one state today, you don't need to split everything at once. St
 - [Terraform azurerm — kubernetes_cluster (data source)](https://registry.terraform.io/providers/hashicorp/azurerm/latest/docs/data-sources/kubernetes_cluster)
 - [Terraform azurerm — key_vault](https://registry.terraform.io/providers/hashicorp/azurerm/latest/docs/resources/key_vault)
 - [Microsoft — Store Terraform state in Azure Storage](https://learn.microsoft.com/en-us/azure/terraform/terraform-backend)
-- [Helm — helm upgrade](https://helm.sh/docs/helm/helm_upgrade/)
+
+**GitOps (Argo CD)**
+- [Argo CD — Overview](https://argo-cd.readthedocs.io/en/stable/)
+- [Argo CD — Installation (getting started)](https://argo-cd.readthedocs.io/en/stable/getting_started/)
+- [Argo CD — Cluster bootstrapping (app of apps)](https://argo-cd.readthedocs.io/en/stable/operator-manual/cluster-bootstrapping/)
+- [Argo CD — Declarative setup (Application)](https://argo-cd.readthedocs.io/en/stable/operator-manual/declarative-setup/)
+- [Argo CD — Automated sync](https://argo-cd.readthedocs.io/en/stable/user-guide/auto_sync/)
+- [Argo CD — Sync options](https://argo-cd.readthedocs.io/en/stable/user-guide/sync-options/)
+- [Argo CD — Kustomize](https://argo-cd.readthedocs.io/en/stable/user-guide/kustomize/)
+- [Argo CD — Private repositories](https://argo-cd.readthedocs.io/en/stable/user-guide/private-repositories/)
 
 **Reference architecture (private network)**
 - [AKS — Private clusters](https://learn.microsoft.com/en-us/azure/aks/private-clusters)
