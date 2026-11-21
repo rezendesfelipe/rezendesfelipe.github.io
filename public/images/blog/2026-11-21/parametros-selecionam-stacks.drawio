@@ -1,0 +1,22 @@
+<mxfile host="app.diagrams.net" version="26.1.1" pages="1">
+  <diagram id="params-stacks" name="Parâmetros → Stacks → tfstate">
+    <mxGraphModel dx="1262" dy="621" grid="0" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1200" pageHeight="660" background="#0b1326" math="0" shadow="0">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+        <mxCell id="title" value="Quem roda é decidido no run, o isolamento é decidido no desenho" style="text;html=1;fontSize=28;fontStyle=1;fontFamily=Space Grotesk;fontColor=#dae2fd;align=left;" parent="1" vertex="1"><mxGeometry x="60" y="60" width="1000" height="40" as="geometry" /></mxCell>
+        <mxCell id="params" value="PARÂMETROS DO RUN&#xa;&#xa;environment: dev | hml | prd&#xa;action: plan | apply&#xa;&#xa;☑ network&#xa;☐ data&#xa;☑ aks" style="rounded=1;arcSize=5;html=0;whiteSpace=wrap;align=left;verticalAlign=top;spacingLeft=24;spacingTop=18;fillColor=#171f33;strokeColor=#45464d;fontColor=#dae2fd;fontFamily=Manrope;fontSize=14;" parent="1" vertex="1"><mxGeometry x="60" y="130" width="300" height="400" as="geometry" /></mxCell>
+        <mxCell id="pipe" value="PIPELINE ÚNICO&#xa;&#xa;Orquestração: lê os parâmetros e monta só os stages pedidos&#xa;&#xa;Template de stack: init → plan → (aprovação) → apply&#xa;&#xa;Identidade por ambiente: OIDC, sem segredo armazenado" style="rounded=1;arcSize=5;html=0;whiteSpace=wrap;align=left;verticalAlign=top;spacingLeft=24;spacingRight=16;spacingTop=18;fillColor=#171f33;strokeColor=#2fd9f4;strokeWidth=2;fontColor=#dae2fd;fontFamily=Manrope;fontSize=14;" parent="1" vertex="1"><mxGeometry x="420" y="130" width="230" height="400" as="geometry" /></mxCell>
+        <mxCell id="net" value="10-network&#xa;usa modules/network&#xa;key = 10-network/dev.tfstate" style="rounded=1;html=0;whiteSpace=wrap;align=left;spacingLeft=20;fillColor=#222a3d;strokeColor=#2fd9f4;strokeWidth=2;fontColor=#dae2fd;fontFamily=Manrope;fontSize=14;" parent="1" vertex="1"><mxGeometry x="744" y="180" width="372" height="92" as="geometry" /></mxCell>
+        <mxCell id="data" value="20-data (não selecionada)&#xa;estado intacto, nada é lido nem alterado&#xa;key = 20-data/dev.tfstate" style="rounded=1;html=0;whiteSpace=wrap;align=left;spacingLeft=20;dashed=1;fillColor=#222a3d;strokeColor=#45464d;fontColor=#c6c6cd;fontFamily=Manrope;fontSize=14;" parent="1" vertex="1"><mxGeometry x="744" y="288" width="372" height="92" as="geometry" /></mxCell>
+        <mxCell id="aks" value="30-aks&#xa;usa modules/aks, lê a rede por data source&#xa;key = 30-aks/dev.tfstate" style="rounded=1;html=0;whiteSpace=wrap;align=left;spacingLeft=20;fillColor=#222a3d;strokeColor=#2fd9f4;strokeWidth=2;fontColor=#dae2fd;fontFamily=Manrope;fontSize=14;" parent="1" vertex="1"><mxGeometry x="744" y="396" width="372" height="92" as="geometry" /></mxCell>
+        <mxCell id="backend" value="Backend remoto (Azure Storage): um container, vários blobs. Cada stack e cada ambiente tem o seu estado e o seu lock." style="rounded=1;html=0;whiteSpace=wrap;align=left;spacingLeft=24;fillColor=#222a3d;strokeColor=#5bbfae;strokeWidth=2;fontColor=#5bbfae;fontFamily=Manrope;fontSize=14;" parent="1" vertex="1"><mxGeometry x="60" y="560" width="1080" height="64" as="geometry" /></mxCell>
+        <mxCell id="e1" style="edgeStyle=orthogonalEdgeStyle;strokeColor=#2fd9f4;strokeWidth=2;endArrow=block;endFill=1;" parent="1" source="params" target="pipe" edge="1"><mxGeometry relative="1" as="geometry" /></mxCell>
+        <mxCell id="e2" style="edgeStyle=orthogonalEdgeStyle;strokeColor=#2fd9f4;strokeWidth=2;endArrow=block;endFill=1;" parent="1" source="pipe" target="net" edge="1"><mxGeometry relative="1" as="geometry" /></mxCell>
+        <mxCell id="e3" style="edgeStyle=orthogonalEdgeStyle;strokeColor=#45464d;strokeWidth=2;dashed=1;endArrow=none;" parent="1" source="pipe" target="data" edge="1"><mxGeometry relative="1" as="geometry" /></mxCell>
+        <mxCell id="e4" style="edgeStyle=orthogonalEdgeStyle;strokeColor=#2fd9f4;strokeWidth=2;endArrow=block;endFill=1;" parent="1" source="pipe" target="aks" edge="1"><mxGeometry relative="1" as="geometry" /></mxCell>
+        <mxCell id="e5" style="edgeStyle=orthogonalEdgeStyle;strokeColor=#5bbfae;strokeWidth=2;endArrow=block;endFill=1;" parent="1" source="aks" target="backend" edge="1"><mxGeometry relative="1" as="geometry" /></mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>
