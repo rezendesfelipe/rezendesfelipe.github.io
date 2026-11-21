@@ -95,9 +95,9 @@ Eu não inventei nada disso, e acho importante deixar claro de onde vem. Segue o
 | [Twelve-Factor App, III. Config](https://12factor.net/config) | Config é o que varia entre deploys e fica separada do código; a "fiação" interna entre módulos, que não varia, fica no código | Ambiente e seleção de stack são *config*; a chamada de módulos dentro de cada stack é código |
 | [Parnas (1972), *On the Criteria To Be Used in Decomposing Systems into Modules*](https://doi.org/10.1145/361598.361623) | Segundo o resumo do próprio artigo, a eficácia de uma modularização depende do critério usado para dividir o sistema em módulos | Base teórica clássica para "dividir pelo critério certo". É uma analogia: o artigo é sobre software, não sobre IaC |
 | [Rahman, Parnin e Williams (ICSE 2019), *The Seven Sins*](https://2019.icse-conferences.org/event/icse-2019-technical-papers-the-seven-sins-security-smells-in-infrastructure-as-code-scripts) | Analisaram 15.232 scripts de IaC e encontraram 21.201 ocorrências de *security smells*, 1.326 delas senhas hardcoded | Motivo para tratar parâmetro como seleção e nunca como lugar de segredo |
-| [State of DevOps 2021 (DORA)](https://cloud.google.com/resources/state-of-devops) | Mede entrega por lead time, frequência de deploy, tempo de restauração e taxa de falha em mudanças | São as métricas que melhoram quando as mudanças ficam pequenas e isoladas |
+| [DORA — métricas de entrega](https://dora.dev/guides/dora-metrics/) | Cinco métricas: lead time da mudança, frequência de deploy, tempo de recuperação de deploy com falha, taxa de falha de mudança e taxa de retrabalho. A pesquisa afirma que velocidade e estabilidade não são trade-offs | São as métricas em que eu espero ganho com mudanças pequenas e isoladas (argumento meu, não achado da pesquisa) |
 
-Sobre o DORA, um cuidado: eu não estou dizendo que "parâmetros de pipeline" aparecem como um achado da pesquisa. O que a pesquisa mede são essas quatro métricas, e o argumento é que mudanças menores e mais isoladas ajudam justamente nelas. Quem quiser a base, o livro *Accelerate* (Forsgren, Humble e Kim) agrupa as capacidades de entrega contínua. Aliás, esse é o relatório de 2021; existem edições mais recentes, então confira a mais atual antes de citar números.
+Sobre o DORA, um cuidado: eu não estou dizendo que "parâmetros de pipeline" aparecem como um achado da pesquisa. O argumento de que mudanças menores e mais isoladas ajudam nessas métricas é meu, e se apoia em dois pontos. A capacidade [Deployment automation](https://dora.dev/capabilities/deployment-automation/) descreve a entrega automatizada com scripts e configuração específica de cada ambiente guardados em version control. E a capacidade [Loosely coupled teams](https://dora.dev/capabilities/loosely-coupled-architecture/) afirma que, em arquiteturas fortemente acopladas, pequenas mudanças podem causar falhas em cascata; ela fala de arquitetura de software e de times, então a ligação com IaC é uma analogia. O [relatório de 2024](https://dora.dev/research/2024/dora-report/) também reforça que fundamentos como lotes pequenos e testes robustos continuam cruciais.
 
 ---
 
@@ -293,16 +293,17 @@ parameters:
     default: [network]
 
 stages:
-  - ${{ if contains(parameters.stacks, 'network') }}:
-      - template: templates/terraform-stack.yml
-        parameters:
-          stack: 10-network
-          stageName: network
-          environment: ${{ parameters.environment }}
-          action: ${{ parameters.action }}
+  - ${{ each stack in parameters.stacks }}:
+      - ${{ if eq(stack, 'network') }}:
+          - template: templates/terraform-stack.yml
+            parameters:
+              stack: 10-network
+              stageName: network
+              environment: ${{ parameters.environment }}
+              action: ${{ parameters.action }}
 ```
 
-O `stringList` e o `contains` estão ambos na documentação, mas os exemplos dela usam `contains` com um parâmetro `string` e `each` com o `stringList`. Eu não testei `contains` diretamente sobre um `stringList`, então valide no seu pipeline antes de adotar.
+A documentação mostra essa iteração com `each` sobre um `stringList`. Evitei o `contains` porque, segundo a [referência de expressões](https://learn.microsoft.com/en-us/azure/devops/pipelines/process/expressions), ele compara strings; para arrays existe o `containsValue`, mas a própria página o descreve como de uso limitado fora de pipeline decorators. Eu não executei este exemplo, então valide antes de adotar. Com essa forma, o `dependsOn` condicional do exemplo principal tende a ficar mais trabalhoso.
 
 ### O template de stack
 
@@ -339,6 +340,9 @@ stages:
               scriptPath: infra/scripts/tf.sh
               arguments: plan ${{ parameters.stack }} ${{ parameters.environment }}
               addSpnToEnvironment: true
+            env:
+              SYSTEM_ACCESSTOKEN: $(System.AccessToken)
+              SYSTEM_OIDCREQUESTURI: $(System.OidcRequestUri)
           - publish: $(Build.ArtifactStagingDirectory)/${{ parameters.stack }}.tfplan
             artifact: plan-${{ parameters.stageName }}
 
@@ -364,6 +368,9 @@ stages:
                         scriptPath: infra/scripts/tf.sh
                         arguments: apply ${{ parameters.stack }} ${{ parameters.environment }}
                         addSpnToEnvironment: true
+                      env:
+                        SYSTEM_ACCESSTOKEN: $(System.AccessToken)
+                        SYSTEM_OIDCREQUESTURI: $(System.OidcRequestUri)
 ```
 
 O que está acontecendo:
@@ -386,6 +393,7 @@ export ARM_USE_OIDC=true
 export ARM_USE_AZUREAD=true
 export ARM_CLIENT_ID="$servicePrincipalId"   # expostos pela task AzureCLI@2
 export ARM_TENANT_ID="$tenantId"
+export ARM_ADO_PIPELINE_SERVICE_CONNECTION_ID="$AZURESUBSCRIPTION_SERVICE_CONNECTION_ID"  # exigido pelo provider no Azure DevOps
 export ARM_SUBSCRIPTION_ID="$(az account show --query id -o tsv)"
 
 cd "infra/stacks/${stack}"
@@ -409,7 +417,7 @@ case "$cmd" in
 esac
 ```
 
-Os valores `TFSTATE_RG` e `TFSTATE_SA` podem vir de variáveis do pipeline. A task [`AzureCLI@2`](https://learn.microsoft.com/en-us/azure/devops/pipelines/tasks/reference/azure-cli-v2) expõe `$servicePrincipalId` e `$tenantId` (e o `idToken`) no ambiente do script quando `addSpnToEnvironment: true` e a service connection usa federação de identidade. Para o backend, a [documentação do `azurerm`](https://developer.hashicorp.com/terraform/language/v1.16.x/backend/azurerm) diz que, no Azure DevOps, os endpoints do token OIDC são encontrados automaticamente e que, com `AzureCLI@2` ou `AzurePowerShell`, o ID da service connection já vem na variável `AZURESUBSCRIPTION_SERVICE_CONNECTION_ID`. Por isso o script não passa o token manualmente. Para o *provider* (e não o backend), confira o guia de OIDC do `azurerm` na versão que você usa: eu não li essa página.
+Os valores `TFSTATE_RG` e `TFSTATE_SA` podem vir de variáveis do pipeline. A task [`AzureCLI@2`](https://learn.microsoft.com/en-us/azure/devops/pipelines/tasks/reference/azure-cli-v2) expõe `$servicePrincipalId` e `$tenantId` (e o `idToken`) no ambiente do script quando `addSpnToEnvironment: true` e a service connection usa federação de identidade. Para o backend, a [documentação do `azurerm`](https://developer.hashicorp.com/terraform/language/v1.16.x/backend/azurerm) diz que, no Azure DevOps, os endpoints do token OIDC são encontrados automaticamente e que, com `AzureCLI@2` ou `AzurePowerShell`, o ID da service connection já vem na variável `AZURESUBSCRIPTION_SERVICE_CONNECTION_ID`. Por isso o script não passa o token manualmente. Para o *provider*, o [guia de OIDC do `azurerm`](https://registry.terraform.io/providers/hashicorp/azurerm/latest/docs/guides/service_principal_oidc) diz que, no Azure DevOps, ele usa `ARM_OIDC_REQUEST_TOKEN` e `ARM_OIDC_REQUEST_URL` ou, na ausência deles, cai em `SYSTEM_ACCESSTOKEN` e `SYSTEM_OIDCREQUESTURI`, e exige o ID da service connection em `ARM_ADO_PIPELINE_SERVICE_CONNECTION_ID`. É por isso que o `env:` das tasks passa o `System.AccessToken` e o `System.OidcRequestUri`, e que o script reaproveita o `AZURESUBSCRIPTION_SERVICE_CONNECTION_ID` (essa reutilização é minha: o guia usa uma variável própria com o ID da conexão). O guia também recomenda a `AzureCLI@2` em vez da `TerraformTaskV4`, que depende de uma extensão que não vem instalada por padrão, e informa que o suporte a OIDC no provider começa na versão 3.7.0.
 
 ---
 
@@ -538,7 +546,7 @@ jobs:
 Os pontos que fazem diferença:
 
 - Os [workflows reutilizáveis](https://docs.github.com/en/actions/how-tos/reuse-automations/reuse-workflows) são chamados no nível do job, recebem `inputs` com `with`, e o tipo precisa bater com o declarado (booleano, número ou string). A documentação permite encadear até dez níveis de workflows (o chamador mais nove). Um detalhe que serve ao nosso desenho: o job que chama o reutilizável não pode usar `environment`; quem declara o `environment` é o job dentro do reutilizável, como fizemos.
-- A autenticação é por **OIDC**. O `ARM_USE_OIDC` faz o provider pedir o token ao GitHub e trocar por acesso no Azure, sem nenhum segredo armazenado. A [documentação do GitHub](https://docs.github.com/en/actions/how-tos/secure-your-work/security-harden-deployments/oidc-in-azure) mostra o fluxo com a action `azure/login`. Aqui deixei o próprio Terraform fazer a troca via `use_oidc`, documentado no backend `azurerm`. Se preferir o caminho mais trilhado, faça o login com `azure/login` antes.
+- A autenticação é por **OIDC**. O `ARM_USE_OIDC` faz o provider pedir o token ao GitHub e trocar por acesso no Azure, sem nenhum segredo armazenado. A [documentação do GitHub](https://docs.github.com/en/actions/how-tos/secure-your-work/security-harden-deployments/oidc-in-azure) mostra o fluxo com a action `azure/login`. Aqui deixei o próprio Terraform fazer a troca: segundo o [guia de OIDC do provider](https://registry.terraform.io/providers/hashicorp/azurerm/latest/docs/guides/service_principal_oidc), no GitHub Actions ele detecta sozinho `ACTIONS_ID_TOKEN_REQUEST_URL` e `ACTIONS_ID_TOKEN_REQUEST_TOKEN`, desde que o workflow tenha `id-token: write`. O mesmo guia lembra que a credencial federada é por Environment, branch, pull request ou tag, e que os valores precisam bater exatamente. Se preferir o caminho mais trilhado, faça o login com `azure/login` antes.
 - Quando o job usa um Environment, o *subject* do token fica no formato `repo:ORG/REPO:environment:NOME`. Isso permite criar **uma credencial federada por ambiente** no Entra ID: o `prd` só aceita tokens de jobs do Environment `prd`. É privilégio mínimo e separação por ambiente praticamente de graça. Atenção a uma mudança recente: segundo a [referência de OIDC do GitHub](https://docs.github.com/en/actions/reference/security/oidc), repositórios criados depois de 15/07/2026 (e renomeados ou transferidos depois dessa data) usam por padrão um subject imutável, que inclui os IDs do dono e do repositório, enquanto os antigos mantêm o formato por nome até você optar. A [Microsoft recomenda migrar](https://learn.microsoft.com/en-us/entra/workload-id/workload-identities-github-immutable-subjects) as credenciais baseadas em nome. Ou seja, a credencial federada precisa bater com o formato do seu repositório. A referência traz o exemplo do subject por ambiente (`repo:octo-org/octo-repo:environment:Production`) e, para o formato imutável, o exemplo com branch (`repo:octo-org@123456/octo-repo@456789:ref:refs/heads/main`), então confirme como fica o subject de ambiente no seu caso. A documentação ainda recomenda proteger o Environment com regras (por exemplo, restringir branches e tags) quando ele é usado em políticas OIDC.
 - Neste exemplo, `plan` e `apply` rodam no mesmo job, aplicando o plano salvo. O custo é que, se o Environment tiver *required reviewers*, a aprovação é pedida **antes** do plan. Se isso incomoda, use dois Environments (`dev-plan` e `dev-apply`, por exemplo) ou separe em dois jobs.
 
@@ -659,6 +667,7 @@ Se você só tem um state hoje, não precisa dividir tudo de uma vez. Comece pel
 - [Azure Pipelines — Task AzureCLI@2](https://learn.microsoft.com/en-us/azure/devops/pipelines/tasks/reference/azure-cli-v2)
 - [GitHub — Workflow syntax](https://docs.github.com/en/actions/reference/workflows-and-actions/workflow-syntax)
 - [GitHub — Referência de OIDC](https://docs.github.com/en/actions/reference/security/oidc)
+- [Terraform azurerm — Guia de OIDC](https://registry.terraform.io/providers/hashicorp/azurerm/latest/docs/guides/service_principal_oidc)
 - [GitHub — Input types for manual workflows](https://github.blog/changelog/2021-11-10-github-actions-input-types-for-manual-workflows)
 - [GitHub — workflow_dispatch agora aceita 25 inputs](https://github.blog/changelog/2025-12-04-actions-workflow-dispatch-workflows-now-support-25-inputs/)
 - [GitHub — Reusable workflows](https://docs.github.com/en/actions/how-tos/reuse-automations/reuse-workflows)
@@ -679,5 +688,7 @@ Se você só tem um state hoje, não precisa dividir tudo de uma vez. Comece pel
 **Pesquisa**
 - D. L. Parnas, [*On the Criteria To Be Used in Decomposing Systems into Modules*](https://doi.org/10.1145/361598.361623), Communications of the ACM, 15(12), 1972.
 - A. Rahman, C. Parnin, L. Williams, [*The Seven Sins: Security Smells in Infrastructure as Code Scripts*](https://2019.icse-conferences.org/event/icse-2019-technical-papers-the-seven-sins-security-smells-in-infrastructure-as-code-scripts), ICSE 2019.
-- [Accelerate State of DevOps 2021 (DORA)](https://cloud.google.com/resources/state-of-devops)
-- N. Forsgren, J. Humble, G. Kim, *Accelerate*, IT Revolution, 2018.
+- [DORA — Software delivery performance metrics](https://dora.dev/guides/dora-metrics/)
+- [DORA — Deployment automation](https://dora.dev/capabilities/deployment-automation/)
+- [DORA — Loosely coupled teams](https://dora.dev/capabilities/loosely-coupled-architecture/)
+- [Accelerate State of DevOps 2024 (DORA)](https://dora.dev/research/2024/dora-report/)
