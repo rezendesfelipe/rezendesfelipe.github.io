@@ -150,14 +150,6 @@ I designed the infrastructure to run the application, the test gate and a **loca
 - **Measuring badly is worse than not measuring.** The first OCR measurement would have endorsed the wrong conclusion.
 - **Dependency security is recurring, not one-off.** New advisories blocked CI on every PR in September and again in October. Dependency updates became step zero of every merge queue.
 
-## What is still open
-
-- Applying `main` branch protection depends on the repository administrator. The verifier already exists.
-- Cross-version classifier drift depends on human-adjudicated data, which the false-negative ledger was built to start collecting.
-- The decomposition of `collection_executor.py` continues with the remaining modules in the plan.
-
----
-
 ## References
 
 - WHO. [International Code of Marketing of Breast-milk Substitutes](https://www.who.int/publications/i/item/9241541601) (1981)

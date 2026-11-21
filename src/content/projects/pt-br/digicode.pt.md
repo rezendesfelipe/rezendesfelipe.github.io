@@ -150,14 +150,6 @@ Desenhei a infraestrutura para rodar a aplicação, o gate de testes e um **LLM 
 - **Medir mal é pior do que não medir.** A primeira medição do OCR teria aprovado uma conclusão errada.
 - **Segurança de dependências é recorrente, não pontual.** Novos avisos travaram o CI de todos os PRs em setembro e em outubro. A atualização de dependências virou a etapa zero de cada fila de merges.
 
-## O que ainda está em aberto
-
-- Aplicar a proteção da `main` depende do administrador do repositório. O verificador já existe.
-- O drift entre versões de classificador depende de dados adjudicados por humanos, e o ledger de falsos negativos foi criado para começar a acumulá-los.
-- A decomposição do `collection_executor.py` segue com os módulos restantes do plano.
-
----
-
 ## Referências
 
 - OMS. [International Code of Marketing of Breast-milk Substitutes](https://www.who.int/publications/i/item/9241541601) (1981)
