@@ -118,7 +118,8 @@ code:not(pre code) {
 .topbar__brand:hover { color: var(--text); }
 
 .topbar__logo {
-  height: 32px;
+  height: 36px;
+  border-radius: 8px;
   width: auto;
   display: block;
 }
