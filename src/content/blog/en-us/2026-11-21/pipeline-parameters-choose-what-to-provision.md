@@ -60,7 +60,7 @@ There is one pipeline. What changes from run to run are the parameters. And sinc
 
 ### 1. Smaller blast radius
 
-HashiCorp's [workspace best practices](https://developer.hashicorp.com/terraform/cloud-docs/workspaces/best-practices) say any operation on a resource can affect other resources managed in the same state, and that you should keep the blast radius small. The guidance is to split by lifecycle (what changes often stays away from what rarely changes), by stateful vs. stateless (databases away from compute) and by team responsibility and permissions. It also shows up in the [state refactoring guide](https://developer.hashicorp.com/terraform/language/v1.16.x/state/refactor).
+HashiCorp's [workspace best practices](https://developer.hashicorp.com/terraform/cloud-docs/workspaces/best-practices) say any operation on a resource can affect other resources managed in the same state, and that you should keep the blast radius small. The guidance is to split by lifecycle (what changes often stays away from what rarely changes), by stateful vs. stateless (databases away from compute) and by team responsibility and permissions. The page even suggests a workspace naming convention, `<business-unit>-<app-name>-<layer>-<env>`, which looks a lot like the `10-network/dev` I use here. It also shows up in the [state refactoring guide](https://developer.hashicorp.com/terraform/language/v1.16.x/state/refactor).
 
 In practice: a bad `apply` on the application stack doesn't put networking or data in the line of fire.
 
@@ -74,7 +74,7 @@ Smaller `plan`, smaller `apply`, smaller lock. The `azurerm` backend locks using
 
 ### 4. Small, frequent changes
 
-The Azure Well-Architected Framework, in [OE:11](https://learn.microsoft.com/azure/well-architected/operational-excellence/safe-deployments), recommends safe deployment practices focused on small, incremental releases with quality gates and progressive exposure. Selecting only what changed is the infrastructure version of that idea.
+The Azure Well-Architected Framework, in [OE:11](https://learn.microsoft.com/azure/well-architected/operational-excellence/safe-deployments), recommends safe deployment practices focused on small, incremental releases with quality gates and progressive exposure. Selecting only what changed is the infrastructure version of that idea. The same page notes that Azure Pipelines and GitHub Actions support multi-stage deployments with approval gates.
 
 ### 5. One pipeline to maintain, not ten
 
@@ -88,16 +88,16 @@ I didn't invent any of this, and I think it matters to be clear about where it c
 
 | Reference | What it says | How it connects |
 |---|---|---|
-| [HashiCorp — Workspace best practices](https://developer.hashicorp.com/terraform/cloud-docs/workspaces/best-practices) | Keep the blast radius small; split by lifecycle, stateful/stateless and responsibility | Grounds the split into multiple `tfstate` files |
-| [HashiCorp — Refactor state](https://developer.hashicorp.com/terraform/language/v1.16.x/state/refactor) | Plan grouping and dependencies before splitting; use `removed` and `import` blocks | Shows how to migrate from one big state without destroying anything |
-| [Azure Landing Zones](https://learn.microsoft.com/en-us/azure/architecture/landing-zones/landing-zone-deploy) | Platform landing zone separate from application landing zones, per environment | Same logic: what's shared changes less and has a different owner |
-| [Azure Well-Architected, OE:11](https://learn.microsoft.com/azure/well-architected/operational-excellence/safe-deployments) | Small, incremental deployments through pipelines, same artifacts across environments | One pipeline, different parameters |
-| [Twelve-Factor App, III. Config](https://12factor.net/config) | Config is what varies between deploys and stays separate from code | Environment and stack selection are *config*; the module code is the same |
-| [Parnas (1972), *On the Criteria To Be Used in Decomposing Systems into Modules*](https://doi.org/10.1145/361598.361623) | The effectiveness of a modularization depends on the criteria used to split the system | Classic basis for "split by the right criterion". It's an analogy: the paper is about software, not IaC |
+| [HashiCorp — Workspace best practices](https://developer.hashicorp.com/terraform/cloud-docs/workspaces/best-practices) | Keep the blast radius small; group by volatility, separate stateful from stateless and split by responsibility and privileges. Long-running plans are an early sign of a bloated scope | Grounds the split into multiple `tfstate` files |
+| [HashiCorp — Refactor state](https://developer.hashicorp.com/terraform/language/v1.16.x/state/refactor) | Plan grouping and dependencies before splitting; sets repeated across configurations are module candidates; migrate with `removed` and `import` blocks (Terraform 1.7+) | Grounds the modules and shows how to migrate from one big state without destroying anything |
+| [Azure Landing Zones](https://learn.microsoft.com/en-us/azure/architecture/landing-zones/landing-zone-deploy) | Platform landing zone (centralized services) separate from workload landing zones | Same separation logic: what's shared has another lifecycle and another owner |
+| [Azure Well-Architected, OE:11](https://learn.microsoft.com/azure/well-architected/operational-excellence/safe-deployments) | Small, incremental, quality-gated releases; every deployment follows a standard pattern and is automated to reduce human error | One standard pipeline, different parameters |
+| [Twelve-Factor App, III. Config](https://12factor.net/config) | Config is what varies between deploys and stays separate from code; the internal wiring between modules, which doesn't vary, belongs in code | Environment and stack selection are *config*; the module calls inside each stack are code |
+| [Parnas (1972), *On the Criteria To Be Used in Decomposing Systems into Modules*](https://doi.org/10.1145/361598.361623) | According to the paper's own abstract, the effectiveness of a modularization depends on the criteria used to divide the system into modules | Classic basis for "split by the right criterion". It's an analogy: the paper is about software, not IaC |
 | [Rahman, Parnin and Williams (ICSE 2019), *The Seven Sins*](https://2019.icse-conferences.org/event/icse-2019-technical-papers-the-seven-sins-security-smells-in-infrastructure-as-code-scripts) | Analyzed 15,232 IaC scripts and found 21,201 security smell occurrences, 1,326 of them hard-coded passwords | Reason to treat parameters as selection and never as a place for secrets |
 | [State of DevOps 2021 (DORA)](https://cloud.google.com/resources/state-of-devops) | Measures delivery by lead time, deployment frequency, time to restore and change failure rate | These are the metrics that improve when changes get small and isolated |
 
-A caution on DORA: I'm not saying "pipeline parameters" appear as a research finding. The research measures those four metrics, and the argument is that smaller, more isolated changes help exactly there. For the foundation, the book *Accelerate* (Forsgren, Humble and Kim) groups the continuous delivery capabilities.
+A caution on DORA: I'm not saying "pipeline parameters" appear as a research finding. The research measures those four metrics, and the argument is that smaller, more isolated changes help exactly there. For the foundation, the book *Accelerate* (Forsgren, Humble and Kim) groups the continuous delivery capabilities. Also note this is the 2021 report; newer editions exist, so check the latest one before quoting numbers.
 
 ---
 
@@ -178,7 +178,7 @@ tfstate/
 └── 30-aks/prd.tfstate
 ```
 
-Two things deserve attention. The state account should live outside what Terraform manages in the stacks, and authentication should use Microsoft Entra ID rather than access keys (the [docs](https://developer.hashicorp.com/terraform/language/v1.16.x/backend/azurerm) treat Entra ID as the recommended option, requiring `Storage Blob Data Contributor` on the container).
+Two things deserve attention. The state account should live outside what Terraform manages in the stacks, and authentication should use Microsoft Entra ID rather than access keys (the [docs](https://developer.hashicorp.com/terraform/language/v1.16.x/backend/azurerm) mark the access key as "not recommended for new workloads" and list `Storage Blob Data Contributor` on the container as the least-privilege option).
 
 ### A module called by the stack
 
@@ -210,7 +210,7 @@ If modules live in another repository, `source` points to a tag so the version i
 
 ## Azure DevOps: runtime parameters
 
-Azure Pipelines has [runtime parameters](https://learn.microsoft.com/en-us/azure/devops/pipelines/process/runtime-parameters): you declare a parameter with a type, a default and, optionally, a list of allowed values, and the **Run pipeline** screen builds the form for you. Three types cover what we want: `string` with `values` (becomes a dropdown), `boolean` (becomes a checkbox) and `object` (for richer structures).
+Azure Pipelines has [runtime parameters](https://learn.microsoft.com/en-us/azure/devops/pipelines/process/runtime-parameters): you declare a parameter with a type, a default and, optionally, a list of allowed values, and the **Run pipeline** screen builds the form for you. Three types cover what we want: `string` with `values` (becomes a dropdown), `boolean` (becomes a checkbox) and `object` (for richer structures). There is also `stringList`, which lets you tick several items, but the documentation warns it isn't available in templates (use `object` there). I show that variation just below.
 
 ### The orchestrator
 
@@ -280,6 +280,30 @@ The key is the `${{ if ... }}` expressions. They are **template expressions**, e
 
 The conditional `dependsOn` solves an annoying detail: if you declare a dependency on a stage that wasn't included, pipeline validation fails. Here the dependency only exists when the network stack was also selected.
 
+### Variation: a multi-select list
+
+Instead of one boolean per stack, you can use a `stringList` in the main pipeline, where the run screen lets you tick several items at once:
+
+```yaml
+parameters:
+  - name: stacks
+    displayName: Stacks to provision
+    type: stringList
+    values: [network, data, aks]
+    default: [network]
+
+stages:
+  - ${{ if contains(parameters.stacks, 'network') }}:
+      - template: templates/terraform-stack.yml
+        parameters:
+          stack: 10-network
+          stageName: network
+          environment: ${{ parameters.environment }}
+          action: ${{ parameters.action }}
+```
+
+Both `stringList` and `contains` are in the documentation, but its examples use `contains` with a `string` parameter and `each` with the `stringList`. I haven't tested `contains` directly on a `stringList`, so validate it in your pipeline before adopting it.
+
 ### The stack template
 
 ```yaml
@@ -345,7 +369,7 @@ stages:
 What's going on:
 
 - One **service connection per environment** (`sc-terraform-dev`, `sc-terraform-prd`), ideally with identity federation. No stored secret.
-- The `deployment` job uses an Azure DevOps **Environment**. That's where you configure approvals and checks for `prd`. Who approves the production `apply` is an Environment decision, not a YAML one.
+- The `deployment` job uses an Azure DevOps **Environment**. That's where you configure approvals and checks for `prd`. Who approves the production `apply` is an Environment decision, not a YAML one. According to the [documentation](https://learn.microsoft.com/en-us/azure/devops/pipelines/process/approvals), approvals and checks aren't defined in the YAML and whoever edits the YAML can't change them; the resource administrators (Environment, service connection, etc.) manage them through the web interface.
 - The `plan` is published as an artifact and `apply` applies **that** plan. What was reviewed is what gets applied, not a new plan computed after approval.
 
 ### The script both steps use
@@ -360,9 +384,8 @@ plan_file="${BUILD_ARTIFACTSTAGINGDIRECTORY:-$PWD}/${stack}.tfplan"
 
 export ARM_USE_OIDC=true
 export ARM_USE_AZUREAD=true
-export ARM_CLIENT_ID="$servicePrincipalId"
+export ARM_CLIENT_ID="$servicePrincipalId"   # expostos pela task AzureCLI@2
 export ARM_TENANT_ID="$tenantId"
-export ARM_OIDC_TOKEN="$idToken"
 export ARM_SUBSCRIPTION_ID="$(az account show --query id -o tsv)"
 
 cd "infra/stacks/${stack}"
@@ -386,7 +409,7 @@ case "$cmd" in
 esac
 ```
 
-`TFSTATE_RG` and `TFSTATE_SA` can come from pipeline variables. `$servicePrincipalId`, `$tenantId` and `$idToken` are exposed by the `AzureCLI@2` task when `addSpnToEnvironment: true` and the service connection uses federation. Confirm that behavior on the task version you use, since Microsoft keeps changing this area.
+`TFSTATE_RG` and `TFSTATE_SA` can come from pipeline variables. The [`AzureCLI@2`](https://learn.microsoft.com/en-us/azure/devops/pipelines/tasks/reference/azure-cli-v2) task exposes `$servicePrincipalId` and `$tenantId` (and the `idToken`) in the script environment when `addSpnToEnvironment: true` and the service connection uses identity federation. For the backend, the [`azurerm` documentation](https://developer.hashicorp.com/terraform/language/v1.16.x/backend/azurerm) says that on Azure DevOps the OIDC token endpoints are found automatically and that, with `AzureCLI@2` or `AzurePowerShell`, the service connection ID is already available in the `AZURESUBSCRIPTION_SERVICE_CONNECTION_ID` variable. That's why the script doesn't pass the token manually. For the *provider* (as opposed to the backend), check the `azurerm` OIDC guide for your version: I didn't read that page.
 
 ---
 
@@ -457,7 +480,7 @@ jobs:
       action: ${{ inputs.action }}
 ```
 
-There is an important difference from Azure DevOps here. On GitHub the condition is evaluated **at runtime**, so an unticked job shows up as *skipped*. And when a `needs` is skipped, the dependent job would also be skipped by default. `!cancelled() && !failure()` fixes that: "run if nothing failed, even if the dependency was skipped".
+There is an important difference from Azure DevOps here. On GitHub the condition is evaluated **at runtime**, so an unticked job shows up as *skipped*. And, according to the [documentation](https://docs.github.com/en/actions/reference/workflows-and-actions/workflow-syntax), if a job fails or is skipped, all jobs that need it are skipped too, unless they use a conditional expression that lets them continue. `!cancelled() && !failure()` fixes that: "run if nothing failed, even if the dependency was skipped". One more detail: the `inputs` context preserves booleans, while `github.event.inputs` converts everything to strings; that's why I use `inputs.network` directly in the `if`.
 
 ### The reusable workflow
 
@@ -514,9 +537,9 @@ jobs:
 
 The points that make a difference:
 
-- [Reusable workflows](https://docs.github.com/en/actions/how-tos/reuse-automations/reuse-workflows) are called at the job level, receive `inputs` through `with`, and the type must match what was declared. There is a limit of 20 reusable workflow calls per file, nested ones included.
-- Authentication is via **OIDC**. `ARM_USE_OIDC` makes the provider request the token from GitHub and exchange it for Azure access, with no stored secret. [GitHub's documentation](https://docs.github.com/en/actions/how-tos/secure-your-work/security-harden-deployments/oidc-in-azure) shows the flow.
-- When the job uses an Environment, the token *subject* has the format `repo:ORG/REPO:environment:NAME`. That lets you create **one federated credential per environment** in Entra ID: `prd` only accepts tokens from jobs in the `prd` Environment. Least privilege and per-environment separation almost for free. GitHub has also started offering an immutable subject (with owner and repository IDs) for new repositories, and [Microsoft recommends migrating](https://learn.microsoft.com/en-us/entra/workload-id/workload-identities-github-immutable-subjects) name-based credentials; check how it affects your repo.
+- [Reusable workflows](https://docs.github.com/en/actions/how-tos/reuse-automations/reuse-workflows) are called at the job level, receive `inputs` through `with`, and the type must match what was declared (boolean, number or string). The documentation allows chaining up to ten levels of workflows (the caller plus nine). One detail that fits our design: the job that calls the reusable workflow can't use `environment`; the `environment` is declared by the job inside the reusable workflow, as we did.
+- Authentication is via **OIDC**. `ARM_USE_OIDC` makes the provider request the token from GitHub and exchange it for Azure access, with no stored secret. [GitHub's documentation](https://docs.github.com/en/actions/how-tos/secure-your-work/security-harden-deployments/oidc-in-azure) shows the flow using the `azure/login` action. Here I let Terraform itself do the exchange through `use_oidc`, documented on the `azurerm` backend. If you prefer the more beaten path, log in with `azure/login` first.
+- When the job uses an Environment, the token *subject* has the format `repo:ORG/REPO:environment:NAME`. That lets you create **one federated credential per environment** in Entra ID: `prd` only accepts tokens from jobs in the `prd` Environment. Least privilege and per-environment separation almost for free. Mind a recent change: per [GitHub's OIDC reference](https://docs.github.com/en/actions/reference/security/oidc), repositories created after July 15, 2026 (and renamed or transferred after that date) use an immutable subject by default, which includes the owner and repository IDs, while older ones keep the name-based format until you opt in. [Microsoft recommends migrating](https://learn.microsoft.com/en-us/entra/workload-id/workload-identities-github-immutable-subjects) name-based credentials. In other words, the federated credential must match your repository's format. The reference shows the environment subject example (`repo:octo-org/octo-repo:environment:Production`) and, for the immutable format, the branch example (`repo:octo-org@123456/octo-repo@456789:ref:refs/heads/main`), so confirm what the environment subject looks like in your case. The documentation also recommends protecting the Environment with rules (for example, restricting branches and tags) when it is used in OIDC policies.
 - In this example, `plan` and `apply` run in the same job, applying the saved plan. The cost is that if the Environment has *required reviewers*, approval is requested **before** the plan. If that bothers you, use two Environments (`dev-plan` and `dev-apply`, for example) or split into two jobs.
 
 ---
@@ -530,7 +553,7 @@ The points that make a difference:
 | Approval | Environment with approvals and checks | Environment with required reviewers |
 | Reuse | Templates (`template:`) | Reusable workflows (`workflow_call`) |
 | Authentication | Service connection with federation | OIDC with a federated credential per Environment |
-| Limit that bit me | Parameters don't apply to trigger-started runs (defaults are used) | 25 inputs per `workflow_dispatch`; 20 reusable workflow calls |
+| Limit that bit me | Parameters need a `default`; trigger-started runs use the defaults | 25 inputs per `workflow_dispatch`; up to 10 chained workflow levels |
 
 Neither is better at everything. The "missing stage vs. skipped job" difference looks small, but it changes how you read run history and how you set up dependencies.
 
@@ -538,7 +561,7 @@ Neither is better at everything. The "missing stage vs. skipped job" difference 
 
 ## Why not a single state with `-target`?
 
-I've seen people try the opposite path: one state, and a parameter passing `-target=module.aks`. I don't recommend it as routine. Terraform's own documentation treats `-target` as a tool for exceptional situations, not a normal workflow. It doesn't fix the lock, the refresh time, the blast radius in the state or permission separation. It's the checkbox without half of the design.
+I've seen people try the opposite path: one state, and a parameter passing `-target=module.aks`. I don't recommend it as routine. Terraform's own [documentation](https://developer.hashicorp.com/terraform/cli/commands/plan) says to use `-target` only in exceptional circumstances (such as recovering from mistakes) and that it isn't recommended for routine operations. It doesn't fix the lock, the refresh time, the blast radius in the state or permission separation. It's the checkbox without half of the design.
 
 ---
 
@@ -549,13 +572,13 @@ When one stack depends on another, there are two ways to read the information:
 - `terraform_remote_state`: reads the other stack's state outputs. Direct, but the reader needs access to the entire state file (which may hold sensitive data) and you couple one stack to the other's state layout.
 - **Provider data source**: queries the real resource through the Azure API. It requires a naming convention, but gives looser coupling and doesn't need access to someone else's state.
 
-I prefer the data source by default and use `remote_state` when I need an output that doesn't exist as a queryable resource. That preference is mine, based on experience, not a HashiCorp rule, so evaluate it in your context.
+HashiCorp doesn't forbid sharing outputs: in its workspace best practices it recommends exposing only the outputs other workspaces need (through `tfe_outputs`), precisely to reduce the risk of leaking sensitive information from the state. I prefer the data source by default and use `remote_state` when I need an output that doesn't exist as a queryable resource. That preference is mine, based on experience, not a HashiCorp rule, so evaluate it in your context.
 
 ---
 
 ## Traps I've seen
 
-1. **A parameter is not a vault.** Microsoft warns that parameter values are expanded when the template is parsed and may show up in logs. Secrets don't go in parameters. The ICSE 2019 study cited above is a good reminder of how common hard-coded passwords in IaC are.
+1. **A parameter is not a vault.** Microsoft warns that parameter values are expanded when the template is parsed and may show up in logs. Secrets don't go in parameters. The ICSE 2019 study cited above found that a hard-coded secret can persist for up to 98 months (median 20), so don't count on "we'll remove it later". The Azure DevOps documentation also says to validate and restrict allowed parameter values, apply least privilege and keep credentials in secret variables, Key Vault or variable groups.
 2. **Partial selection creates drift.** If someone ticks only the AKS stack after a network change that wasn't applied, the plan will fail or, worse, be applied on top of an outdated base. I handle it with `plan` as the default action and a scheduled job that runs `plan` on everything to detect drift.
 3. **Destroy order.** On create, network comes before cluster. On `destroy` it's the reverse. So I simply don't offer `destroy` as an `action` value in `prd`.
 4. **Who can click "Run" is part of access control.** The parameter form is an infrastructure control interface. Restrict who can run the pipeline and protect the production Environment.
@@ -578,7 +601,7 @@ I prefer the data source by default and use `remote_state` when I need an output
 
 - More moving parts to understand: modules, stacks, backends, templates.
 - Dependencies between stacks become explicit and you have to manage them.
-- Migrating from a big state needs planning (HashiCorp's [state splitting guide](https://support.hashicorp.com/hc/en-us/articles/7955227415059-How-to-Split-State-Files) recommends validating that the post-split `plan` shows no changes).
+- Migrating from a big state needs planning (HashiCorp's [refactoring guide](https://developer.hashicorp.com/terraform/language/v1.16.x/state/refactor) says to run `terraform plan` on the source configuration and confirm it won't change anything).
 - Manual selection opens room for human error unless you add guard rails (approvals, allowed values, `plan` as default).
 - A wrong split trades one problem for another: coupling between states.
 
@@ -602,7 +625,7 @@ I prefer the data source by default and use `remote_state` when I need an output
 ## FAQ
 
 **Can I use `object` instead of several booleans in Azure DevOps?**
-Yes, and you can iterate with `${{ each }}`, which shortens the YAML. The cost is that the form becomes a YAML text field instead of checkboxes, so it's easier to get wrong. For a few stacks I prefer booleans.
+Yes, and you can iterate with `${{ each }}`, which shortens the YAML. The cost is that the input is less friendly than checkboxes and easier to get wrong. For a middle ground, see the `stringList` variation above. For a few stacks I prefer booleans.
 
 **What if I want to run every stack at once?**
 Tick them all. If that's the most common case, consider an `all` parameter or an execution profile, but keep individual selection available.
@@ -632,6 +655,10 @@ If you only have one state today, you don't need to split everything at once. St
 - [Azure Pipelines — Runtime parameters](https://learn.microsoft.com/en-us/azure/devops/pipelines/process/runtime-parameters)
 - [Azure Pipelines — Template expressions](https://learn.microsoft.com/en-us/azure/devops/pipelines/process/template-expressions)
 - [Azure Pipelines — Template parameters](https://learn.microsoft.com/en-us/azure/devops/pipelines/process/template-parameters)
+- [Azure Pipelines — Approvals and checks](https://learn.microsoft.com/en-us/azure/devops/pipelines/process/approvals)
+- [Azure Pipelines — AzureCLI@2 task](https://learn.microsoft.com/en-us/azure/devops/pipelines/tasks/reference/azure-cli-v2)
+- [GitHub — Workflow syntax](https://docs.github.com/en/actions/reference/workflows-and-actions/workflow-syntax)
+- [GitHub — OIDC reference](https://docs.github.com/en/actions/reference/security/oidc)
 - [GitHub — Input types for manual workflows](https://github.blog/changelog/2021-11-10-github-actions-input-types-for-manual-workflows)
 - [GitHub — workflow_dispatch now supports 25 inputs](https://github.blog/changelog/2025-12-04-actions-workflow-dispatch-workflows-now-support-25-inputs/)
 - [GitHub — Reusable workflows](https://docs.github.com/en/actions/how-tos/reuse-automations/reuse-workflows)
@@ -639,7 +666,7 @@ If you only have one state today, you don't need to split everything at once. St
 - [Microsoft Entra — GitHub immutable subjects](https://learn.microsoft.com/en-us/entra/workload-id/workload-identities-github-immutable-subjects)
 - [HashiCorp — Workspace best practices](https://developer.hashicorp.com/terraform/cloud-docs/workspaces/best-practices)
 - [HashiCorp — Refactor Terraform state](https://developer.hashicorp.com/terraform/language/v1.16.x/state/refactor)
-- [HashiCorp — How to split state files](https://support.hashicorp.com/hc/en-us/articles/7955227415059-How-to-Split-State-Files)
+- [HashiCorp — terraform plan and `-target`](https://developer.hashicorp.com/terraform/cli/commands/plan)
 - [HashiCorp — azurerm backend](https://developer.hashicorp.com/terraform/language/v1.16.x/backend/azurerm)
 - [Microsoft — Store Terraform state in Azure Storage](https://learn.microsoft.com/en-us/azure/terraform/terraform-backend)
 
