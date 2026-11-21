@@ -1,4 +1,10 @@
 ---
+interface Props {
+  // Caminho equivalente no outro idioma, quando a URL não é simétrica (ex.: /projetos/x/ ↔ /en/projects/x/)
+  altHref?: string;
+}
+
+const { altHref } = Astro.props;
 const pathname = Astro.url.pathname;
 
 // Normalize: remove trailing slash exceto root
@@ -17,7 +23,7 @@ function toPT(path: string) {
 }
 
 const isEN = normalized === '/en' || normalized.startsWith('/en/');
-const targetHref = isEN ? toPT(pathname) : toEN(pathname);
+const targetHref = altHref ?? (isEN ? toPT(pathname) : toEN(pathname));
 const aria = isEN ? 'Mudar para Português' : 'Switch to English';
 ---
 

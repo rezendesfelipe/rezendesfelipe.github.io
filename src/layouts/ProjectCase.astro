@@ -1,0 +1,487 @@
+---
+import type { CollectionEntry } from 'astro:content';
+import BaseHead from '../components/BaseHead.astro';
+import SiteNav from '../components/SiteNav.astro';
+import SiteFooter from '../components/SiteFooter.astro';
+
+type Props = CollectionEntry<'projects'>['data'];
+
+const { lang, title, subtitle, description, tags, logo, meta, highlights, pubDate, page, url, repo } = Astro.props;
+const isEN = lang === 'en';
+
+const homeHref = isEN ? '/en/' : '/';
+const projectsHref = isEN ? '/en/#projects' : '/#projetos';
+// URL equivalente no outro idioma (mesmo `page` nas duas línguas)
+const altHref = page ? (isEN ? `/projetos/${page}/` : `/en/projects/${page}/`) : undefined;
+
+const t = {
+  home: isEN ? 'Home' : 'Início',
+  projects: isEN ? 'Projects' : 'Projetos',
+  caseStudy: isEN ? 'Case study' : 'Estudo de caso',
+  inThisPage: isEN ? 'On this page' : 'Nesta página',
+  index: isEN ? 'Page index' : 'Índice da página',
+  back: isEN ? '← Back to projects' : '← Voltar para projetos',
+  talk: isEN ? 'Talk about a project' : 'Conversar sobre um projeto',
+  contactHref: isEN ? '/en/contact/' : '/contact/',
+  visit: isEN ? 'Visit project' : 'Ver projeto',
+  repo: isEN ? 'Repository' : 'Repositório',
+  highlights: isEN ? 'Highlights' : 'Destaques',
+  details: isEN ? 'Project details' : 'Ficha do projeto',
+};
+
+const pageUrl = new URL(Astro.url.pathname, Astro.site).toString();
+const schema = {
+  '@context': 'https://schema.org',
+  '@type': 'CreativeWork',
+  name: title,
+  headline: subtitle ?? title,
+  description,
+  inLanguage: isEN ? 'en-US' : 'pt-BR',
+  url: pageUrl,
+  keywords: tags.join(', '),
+  ...(pubDate ? { datePublished: pubDate.toISOString() } : {}),
+  author: { '@type': 'Person', name: 'Felipe Rezende', url: 'https://www.linkedin.com/in/rezendesfelipe/' },
+};
+---
+
+<html lang={isEN ? 'en-US' : 'pt-BR'}>
+  <head>
+    <BaseHead title={`${title} · ${t.caseStudy}`} description={description} />
+    {altHref && <link rel="alternate" hreflang={isEN ? 'pt-BR' : 'en-US'} href={new URL(altHref, Astro.site).toString()} />}
+    <script type="application/ld+json" set:html={JSON.stringify(schema)} />
+  </head>
+
+  <body>
+    <SiteNav lang={lang} active="projects" altHref={altHref} />
+
+    <header class="case-hero">
+      <div class="case-hero__inner">
+        <nav class="case-breadcrumb" aria-label="Breadcrumb">
+          <a href={homeHref}>{t.home}</a>
+          <span aria-hidden="true">/</span>
+          <a href={projectsHref}>{t.projects}</a>
+          <span aria-hidden="true">/</span>
+          <span aria-current="page">{title}</span>
+        </nav>
+
+        <div class="case-hero__grid">
+          <div class="case-hero__content">
+            <p class="case-hero__eyebrow">{t.caseStudy}</p>
+            <h1 class="case-hero__title">{title}</h1>
+            {subtitle && <p class="case-hero__subtitle">{subtitle}</p>}
+            <p class="case-hero__desc">{description}</p>
+            {tags.length > 0 && (
+              <ul class="case-tags" aria-label="Tags">
+                {tags.map((tag) => <li>{tag}</li>)}
+              </ul>
+            )}
+            {(url || repo) && (
+              <div class="case-hero__actions">
+                {url && <a class="btn" href={url} target="_blank" rel="noopener">{t.visit}</a>}
+                {repo && <a class="btn btn--ghost" href={repo} target="_blank" rel="noopener">{t.repo}</a>}
+              </div>
+            )}
+          </div>
+
+          {logo && (
+            <div class="case-hero__logo">
+              {logo.href ? (
+                <a href={logo.href} target="_blank" rel="noopener">
+                  <img src={logo.src} alt={logo.alt} width="324" height="108" />
+                </a>
+              ) : (
+                <img src={logo.src} alt={logo.alt} width="324" height="108" />
+              )}
+            </div>
+          )}
+        </div>
+
+        {meta.length > 0 && (
+          <dl class="case-meta" aria-label={t.details}>
+            {meta.map((item) => (
+              <div class="case-meta__item">
+                <dt>{item.label}</dt>
+                <dd>{item.value}</dd>
+              </div>
+            ))}
+          </dl>
+        )}
+
+        {highlights.length > 0 && (
+          <ul class="case-highlights" aria-label={t.highlights}>
+            {highlights.map((h) => (
+              <li>
+                <span class="case-highlights__value">{h.value}</span>
+                <span class="case-highlights__label">{h.label}</span>
+              </li>
+            ))}
+          </ul>
+        )}
+      </div>
+    </header>
+
+    <div class="case-wrap">
+      <article class="case-article">
+        <div class="case-prose">
+          <slot />
+        </div>
+
+        <div class="case-cta">
+          <a class="btn" href={t.contactHref}>{t.talk}</a>
+          <a class="btn btn--ghost" href={projectsHref}>{t.back}</a>
+        </div>
+      </article>
+
+      <aside class="case-toc" aria-label={t.index} id="case-toc">
+        <p class="case-toc__title">{t.inThisPage}</p>
+        <ul class="case-toc__list" id="case-toc-list"></ul>
+      </aside>
+    </div>
+
+    <SiteFooter lang={lang} />
+
+    <script>
+      const prose = document.querySelector('.case-prose');
+      const list = document.getElementById('case-toc-list');
+      const toc = document.getElementById('case-toc');
+      if (prose && list) {
+        const headings = prose.querySelectorAll<HTMLElement>('h2, h3');
+        if (headings.length === 0 && toc) toc.style.display = 'none';
+        headings.forEach((h) => {
+          if (!h.id) {
+            h.id = (h.textContent ?? '')
+              .toLowerCase()
+              .normalize('NFD')
+              .replace(/[̀-ͯ]/g, '')
+              .replace(/[^\w\s-]/g, '')
+              .trim()
+              .replace(/\s+/g, '-');
+          }
+          const li = document.createElement('li');
+          if (h.tagName === 'H3') li.classList.add('is-h3');
+          const a = document.createElement('a');
+          a.href = `#${h.id}`;
+          a.textContent = h.textContent;
+          li.appendChild(a);
+          list.appendChild(li);
+        });
+
+        const links = list.querySelectorAll<HTMLAnchorElement>('a');
+        const observer = new IntersectionObserver(
+          (entries) => {
+            entries.forEach((e) => {
+              if (!e.isIntersecting) return;
+              links.forEach((l) => l.classList.remove('is-active'));
+              list.querySelector(`a[href="#${e.target.id}"]`)?.classList.add('is-active');
+            });
+          },
+          { rootMargin: '-10% 0px -80% 0px', threshold: 0 },
+        );
+        headings.forEach((h) => observer.observe(h));
+      }
+    </script>
+  </body>
+</html>
+
+<style>
+  /* ── Hero ── */
+  .case-hero {
+    position: relative;
+    overflow: hidden;
+    padding: 6.5rem 0 2.5rem;
+    border-bottom: 1px solid rgba(69, 70, 77, .45);
+  }
+  .case-hero::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background-image: radial-gradient(circle, rgba(47, 217, 244, .2) 1px, transparent 1px);
+    background-size: 32px 32px;
+    opacity: .15;
+    pointer-events: none;
+  }
+  .case-hero__inner {
+    position: relative;
+    z-index: 1;
+    max-width: 1220px;
+    margin: 0 auto;
+    padding: 0 1.5rem;
+  }
+  .case-breadcrumb {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: .5rem;
+    font-size: .8rem;
+    color: var(--muted);
+    margin-bottom: 1.75rem;
+  }
+  .case-breadcrumb a { color: var(--muted); text-decoration: none; }
+  .case-breadcrumb a:hover { color: var(--accent); }
+  .case-breadcrumb span[aria-hidden] { color: var(--border); }
+  .case-breadcrumb [aria-current] { color: var(--text); }
+
+  .case-hero__grid {
+    display: grid;
+    grid-template-columns: minmax(0, 1.35fr) minmax(0, .65fr);
+    gap: 2.5rem;
+    align-items: center;
+  }
+  .case-hero__eyebrow {
+    display: inline-block;
+    margin: 0 0 1rem;
+    padding: .4rem .8rem;
+    background: rgba(34, 42, 61, .7);
+    border-left: 4px solid var(--primary);
+    border-radius: .5rem;
+    text-transform: uppercase;
+    letter-spacing: .08em;
+    font-size: .7rem;
+    color: var(--muted);
+  }
+  .case-hero__title {
+    margin: 0;
+    font-family: var(--font-display);
+    font-size: clamp(2.6rem, 6vw, 4.25rem);
+    line-height: 1;
+    letter-spacing: -.03em;
+    color: var(--text);
+  }
+  .case-hero__subtitle {
+    margin: .85rem 0 0;
+    font-family: var(--font-display);
+    font-size: clamp(1.15rem, 2.4vw, 1.5rem);
+    line-height: 1.3;
+    color: var(--primary);
+  }
+  .case-hero__desc {
+    margin: 1rem 0 0;
+    max-width: 62ch;
+    font-size: 1.02rem;
+    line-height: 1.7;
+    color: var(--muted);
+  }
+  .case-tags {
+    list-style: none;
+    padding: 0;
+    margin: 1.25rem 0 0;
+    display: flex;
+    flex-wrap: wrap;
+    gap: .4rem;
+  }
+  .case-tags li {
+    padding: .2rem .55rem;
+    font-size: .66rem;
+    letter-spacing: .08em;
+    text-transform: uppercase;
+    border: 1px solid rgba(47, 217, 244, .22);
+    border-radius: .25rem;
+    background: rgba(47, 217, 244, .08);
+    color: var(--primary);
+  }
+  .case-hero__actions { margin-top: 1.5rem; display: flex; gap: .75rem; flex-wrap: wrap; }
+
+  .case-hero__logo {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 180px;
+    padding: 2rem;
+    background: linear-gradient(160deg, var(--surface-container) 0%, var(--surface-container-low) 100%);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    box-shadow: var(--ambient-shadow);
+  }
+  .case-hero__logo a { display: block; border-radius: 8px; }
+  .case-hero__logo a:hover { box-shadow: var(--cyan-glow); }
+  .case-hero__logo img { display: block; width: 100%; max-width: 300px; height: auto; }
+
+  /* ── Meta ── */
+  .case-meta {
+    margin: 2.25rem 0 0;
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 1px;
+    background: var(--border);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    overflow: hidden;
+  }
+  .case-meta__item { background: var(--surface-container); padding: 1rem 1.15rem; }
+  .case-meta dt {
+    margin: 0 0 .35rem;
+    font-size: .68rem;
+    font-weight: 700;
+    letter-spacing: .08em;
+    text-transform: uppercase;
+    color: var(--accent);
+  }
+  .case-meta dd { margin: 0; font-size: .9rem; line-height: 1.5; color: var(--text); }
+
+  /* ── Highlights ── */
+  .case-highlights {
+    list-style: none;
+    padding: 0;
+    margin: 1rem 0 0;
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+    gap: 1rem;
+  }
+  .case-highlights li {
+    padding: 1.1rem 1.15rem;
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    display: flex;
+    flex-direction: column;
+    gap: .3rem;
+  }
+  .case-highlights__value {
+    font-family: var(--font-display);
+    font-size: 1.9rem;
+    font-weight: 700;
+    line-height: 1;
+    color: var(--primary);
+    text-shadow: 0 0 18px rgba(47, 217, 244, .25);
+  }
+  .case-highlights__label { font-size: .82rem; line-height: 1.4; color: var(--muted); }
+
+  /* ── Body ── */
+  .case-wrap {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) 210px;
+    gap: 4rem;
+    max-width: 1220px;
+    margin: 0 auto;
+    padding: 2.5rem 1.5rem 4rem;
+  }
+  .case-article { min-width: 0; max-width: 780px; width: 100%; margin: 0 auto; }
+
+  .case-toc {
+    position: sticky;
+    top: 88px;
+    align-self: start;
+    max-height: calc(100vh - 110px);
+    overflow-y: auto;
+    padding: 1rem;
+    background: rgba(6, 14, 32, .5);
+    outline: 1px solid var(--border);
+    backdrop-filter: blur(24px);
+    border-radius: 12px;
+  }
+  .case-toc__title {
+    margin: 0 0 .65rem;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: .08em;
+    text-transform: uppercase;
+    color: var(--muted);
+  }
+  .case-toc__list { list-style: none; padding: 0; margin: 0; display: flex; flex-direction: column; gap: .3rem; }
+  .case-toc__list :global(a) {
+    display: block;
+    font-size: 12px;
+    line-height: 1.4;
+    color: var(--muted);
+    text-decoration: none;
+    transition: color .15s;
+  }
+  .case-toc__list :global(a:hover),
+  .case-toc__list :global(a.is-active) { color: var(--accent); }
+  .case-toc__list :global(li.is-h3) { padding-left: .65rem; }
+
+  /* Conteúdo vem do <slot /> (Markdown compilado): seletores precisam de :global(). */
+  .case-prose { color: var(--text); font-size: 1rem; line-height: 1.8; }
+  .case-prose :global(h2) {
+    margin: 2.75rem 0 .9rem;
+    font-family: var(--font-display);
+    font-size: 1.65rem;
+    letter-spacing: -.02em;
+    color: var(--text);
+    scroll-margin-top: 90px;
+  }
+  .case-prose :global(h2:first-child) { margin-top: 0; }
+  .case-prose :global(h3) {
+    margin: 2rem 0 .6rem;
+    font-family: var(--font-display);
+    font-size: 1.25rem;
+    color: var(--text);
+    scroll-margin-top: 90px;
+  }
+  .case-prose :global(p) { margin: 0 0 1.1rem; }
+  .case-prose :global(ul),
+  .case-prose :global(ol) { margin: 0 0 1.2rem 1.4rem; padding: 0; }
+  .case-prose :global(li) { margin-bottom: .45rem; }
+  .case-prose :global(li::marker) { color: var(--accent); }
+  .case-prose :global(strong) { color: #fff; }
+  .case-prose :global(em) { color: var(--muted); }
+  .case-prose :global(a) { color: var(--accent); text-decoration: none; }
+  .case-prose :global(a:hover) { text-decoration: underline; }
+  .case-prose :global(code) {
+    font-family: var(--font-mono);
+    font-size: .86em;
+    padding: .1rem .35rem;
+    border-radius: .3rem;
+    background: var(--surface-container-highest);
+    color: var(--accent-ai);
+  }
+  .case-prose :global(blockquote) {
+    margin: 1.5rem 0;
+    padding: .85rem 1.25rem;
+    border-left: 3px solid var(--accent);
+    border-radius: 0 10px 10px 0;
+    background: rgba(47, 217, 244, .08);
+    color: var(--muted);
+  }
+  .case-prose :global(blockquote p) { margin: 0; }
+  .case-prose :global(hr) { border: none; height: 1px; background: var(--border); margin: 2.5rem 0; }
+  .case-prose :global(table) {
+    width: 100%;
+    margin: 1.5rem 0;
+    border-collapse: separate;
+    border-spacing: 0;
+    font-size: .9rem;
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    overflow: hidden;
+    display: block;
+    overflow-x: auto;
+  }
+  .case-prose :global(th),
+  .case-prose :global(td) {
+    padding: .6rem .85rem;
+    text-align: left;
+    border-bottom: 1px solid var(--border);
+    vertical-align: top;
+  }
+  .case-prose :global(tr:last-child td) { border-bottom: none; }
+  .case-prose :global(th) {
+    background: var(--surface-container-high);
+    font-size: .72rem;
+    letter-spacing: .06em;
+    text-transform: uppercase;
+    color: var(--accent);
+  }
+  .case-prose :global(td) { background: var(--surface-container); }
+
+  .case-cta {
+    margin-top: 3rem;
+    padding-top: 2rem;
+    border-top: 1px solid var(--border);
+    display: flex;
+    flex-wrap: wrap;
+    gap: .75rem;
+  }
+
+  @media (max-width: 960px) {
+    .case-hero__grid { grid-template-columns: 1fr; }
+    .case-hero__logo { min-height: 0; padding: 1.5rem; justify-content: flex-start; }
+    .case-hero__logo img { max-width: 240px; }
+    .case-wrap { grid-template-columns: 1fr; padding: 2rem 1rem 3rem; }
+    .case-toc { display: none; }
+  }
+  @media (max-width: 600px) {
+    .case-hero { padding-top: 5.5rem; }
+    .case-hero__inner { padding: 0 1rem; }
+  }
+</style>
