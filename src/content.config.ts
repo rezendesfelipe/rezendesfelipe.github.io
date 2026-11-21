@@ -31,21 +31,35 @@ const blog = defineCollection({
 });
 const projects = defineCollection({
 	loader: glob({ base: './src/content/projects', pattern: '**/*.{md,mdx}' }),
-  schema: z.object({
+	schema: z.object({
 		lang: z.enum(['pt', 'en']).default('pt'),
-    title: z.string(),
-    description: z.string(),
-    // link do projeto (GitHub, demo, etc.)
-    url: z.string().url(),
-    // opcional: repo separado do site
-    repo: z.string().url().optional(),
-    // tags para filtrar/mostrar
-    tags: z.array(z.string()).default([]),
-    // destacar na home
-    featured: z.boolean().default(false),
-    // ordenar
-    order: z.number().optional(),
-  }),
+		title: z.string(),
+		description: z.string(),
+		// link externo do projeto (GitHub, demo, etc.). Sem `page`, o card aponta para cá.
+		url: z.string().url().optional(),
+		// opcional: repo separado do site
+		repo: z.string().url().optional(),
+		// tags para filtrar/mostrar
+		tags: z.array(z.string()).default([]),
+		// destacar na home
+		featured: z.boolean().default(false),
+		// ordenar
+		order: z.number().optional(),
+		// Estudo de caso: gera /projetos/<page>/ (pt) ou /en/projects/<page>/ (en).
+		// Use o mesmo valor nas duas línguas para o seletor de idioma apontar para a página equivalente.
+		page: z.string().regex(/^[a-z0-9-]+$/).optional(),
+		subtitle: z.string().optional(),
+		pubDate: z.coerce.date().optional(),
+		logo: z
+			.object({
+				src: z.string(),
+				alt: z.string(),
+				href: z.string().url().optional(),
+			})
+			.optional(),
+		meta: z.array(z.object({ label: z.string(), value: z.string() })).default([]),
+		highlights: z.array(z.object({ value: z.string(), label: z.string() })).default([]),
+	}),
 });
 const langSchema = z.enum(['pt', 'en']);
 

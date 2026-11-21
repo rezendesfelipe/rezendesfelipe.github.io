@@ -6,5 +6,5 @@ url: "https://rezendesfelipe.github.io/en/"
 repo: "https://github.com/rezendesfelipe/rezendesfelipe.github.io"
 tags: ["Astro", "GitHub Pages"]
 featured: true
-order: 1
+order: 2
 ---

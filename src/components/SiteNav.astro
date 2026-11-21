@@ -4,10 +4,11 @@ import logo from '../assets/logo_pixeled-removebg-preview.png';
 
 interface Props {
   lang?: 'pt' | 'en';
-  active?: 'home' | 'about' | 'contact' | 'blog';
+  active?: 'home' | 'about' | 'contact' | 'blog' | 'projects';
+  altHref?: string;
 }
 
-const { lang = 'pt', active } = Astro.props;
+const { lang = 'pt', active, altHref } = Astro.props;
 
 const base = lang === 'en' ? '/en' : '';
 const homeHref = lang === 'en' ? '/en/' : '/';
@@ -38,7 +39,7 @@ const labels = {
     </div>
 
     <div class="topbar__actions">
-      <LanguageToggle />
+      <LanguageToggle altHref={altHref} />
       <a class="topbar__hire" href={contactHref}>{labels.hire}</a>
     </div>
   </nav>
