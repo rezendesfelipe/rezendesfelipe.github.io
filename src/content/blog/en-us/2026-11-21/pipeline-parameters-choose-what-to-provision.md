@@ -115,12 +115,12 @@ The question that defines the split is "who changes this, and how often". For th
 
 | Stack (folder) | Resources | Modules | State `key` |
 |---|---|---|---|
-| `vnet-core` | VNet, subnets, NSGs, Private DNS zones | `network` | `vnet-core-prod-brs-01.tfstate` |
-| `aks-core` | AKS, ACR and its Private Endpoint | `aks`, `acr`, `private-endpoint` | `aks-core-prod-brs-01.tfstate` |
-| `app-orders` | Dedicated PostgreSQL, Key Vault and its Private Endpoint, the application's identity | `postgresql`, `key-vault`, `private-endpoint`, `workload-identity` | `app-orders-prod-brs-01.tfstate` |
+| `vnet-core` | Resource group, VNet, subnets, NSGs, Private DNS zones | `network` | `vnet-core-prod-brs-01.tfstate` |
+| `aks-core` | Resource group, AKS, ACR and its Private Endpoint | `aks`, `acr`, `private-endpoint` | `aks-core-prod-brs-01.tfstate` |
+| `app-orders` | Resource group, dedicated PostgreSQL, Key Vault and its Private Endpoint, the application's identity | `postgresql`, `key-vault`, `private-endpoint`, `workload-identity` | `app-orders-prod-brs-01.tfstate` |
 | *(outside Terraform)* | The `orders` pod and Argo CD | Manifests in `infra/argocd` ([Part 2](/en/blog/en-us/2026-11-22/private-aks-postgresql-terraform-argocd/)) | no state |
 
-Two details. The `private-endpoint` module is used by two stacks, which is the kind of reuse that justifies a module: HashiCorp's refactoring guide recommends grouping into a module the set of resources you create in several configurations. And the `aks-core` stack also holds the ACR: it takes the name of its main resource, and the registry is support.
+Three details. The `private-endpoint` module is used by two stacks, which is the kind of reuse that justifies a module: HashiCorp's refactoring guide recommends grouping into a module the set of resources you create in several configurations. And the `aks-core` stack also holds the ACR: it takes the name of its main resource, and the registry is support. Finally, each stack creates its own resource group (`rg-vnet-core-…`, `rg-aks-core-…`, `rg-app-orders-…`), and that name is how the other stacks and the bootstrap script find it.
 
 ### The database belongs to the application
 
@@ -235,7 +235,7 @@ The code of each stack and module is in [Part 2](/en/blog/en-us/2026-11-22/priva
 
 ## Pipeline parameters
 
-Now the center of the article. The pipeline receives one parameter per step, and only the ticked steps run. The steps are the three Terraform stacks. In [Part 2](/en/blog/en-us/2026-11-22/private-aks-postgresql-terraform-argocd/) I add a fourth, the Argo CD bootstrap.
+Now the center of the article. The pipeline receives one parameter per step, and only the ticked steps run. The steps are the three Terraform stacks. In [Part 2](/en/blog/en-us/2026-11-22/private-aks-postgresql-terraform-argocd/) I add a fourth, the Argo CD bootstrap, which only runs when the action is `apply`.
 
 ### Azure DevOps
 

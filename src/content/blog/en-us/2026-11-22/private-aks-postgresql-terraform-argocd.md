@@ -55,12 +55,12 @@ The question that defines the split is "who changes this, and how often". For th
 
 | Stack (folder) | Resources | Modules | State `key` |
 |---|---|---|---|
-| `vnet-core` | VNet, subnets, NSGs, Private DNS zones | `network` | `vnet-core-prod-brs-01.tfstate` |
-| `aks-core` | AKS, ACR and its Private Endpoint | `aks`, `acr`, `private-endpoint` | `aks-core-prod-brs-01.tfstate` |
-| `app-orders` | Dedicated PostgreSQL, Key Vault and its Private Endpoint, the application's identity | `postgresql`, `key-vault`, `private-endpoint`, `workload-identity` | `app-orders-prod-brs-01.tfstate` |
+| `vnet-core` | Resource group, VNet, subnets, NSGs, Private DNS zones | `network` | `vnet-core-prod-brs-01.tfstate` |
+| `aks-core` | Resource group, AKS, ACR and its Private Endpoint | `aks`, `acr`, `private-endpoint` | `aks-core-prod-brs-01.tfstate` |
+| `app-orders` | Resource group, dedicated PostgreSQL, Key Vault and its Private Endpoint, the application's identity | `postgresql`, `key-vault`, `private-endpoint`, `workload-identity` | `app-orders-prod-brs-01.tfstate` |
 | *(outside Terraform)* | Argo CD (bootstrap) and the `orders` pod | Bootstrap script and manifests in `infra/argocd` | no state |
 
-Two details. The `private-endpoint` module is used by two stacks, which is the kind of reuse that justifies a module: HashiCorp's refactoring guide recommends grouping into a module the set of resources you create in several configurations. And the `aks-core` stack also holds the ACR: it takes the name of its main resource, and the registry is support.
+Three details. The `private-endpoint` module is used by two stacks, which is the kind of reuse that justifies a module: HashiCorp's refactoring guide recommends grouping into a module the set of resources you create in several configurations. And the `aks-core` stack also holds the ACR: it takes the name of its main resource, and the registry is support. Finally, each stack creates its own resource group (`rg-vnet-core-…`, `rg-aks-core-…`, `rg-app-orders-…`), and that name is how the other stacks and the bootstrap script find it.
 
 ### Two design decisions
 
@@ -644,7 +644,7 @@ kubectl apply -n argocd -f "infra/argocd/bootstrap/root-${suffix}.yaml"
 
 ### Extending Part 1's pipeline
 
-The bootstrap enters [Part 1's](/en/blog/en-us/2026-11-21/pipeline-parameters-choose-what-to-provision/) pipeline as a fourth step. In Azure DevOps, add the parameter and the stage to the orchestrator:
+The bootstrap enters [Part 1's](/en/blog/en-us/2026-11-21/pipeline-parameters-choose-what-to-provision/) pipeline as a fourth step, one that only runs when the action is `apply`. In Azure DevOps, add the parameter and the stage to the orchestrator:
 
 ```yaml
 # infra/pipelines/azure-pipelines.yml (additions)
