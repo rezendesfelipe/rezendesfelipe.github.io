@@ -9,6 +9,7 @@ author:
 category: "Cloud & DevOps"
 tags: ["terraform", "aks", "argocd", "gitops", "postgresql", "private-link", "workload-identity", "platform-engineering", "azure"]
 readingTime: "15 min"
+heroImage: ../../../../assets/blog/arquitetura-aks-postgresql-privada.webp
 lang: "en"
 draft: false
 ---
@@ -34,7 +35,7 @@ To keep the example from being abstract, I picked an architecture I run into oft
 
 <figure>
     <img src="/images/blog/2026-11-21/arquitetura-aks-postgresql-privada.svg" alt="Reference architecture in a private network: corporate network users enter through an internal ingress into the aks-core-prod-brs-01 cluster, inside the snet-aks subnet, where the orders pod runs. The pod reaches the dedicated PostgreSQL pgsql-orders-prod-brs-01, in the delegated snet-postgres subnet, and, through Private Endpoints in snet-endpoints, the Key Vault. The cluster pulls images from the Container Registry through another Private Endpoint. Argo CD, inside the cluster, syncs the manifests from a Git repository to the pod. Self-hosted agents in snet-agents run Terraform and the Argo CD bootstrap. Private DNS zones linked to the VNet resolve the names. Each resource is tagged with the Terraform stack that owns it: vnet-core-prod-brs-01, aks-core-prod-brs-01 or app-orders-prod-brs-01." loading="lazy" />
-    <figcaption>Figure 2 — Reference architecture. The pills show the Terraform stack that owns each resource. The pod enters the cluster through Argo CD, from Git, outside Terraform. The editable source is in draw.io.</figcaption>
+    <figcaption>Figure 1 — Reference architecture. The pills show the Terraform stack that owns each resource. The pod enters the cluster through Argo CD, from Git, outside Terraform. The editable source is in draw.io.</figcaption>
 </figure>
 
 What the figure shows, and the documentation behind each decision:

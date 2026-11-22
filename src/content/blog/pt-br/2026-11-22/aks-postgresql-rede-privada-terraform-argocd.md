@@ -9,6 +9,7 @@ author:
 category: "Cloud & DevOps"
 tags: ["terraform", "aks", "argocd", "gitops", "postgresql", "private-link", "workload-identity", "platform-engineering", "azure"]
 readingTime: "15 min"
+heroImage: ../../../../assets/blog/arquitetura-aks-postgresql-privada.webp
 lang: "pt"
 draft: false
 ---
@@ -34,7 +35,7 @@ Para o exemplo não ficar abstrato, escolhi uma arquitetura que eu encontro com 
 
 <figure>
     <img src="/images/blog/2026-11-21/arquitetura-aks-postgresql-privada.svg" alt="Arquitetura de referência em rede privada: usuários da rede corporativa entram por um ingress interno no cluster aks-core-prod-brs-01, dentro da subnet snet-aks, onde roda o pod orders. O pod acessa o PostgreSQL dedicado pgsql-orders-prod-brs-01, na subnet delegada snet-postgres, e, por Private Endpoints na snet-endpoints, o Key Vault. O cluster puxa imagens do Container Registry por outro Private Endpoint. O Argo CD, dentro do cluster, sincroniza os manifestos de um repositório Git com o pod. Agentes self-hosted na snet-agents executam o Terraform e o bootstrap do Argo CD. Zonas Private DNS vinculadas à VNet resolvem os nomes. Cada recurso está marcado com a stack Terraform dona dele: vnet-core-prod-brs-01, aks-core-prod-brs-01 ou app-orders-prod-brs-01." loading="lazy" />
-    <figcaption>Figura 2 — Arquitetura de referência. As pílulas mostram a stack Terraform dona de cada recurso. O pod entra no cluster pelo Argo CD, a partir do Git, fora do Terraform. A fonte editável está em draw.io.</figcaption>
+    <figcaption>Figura 1 — Arquitetura de referência. As pílulas mostram a stack Terraform dona de cada recurso. O pod entra no cluster pelo Argo CD, a partir do Git, fora do Terraform. A fonte editável está em draw.io.</figcaption>
 </figure>
 
 O que a figura mostra, e a documentação por trás de cada decisão:
