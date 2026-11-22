@@ -2,6 +2,7 @@
 title: "Parâmetros no pipeline: provisione só o que você escolher (Terraform e um tfstate por stack)"
 description: "Como usar parâmetros no Azure DevOps e no GitHub Actions para escolher quais stacks Terraform rodar, com um tfstate por stack e nomes que dizem o que cada coisa guarda."
 pubDate: 2026-11-21
+updatedDate: 2026-11-22
 author:
   name: "Felipe Rezende"
   role: "Cloud & DevOps Architect"
@@ -43,7 +44,7 @@ O que eu uso hoje tem duas metades que andam juntas:
 
 Uma metade sem a outra não resolve. Parâmetro sem state separado vira um checkbox que não muda nada. State separado sem parâmetro vira um monte de pipelines duplicados.
 
-> **Como ler este artigo.** Todo link aponta para documentação oficial ou pesquisa publicada. Quando uma ideia é minha, e não da fonte, eu marco como **leitura minha**. O código é simplificado para explicar o desenho: adapte nomes, versões e permissões ao seu ambiente e teste em dev antes de qualquer coisa. Se você quer ver os parâmetros funcionando, pule para [Parâmetros no pipeline](#parâmetros-no-pipeline). O código das stacks e dos módulos está na [Parte 2](/blog/pt-br/2026-11-22/aks-postgresql-rede-privada-terraform-argocd/).
+> **Como ler este artigo.** Todo link aponta para documentação oficial ou pesquisa publicada. Quando uma ideia é minha, e não da fonte, eu marco como **leitura minha**. O código é simplificado para explicar o desenho: adapte nomes, versões e permissões ao seu ambiente e teste em dev antes de qualquer coisa. Se você quer ver os parâmetros funcionando, pule para [Parâmetros no pipeline](#parâmetros-no-pipeline). O código das stacks e dos módulos está na [Parte 2](/blog/pt-br/2026-11-22/aks-postgresql-rede-privada-terraform-argocd/). **Atualização (22/11/2026):** revalidei o código com `terraform validate`, `actionlint`, `shellcheck` e `kustomize build` e corrigi o que não passava: versões mínimas do Terraform (1.12) e do provider (4.65), as variáveis do state, o tratamento de erro do `tf.sh` e a nota sobre a service connection.
 
 ---
 
@@ -114,12 +115,12 @@ A pergunta que define a divisão é "quem muda isso, e com que frequência". Par
 
 | Stack (pasta) | Recursos | Módulos | `key` do state |
 |---|---|---|---|
-| `vnet-core` | VNet, subnets, NSGs, zonas Private DNS | `network` | `vnet-core-prod-brs-01.tfstate` |
-| `aks-core` | AKS, ACR e o Private Endpoint dele | `aks`, `acr`, `private-endpoint` | `aks-core-prod-brs-01.tfstate` |
-| `app-orders` | PostgreSQL dedicado, Key Vault e o Private Endpoint dele, identidade da aplicação | `postgresql`, `key-vault`, `private-endpoint`, `workload-identity` | `app-orders-prod-brs-01.tfstate` |
+| `vnet-core` | Resource group, VNet, subnets, NSGs, zonas Private DNS | `network` | `vnet-core-prod-brs-01.tfstate` |
+| `aks-core` | Resource group, AKS, ACR e o Private Endpoint dele | `aks`, `acr`, `private-endpoint` | `aks-core-prod-brs-01.tfstate` |
+| `app-orders` | Resource group, PostgreSQL dedicado, Key Vault e o Private Endpoint dele, identidade da aplicação | `postgresql`, `key-vault`, `private-endpoint`, `workload-identity` | `app-orders-prod-brs-01.tfstate` |
 | *(fora do Terraform)* | O pod `orders` e o Argo CD | Manifestos em `infra/argocd` ([Parte 2](/blog/pt-br/2026-11-22/aks-postgresql-rede-privada-terraform-argocd/)) | não tem state |
 
-Dois detalhes. O módulo `private-endpoint` é usado por duas stacks, e esse é o tipo de reaproveitamento que justifica um módulo: o guia de refatoração da HashiCorp recomenda agrupar em módulo o conjunto de recursos que você cria em várias configurações. E a stack `aks-core` também guarda o ACR: ela leva o nome do recurso principal, e o registry é apoio.
+Três detalhes. O módulo `private-endpoint` é usado por duas stacks, e esse é o tipo de reaproveitamento que justifica um módulo: o guia de refatoração da HashiCorp recomenda agrupar em módulo o conjunto de recursos que você cria em várias configurações. E a stack `aks-core` também guarda o ACR: ela leva o nome do recurso principal, e o registry é apoio. Por fim, cada stack cria o próprio resource group (`rg-vnet-core-…`, `rg-aks-core-…`, `rg-app-orders-…`), e é por esse nome que as outras stacks e o script de bootstrap o encontram.
 
 ### O banco é da aplicação
 
@@ -174,12 +175,12 @@ Cada stack declara o backend vazio e recebe o resto no `init` (o que o Terraform
 ```hcl
 # infra/stacks/aks-core/main.tf
 terraform {
-  required_version = "~> 1.9"
+  required_version = ">= 1.12, < 2.0"
 
   required_providers {
     azurerm = {
       source  = "hashicorp/azurerm"
-      version = "~> 4.0"
+      version = ">= 4.65, < 5.0"
     }
   }
 
@@ -190,6 +191,8 @@ provider "azurerm" {
   features {}
 }
 ```
+
+Por que `>= 1.12` e `>= 4.65`: a autenticação OIDC do backend no Azure DevOps só aparece na [documentação do backend](https://developer.hashicorp.com/terraform/language/v1.16.x/backend/azurerm) a partir do Terraform 1.12, e a Parte 2 usa atributos do provider que chegaram depois do 4.0 (`rbac_authorization_enabled` no Key Vault e `user_assigned_identity_id` na credencial federada). Um `~> 1.9` ou `~> 4.0` aceitaria versões sem eles.
 
 O `init` define a `key`, que no `azurerm` é o nome do blob dentro do container:
 
@@ -232,7 +235,7 @@ O código de cada stack e dos módulos está na [Parte 2](/blog/pt-br/2026-11-22
 
 ## Parâmetros no pipeline
 
-Agora o centro do artigo. O pipeline recebe um parâmetro por etapa, e só as etapas marcadas rodam. As etapas são as três stacks Terraform. Na [Parte 2](/blog/pt-br/2026-11-22/aks-postgresql-rede-privada-terraform-argocd/) eu acrescento uma quarta, o bootstrap do Argo CD.
+Agora o centro do artigo. O pipeline recebe um parâmetro por etapa, e só as etapas marcadas rodam. As etapas são as três stacks Terraform. Na [Parte 2](/blog/pt-br/2026-11-22/aks-postgresql-rede-privada-terraform-argocd/) eu acrescento uma quarta, o bootstrap do Argo CD, que só entra quando a ação é `apply`.
 
 ### Azure DevOps
 
@@ -241,6 +244,9 @@ O Azure Pipelines tem [runtime parameters](https://learn.microsoft.com/en-us/azu
 ```yaml
 # infra/pipelines/azure-pipelines.yml
 trigger: none   # execução sempre intencional; ver "Armadilhas"
+
+variables:
+  - group: tfstate   # TFSTATE_RG e TFSTATE_SA (onde fica o state)
 
 parameters:
   - name: environment
@@ -392,6 +398,7 @@ O que importa nesse desenho:
 
 - **Uma service connection por ambiente** (`sc-terraform-prod`), com federação de identidade, em vez de credenciais guardadas.
 - **O pool `agentes-privados` fica dentro da VNet**, porque o ACR (e, se você fechar, o state) não aceita acesso público e a API do cluster é privada (detalhes na [Parte 2](/blog/pt-br/2026-11-22/aks-postgresql-rede-privada-terraform-argocd/)).
+- **O endereço do state vem de um variable group** (`tfstate`, com `TFSTATE_RG` e `TFSTATE_SA`). Sem ele, o `set -u` do script para no `init`.
 - **A aprovação vive no Environment**, não no YAML. Segundo a [documentação](https://learn.microsoft.com/en-us/azure/devops/pipelines/process/approvals), aprovações e checks não são definidos no YAML, e quem edita o YAML não consegue alterá-los.
 - **O `plan` é publicado como artefato e o `apply` aplica aquele plano**: o que foi revisado é o que vai ser aplicado.
 
@@ -413,7 +420,8 @@ export ARM_USE_AZUREAD=true
 export ARM_CLIENT_ID="$servicePrincipalId"   # expostos pela task AzureCLI@2
 export ARM_TENANT_ID="$tenantId"
 export ARM_ADO_PIPELINE_SERVICE_CONNECTION_ID="$AZURESUBSCRIPTION_SERVICE_CONNECTION_ID"  # exigido pelo provider no Azure DevOps
-export ARM_SUBSCRIPTION_ID="$(az account show --query id -o tsv)"
+ARM_SUBSCRIPTION_ID="$(az account show --query id -o tsv)"   # assinatura do ambiente (em duas linhas para o set -e pegar falha do az)
+export ARM_SUBSCRIPTION_ID
 
 cd "infra/stacks/${stack}"
 
@@ -434,10 +442,14 @@ case "$cmd" in
     terraform apply -input=false \
       "${PIPELINE_WORKSPACE}/plan-${stage}/${stack}.tfplan"
     ;;
+  *)
+    echo "uso: tf.sh <plan|apply> <stack> <env> <instance>" >&2
+    exit 2
+    ;;
 esac
 ```
 
-> **Nota sobre a autenticação no Azure DevOps.** A task [`AzureCLI@2`](https://learn.microsoft.com/en-us/azure/devops/pipelines/tasks/reference/azure-cli-v2) expõe `$servicePrincipalId` e `$tenantId` quando `addSpnToEnvironment: true` e a service connection usa federação. Para o **backend**, a [doc do `azurerm`](https://developer.hashicorp.com/terraform/language/v1.16.x/backend/azurerm) diz que os endpoints do token OIDC são achados automaticamente no Azure DevOps. Para o **provider**, o [guia de OIDC](https://registry.terraform.io/providers/hashicorp/azurerm/latest/docs/guides/service_principal_oidc) usa `SYSTEM_ACCESSTOKEN` e `SYSTEM_OIDCREQUESTURI` (por isso o `env:` das tasks) e exige o ID da service connection em `ARM_ADO_PIPELINE_SERVICE_CONNECTION_ID`. Reaproveitar o `AZURESUBSCRIPTION_SERVICE_CONNECTION_ID` nessa variável é **leitura minha**: o guia usa uma variável própria.
+> **Nota sobre a autenticação no Azure DevOps.** A task [`AzureCLI@2`](https://learn.microsoft.com/en-us/azure/devops/pipelines/tasks/reference/azure-cli-v2) expõe `$servicePrincipalId` e `$tenantId` quando `addSpnToEnvironment: true` e a service connection usa federação. Para o **backend**, a [doc do `azurerm`](https://developer.hashicorp.com/terraform/language/v1.16.x/backend/azurerm) diz que os endpoints do token OIDC são achados automaticamente no Azure DevOps. Para o **provider**, o [guia de OIDC](https://registry.terraform.io/providers/hashicorp/azurerm/latest/docs/guides/service_principal_oidc) usa `SYSTEM_ACCESSTOKEN` e `SYSTEM_OIDCREQUESTURI` (por isso o `env:` das tasks) e exige o ID da service connection em `ARM_ADO_PIPELINE_SERVICE_CONNECTION_ID`. Reaproveitar o `AZURESUBSCRIPTION_SERVICE_CONNECTION_ID` nessa variável tem apoio na própria doc do backend: a partir do Terraform 1.12, ela diz que as tasks `AzureCLI` e `AzurePowerShell` definem essa variável automaticamente.
 
 ### GitHub Actions
 
