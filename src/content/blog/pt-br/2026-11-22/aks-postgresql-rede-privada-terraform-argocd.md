@@ -99,7 +99,7 @@ module "network" {
 
   subnets = {
     "snet-aks-${local.suffix}"       = { cidr = "10.10.0.0/22" }
-    "snet-endpoints-${local.suffix}" = { cidr = "10.10.4.0/27" }
+    "snet-endpoints-${local.suffix}" = { cidr = "10.10.4.0/27", private_endpoint_network_policies = "NetworkSecurityGroupEnabled" }
     "snet-postgres-${local.suffix}"  = { cidr = "10.10.4.32/28", delegation = "Microsoft.DBforPostgreSQL/flexibleServers" }
     "snet-agents-${local.suffix}"    = { cidr = "10.10.4.64/27" }
   }
@@ -118,13 +118,14 @@ O módulo cria o resource group (`rg-vnet-core-prod-brs-01`) e recebe o mapa de 
 # infra/modules/network/variables.tf (trecho)
 variable "subnets" {
   type = map(object({
-    cidr       = string
-    delegation = optional(string)
+    cidr                              = string
+    delegation                        = optional(string)
+    private_endpoint_network_policies = optional(string, "Disabled")
   }))
 }
 ```
 
-O módulo cria o resource group, a VNet, as subnets (com a delegação, quando houver) e as zonas Private DNS, cada uma vinculada à VNet. Sem o vínculo, a VNet não resolve os nomes privados ([doc do PostgreSQL](https://learn.microsoft.com/en-us/azure/postgresql/flexible-server/concepts-networking-private)):
+O módulo cria o resource group, a VNet, as subnets (com a delegação, quando houver), uma NSG por subnet e as zonas Private DNS, cada uma vinculada à VNet. Sem o vínculo, a VNet não resolve os nomes privados ([doc do PostgreSQL](https://learn.microsoft.com/en-us/azure/postgresql/flexible-server/concepts-networking-private)):
 
 ```hcl
 # infra/modules/network/main.tf (trecho)
@@ -134,6 +135,8 @@ resource "azurerm_subnet" "this" {
   resource_group_name  = azurerm_resource_group.this.name
   virtual_network_name = azurerm_virtual_network.this.name
   address_prefixes     = [each.value.cidr]
+
+  private_endpoint_network_policies = each.value.private_endpoint_network_policies
 
   dynamic "delegation" {
     for_each = each.value.delegation == null ? [] : [each.value.delegation]
@@ -145,6 +148,19 @@ resource "azurerm_subnet" "this" {
       }
     }
   }
+}
+
+resource "azurerm_network_security_group" "this" {
+  for_each            = var.subnets
+  name                = "nsg-${trimprefix(each.key, "snet-")}" # nsg-aks-prod-brs-01, nsg-postgres-prod-brs-01...
+  location            = var.location
+  resource_group_name = azurerm_resource_group.this.name
+}
+
+resource "azurerm_subnet_network_security_group_association" "this" {
+  for_each                  = var.subnets
+  subnet_id                 = azurerm_subnet.this[each.key].id
+  network_security_group_id = azurerm_network_security_group.this[each.key].id
 }
 
 resource "azurerm_private_dns_zone" "this" {
@@ -161,6 +177,12 @@ resource "azurerm_private_dns_zone_virtual_network_link" "this" {
   virtual_network_id    = azurerm_virtual_network.this.id
 }
 ```
+
+As NSGs nascem só com as regras padrão do Azure, que liberam o tráfego dentro da VNet e a saída. Regras mais restritivas são decisão sua, e três documentos dizem o que não pode ser bloqueado:
+
+- **AKS:** o AKS não cria nem altera NSG em subnet trazida por você, então as regras precisam liberar o tráfego entre nós e pods ([doc](https://learn.microsoft.com/en-us/azure/aks/concepts-network#network-security-groups)).
+- **PostgreSQL:** se a NSG negar tráfego na subnet delegada, libere a porta 5432 dentro da subnet e a saída para o service tag `Storage` ([doc](https://learn.microsoft.com/en-us/azure/postgresql/network/concepts-networking-private)).
+- **Private Endpoints:** por padrão, a NSG não é avaliada para os endpoints da subnet. Por isso a `snet-endpoints` liga `private_endpoint_network_policies = "NetworkSecurityGroupEnabled"` ([doc](https://learn.microsoft.com/en-us/azure/private-link/disable-private-endpoint-network-policy)).
 
 **`aks-core`** não cria rede. Consulta a subnet e a zona do ACR que a `vnet-core` criou, e cria o registry, o endpoint privado e o cluster:
 
