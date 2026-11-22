@@ -1,0 +1,52 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="660" viewBox="0 0 1200 660" role="img" aria-labelledby="title desc">
+  <title id="title">Parâmetros do pipeline selecionam quais stacks Terraform rodam</title>
+  <desc id="desc">Um painel de parâmetros (ambiente, instância, ação e um checkbox por etapa) alimenta o pipeline. O pipeline executa apenas as etapas marcadas: a stack vnet-core-prod-brs-01 e a stack aks-core-prod-brs-01. A stack da aplicação orders está desmarcada e não roda. Cada stack grava em um arquivo tfstate próprio, nomeado como o recurso, no mesmo container do Azure Storage.</desc>
+  <defs>
+    <style>text{font-family:Manrope,'Geist Sans',Arial,sans-serif;fill:#dae2fd}.title{font-family:'Space Grotesk','Geist Sans',Arial,sans-serif;font-size:28px;font-weight:700}.kicker{font-family:'Space Grotesk','Geist Sans',Arial,sans-serif;font-size:12px;font-weight:700;letter-spacing:2px;fill:#2fd9f4}.label{font-family:'Space Grotesk','Geist Sans',Arial,sans-serif;font-size:16px;font-weight:700}.body{font-size:13px;fill:#c6c6cd}.mono{font-family:'Geist Mono',Consolas,'Courier New',monospace;font-size:12px;fill:#7bd0ff}.edge{fill:none;stroke:#2fd9f4;stroke-width:2.2;marker-end:url(#a)}.skip{fill:none;stroke:#45464d;stroke-width:2;stroke-dasharray:6 5}.state{fill:none;stroke:#5bbfae;stroke-width:2;marker-end:url(#c)}</style>
+    <marker id="a" markerWidth="9" markerHeight="8" refX="8" refY="4" orient="auto"><path d="M0 0L9 4L0 8Z" fill="#2fd9f4"/></marker>
+    <marker id="c" markerWidth="9" markerHeight="8" refX="8" refY="4" orient="auto"><path d="M0 0L9 4L0 8" fill="none" stroke="#5bbfae"/></marker>
+  </defs>
+  <rect width="1200" height="660" fill="#0b1326"/><circle cx="1080" cy="70" r="230" fill="#2fd9f4" opacity=".035"/>
+  <text x="60" y="56" class="kicker">PARÂMETROS → STACKS → TFSTATE</text>
+  <text x="60" y="94" class="title">Quem roda é decidido no run, o isolamento é decidido no desenho</text>
+  <rect x="60" y="130" width="300" height="410" rx="16" fill="#171f33" stroke="#45464d"/>
+  <text x="84" y="162" class="kicker">PARÂMETROS DO RUN</text>
+  <text x="84" y="194" class="label">environment</text><text x="84" y="214" class="mono">dev | hml | prod</text>
+  <text x="84" y="246" class="label">instance</text><text x="84" y="266" class="mono">brs-01</text>
+  <text x="84" y="298" class="label">action</text><text x="84" y="318" class="mono">plan | apply</text>
+  <rect x="84" y="340" width="252" height="48" rx="10" fill="#222a3d" stroke="#2fd9f4" stroke-width="2"/>
+  <text x="104" y="370" class="label">☑ vnet-core</text>
+  <rect x="84" y="398" width="252" height="48" rx="10" fill="#222a3d" stroke="#2fd9f4" stroke-width="2"/>
+  <text x="104" y="428" class="label">☑ aks-core</text>
+  <rect x="84" y="456" width="252" height="48" rx="10" fill="#222a3d" stroke="#45464d"/>
+  <text x="104" y="486" class="label" style="fill:#c6c6cd">☐ app-orders</text>
+  <rect x="420" y="130" width="230" height="410" rx="16" fill="#171f33" stroke="#2fd9f4" stroke-width="2"/>
+  <text x="444" y="162" class="kicker">PIPELINE ÚNICO</text>
+  <text x="444" y="200" class="label">Orquestração</text>
+  <text x="444" y="224" class="body">lê os parâmetros e</text><text x="444" y="244" class="body">monta só as etapas</text><text x="444" y="264" class="body">que foram pedidas</text>
+  <text x="444" y="312" class="label">Template de stack</text>
+  <text x="444" y="336" class="body">init → plan → (aprovação)</text><text x="444" y="356" class="body">→ apply</text>
+  <text x="444" y="404" class="label">Agente na VNet</text>
+  <text x="444" y="428" class="body">self-hosted, rede privada</text>
+  <text x="444" y="476" class="label">Identidade por ambiente</text>
+  <text x="444" y="500" class="body">OIDC, sem segredo</text><text x="444" y="520" class="body">armazenado</text>
+  <rect x="720" y="130" width="420" height="410" rx="16" fill="#171f33" stroke="#45464d"/>
+  <text x="744" y="162" class="kicker">STACKS</text>
+  <rect x="744" y="180" width="372" height="92" rx="10" fill="#222a3d" stroke="#2fd9f4" stroke-width="2"/>
+  <text x="764" y="208" class="label">vnet-core-prod-brs-01</text><text x="764" y="230" class="body">módulo network</text>
+  <text x="764" y="254" class="mono">key = vnet-core-prod-brs-01.tfstate</text>
+  <rect x="744" y="286" width="372" height="92" rx="10" fill="#222a3d" stroke="#7bd0ff" stroke-width="2"/>
+  <text x="764" y="314" class="label">aks-core-prod-brs-01</text><text x="764" y="336" class="body">módulos aks e acr</text>
+  <text x="764" y="360" class="mono">key = aks-core-prod-brs-01.tfstate</text>
+  <rect x="744" y="392" width="372" height="92" rx="10" fill="#222a3d" stroke="#45464d" stroke-dasharray="6 5"/>
+  <text x="764" y="420" class="label" style="fill:#c6c6cd">app-orders-prod-brs-01  (não selecionada)</text><text x="764" y="442" class="body">PostgreSQL dedicado, Key Vault e identidade: intactos</text>
+  <text x="764" y="466" class="mono">key = app-orders-prod-brs-01.tfstate</text>
+  <path class="edge" d="M360 335H420"/>
+  <path class="edge" d="M650 226H744"/>
+  <path class="edge" d="M650 332H744"/>
+  <path class="skip" d="M650 438H744"/>
+  <rect x="60" y="570" width="1080" height="64" rx="12" fill="#222a3d" stroke="#5bbfae" stroke-width="2"/>
+  <text x="84" y="598" class="label" style="fill:#5bbfae">Backend remoto (Azure Storage)</text>
+  <text x="84" y="619" class="body">um container, um blob por stack e por instância: cada um com o seu estado e o seu lock</text>
+  <path class="state" d="M930 540V570"/>
+</svg>
