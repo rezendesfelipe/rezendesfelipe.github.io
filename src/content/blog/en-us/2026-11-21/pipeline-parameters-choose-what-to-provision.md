@@ -9,6 +9,7 @@ author:
 category: "Cloud & DevOps"
 tags: ["terraform", "azure-devops", "github-actions", "iac", "tfstate", "modules", "platform-engineering", "azure"]
 readingTime: "18 min"
+heroImage: ../../../../assets/blog/parametros-selecionam-stacks.webp
 lang: "en"
 draft: false
 ---
