@@ -800,6 +800,32 @@ A new `orders` version becomes a change to the overlay's `newTag`, in a pull req
 
 ---
 
+## Generating this layout with a skill
+
+Building this by hand works, but it is easy to get wrong exactly where the traps section points: a conditional `dependsOn` that breaks validation, a state `key` that drifts from the naming pattern, a Workload Identity `subject` that does not match the Argo CD namespace and service account, `destroy` offered in production. So I turned the pattern from these two articles into a public skill, **`azure-terraform-stacks`**, in the [rezendesfelipe/agent-skills](https://github.com/rezendesfelipe/agent-skills) repository.
+
+What it does:
+
+- **It starts from a manifest.** The agent talks to you and writes `infra/stacks.yaml` (environments, regions and instances, naming pattern, stacks and dependencies, CI platform and, optionally, GitOps). Every generated file is derived from it.
+- **It generates the articles' layout.** Folders `infra/{modules,stacks,envs,scripts,pipelines}`, state `key` as `<stack>-<env>-<instance>.tfstate`, a partial `azurerm` backend, the parameterized orchestrator (Azure DevOps or GitHub Actions) and, optionally, the Argo CD layer with Kustomize and the bootstrap. There is also a profile with the three stacks and the modules of this Part's reference architecture.
+- **It checks the rules.** The `check` command validates an existing `infra/`: state `key`, names, parameters against stacks, `dependsOn` against the manifest, the Workload Identity `subject` against the Argo CD Application, no `destroy` in production, and `trigger: none`.
+- **It bridges Terraform and Git.** `bridge` carries outputs from `terraform output -json` into the Kustomize overlay, refuses values marked `sensitive` and, if you ask, opens a pull request (it never merges).
+- **It draws the architecture.** `diagram` writes an editable `.drawio` file from the manifest, with official Azure icons and the owning stack on every resource.
+
+Names follow the articles' pattern by default, but you can change the order, the separator and the abbreviations in the manifest (global-name rules such as the ACR's and the Key Vault's still apply). It works with any region, and the `alz` mode reads an existing landing zone (a spoke peered to a hub, central Private DNS zones) instead of creating the network.
+
+What it does **not** do: it does not run `terraform apply` or `destroy`, create service connections, federated identities, Environments or agents, build the landing zone, or migrate a single state into stacks. It writes files and runs local checks. And the generated code starts from these articles' simplified code, so the same warning applies: review it and test in dev.
+
+To install (needs Node.js 20+):
+
+```bash
+npx @frcloudsolutions/agent-skills add azure-terraform-stacks --tool claude
+```
+
+Or as a Claude Code plugin: `/plugin marketplace add rezendesfelipe/agent-skills`, then `/plugin install azure-terraform-stacks@rezendesfelipe-agent-skills`. The repository also explains how to install it for Codex, Gemini CLI, Cursor and Copilot.
+
+---
+
 ## Traps I've seen
 
 1. **The bridge between Terraform and Git.** If the `orders` Application enters Git before the database and the identity exist, the pod starts without being able to connect: apply the `app-orders` stack before merging the PR that creates the Application. And if someone recreates the database or the identity and forgets to update the overlay, Argo CD keeps syncing the old values, because as far as it is concerned Git is right.

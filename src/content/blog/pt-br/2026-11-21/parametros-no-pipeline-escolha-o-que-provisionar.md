@@ -670,6 +670,12 @@ Planeje o agrupamento, mova os recursos com blocos `removed` e `import` (o guia 
 
 ---
 
+## Quer gerar esse layout em vez de montar na mão?
+
+Tudo o que está neste artigo (stacks, `key` do state, nomes e o pipeline com parâmetros) virou uma skill pública, a **`azure-terraform-stacks`**, no repositório [rezendesfelipe/agent-skills](https://github.com/rezendesfelipe/agent-skills). Ela parte de um manifesto (`infra/stacks.yaml`), gera o layout e os pipelines de Azure DevOps ou GitHub Actions e confere as regras com um comando `check`. Ela não roda `apply` nem cria identidades. O que ela gera, como instalar e o que ela não faz estão na [Parte 2](/blog/pt-br/2026-11-22/aks-postgresql-rede-privada-terraform-argocd/#gerando-esse-layout-com-uma-skill).
+
+---
+
 ## Fechando
 
 O checkbox no pipeline é só a ponta visível. O que sustenta a ideia é o desenho por baixo: módulos que concentram o *como*, stacks que isolam o *o quê*, states que isolam o *impacto*, nomes que dizem o que cada coisa é e identidades que isolam o *quem pode*. Com isso pronto, o parâmetro vira só a forma de escolher.

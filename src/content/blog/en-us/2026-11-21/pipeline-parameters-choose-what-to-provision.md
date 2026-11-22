@@ -670,6 +670,12 @@ Plan the grouping, move resources with `removed` and `import` blocks (HashiCorp'
 
 ---
 
+## Want to generate this layout instead of building it by hand?
+
+Everything in this article (stacks, state `key`, names and the parameterized pipeline) became a public skill, **`azure-terraform-stacks`**, in the [rezendesfelipe/agent-skills](https://github.com/rezendesfelipe/agent-skills) repository. It starts from a manifest (`infra/stacks.yaml`), generates the layout and the Azure DevOps or GitHub Actions pipelines, and checks the rules with a `check` command. It does not run `apply` or create identities. What it generates, how to install it and what it does not do are in [Part 2](/en/blog/en-us/2026-11-22/private-aks-postgresql-terraform-argocd/#generating-this-layout-with-a-skill).
+
+---
+
 ## Closing
 
 The checkbox in the pipeline is just the visible tip. What holds the idea up is the design underneath: modules that concentrate the *how*, stacks that isolate the *what*, states that isolate the *impact*, names that say what each thing is and identities that isolate the *who*. With that in place, the parameter is just the way you choose.
