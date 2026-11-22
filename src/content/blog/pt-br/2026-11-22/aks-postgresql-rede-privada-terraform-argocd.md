@@ -24,7 +24,7 @@ draft: false
 
 Na [Parte 1](/blog/pt-br/2026-11-21/parametros-no-pipeline-escolha-o-que-provisionar/) eu mostrei como dividir a infraestrutura em stacks e escolher o que rodar por parâmetro. Aqui está a arquitetura por trás dos exemplos: o que cada stack entrega, o código de cada uma e o deploy da aplicação por Argo CD. Os nomes (`vnet-core-prod-brs-01` e companhia) e os parâmetros vêm da Parte 1.
 
-> **Como ler este artigo.** Todo link aponta para documentação oficial ou pesquisa publicada. Quando uma ideia é minha, e não da fonte, eu marco como **leitura minha**. O código é simplificado: adapte nomes, versões e permissões ao seu ambiente e teste em dev.
+> **Como ler este artigo.** Todo link aponta para documentação oficial ou pesquisa publicada. Quando uma ideia é minha, e não da fonte, eu marco como **leitura minha**. O código é simplificado: adapte nomes, versões e permissões ao seu ambiente e teste em dev. **Atualização (22/11/2026):** revalidei o código com `terraform validate`, `actionlint`, `shellcheck` e `kustomize build` e corrigi o que não passava: resource group de cada stack, `location` e `resource_group_name` nas chamadas de módulo, o módulo de rede, o papel de rede do AKS, o atributo novo da credencial federada, o `kustomization.yaml` da base e o bootstrap, que agora só roda com `apply`.
 
 ---
 
@@ -80,18 +80,20 @@ Os trechos abaixo mostram as três stacks e os módulos da arquitetura. Todas re
 
 ```hcl
 # infra/stacks/vnet-core/main.tf (terraform {} e provider como no exemplo do backend da Parte 1)
-variable "environment" { type = string }   # prod
-variable "instance"    { type = string }   # brs-01
+variable "environment" { type = string } # prod
+variable "instance" { type = string }    # brs-01
+variable "location" { type = string }    # brazilsouth
 
 locals {
   name   = "core"
-  suffix = "${var.environment}-${var.instance}"   # prod-brs-01
+  suffix = "${var.environment}-${var.instance}" # prod-brs-01
 }
 
 module "network" {
   source = "../../modules/network"
 
-  name          = "vnet-${local.name}-${local.suffix}"      # vnet-core-prod-brs-01
+  location      = var.location
+  name          = "vnet-${local.name}-${local.suffix}" # vnet-core-prod-brs-01
   address_space = ["10.10.0.0/16"]
 
   subnets = {
@@ -121,18 +123,62 @@ variable "subnets" {
 }
 ```
 
+O módulo cria o resource group, a VNet, as subnets (com a delegação, quando houver) e as zonas Private DNS, cada uma vinculada à VNet. Sem o vínculo, a VNet não resolve os nomes privados ([doc do PostgreSQL](https://learn.microsoft.com/en-us/azure/postgresql/flexible-server/concepts-networking-private)):
+
+```hcl
+# infra/modules/network/main.tf (trecho)
+resource "azurerm_subnet" "this" {
+  for_each             = var.subnets
+  name                 = each.key
+  resource_group_name  = azurerm_resource_group.this.name
+  virtual_network_name = azurerm_virtual_network.this.name
+  address_prefixes     = [each.value.cidr]
+
+  dynamic "delegation" {
+    for_each = each.value.delegation == null ? [] : [each.value.delegation]
+    content {
+      name = "delegation"
+      service_delegation {
+        name    = delegation.value
+        actions = ["Microsoft.Network/virtualNetworks/subnets/join/action"]
+      }
+    }
+  }
+}
+
+resource "azurerm_private_dns_zone" "this" {
+  for_each            = toset(var.private_dns_zones)
+  name                = each.value
+  resource_group_name = azurerm_resource_group.this.name
+}
+
+resource "azurerm_private_dns_zone_virtual_network_link" "this" {
+  for_each              = azurerm_private_dns_zone.this
+  name                  = "link-${var.name}"
+  resource_group_name   = azurerm_resource_group.this.name
+  private_dns_zone_name = each.value.name
+  virtual_network_id    = azurerm_virtual_network.this.id
+}
+```
+
 **`aks-core`** não cria rede. Consulta a subnet e a zona do ACR que a `vnet-core` criou, e cria o registry, o endpoint privado e o cluster:
 
 ```hcl
 # infra/stacks/aks-core/main.tf (continuação do bloco terraform/provider da seção do backend da Parte 1)
 variable "environment" { type = string }
-variable "instance"    { type = string }
+variable "instance" { type = string }
+variable "location" { type = string }
 
 locals {
   name       = "core"
   suffix     = "${var.environment}-${var.instance}"
   network_rg = "rg-vnet-core-${local.suffix}"
   vnet_name  = "vnet-core-${local.suffix}"
+}
+
+resource "azurerm_resource_group" "this" {
+  name     = "rg-aks-${local.name}-${local.suffix}" # rg-aks-core-prod-brs-01
+  location = var.location
 }
 
 data "azurerm_subnet" "aks" {
@@ -155,13 +201,17 @@ data "azurerm_private_dns_zone" "acr" {
 module "acr" {
   source = "../../modules/acr" # sku = "Premium", acesso público desabilitado
 
-  name = "cr${local.name}${var.environment}${replace(var.instance, "-", "")}"   # crcoreprodbrs01 (só letras e números)
+  location            = var.location
+  resource_group_name = azurerm_resource_group.this.name
+  name                = "cr${local.name}${var.environment}${replace(var.instance, "-", "")}" # crcoreprodbrs01 (só letras e números)
 }
 
 module "acr_private_endpoint" {
   source = "../../modules/private-endpoint"
 
-  name                = "pep-cr-${local.name}-${local.suffix}"   # pep-cr-core-prod-brs-01
+  location            = var.location
+  resource_group_name = azurerm_resource_group.this.name
+  name                = "pep-cr-${local.name}-${local.suffix}" # pep-cr-core-prod-brs-01
   subnet_id           = data.azurerm_subnet.endpoints.id
   target_resource_id  = module.acr.id
   subresource_name    = "registry"
@@ -171,9 +221,14 @@ module "acr_private_endpoint" {
 module "aks" {
   source = "../../modules/aks"
 
-  name      = "aks-${local.name}-${local.suffix}"               # aks-core-prod-brs-01
-  subnet_id = data.azurerm_subnet.aks.id
-  acr_id    = module.acr.id
+  location            = var.location
+  resource_group_name = azurerm_resource_group.this.name
+  vm_size             = "Standard_D4ds_v5"
+  node_count          = 3
+  outbound_type       = "loadBalancer"                      # decisão de egress à parte
+  name                = "aks-${local.name}-${local.suffix}" # aks-core-prod-brs-01
+  subnet_id           = data.azurerm_subnet.aks.id
+  acr_id              = module.acr.id
 }
 ```
 
@@ -214,21 +269,35 @@ resource "azurerm_role_assignment" "acr_pull" {
   role_definition_name = "AcrPull"
   principal_id         = azurerm_kubernetes_cluster.this.kubelet_identity[0].object_id
 }
+
+resource "azurerm_role_assignment" "subnet_network_contributor" {
+  scope                = var.subnet_id
+  role_definition_name = "Network Contributor"
+  principal_id         = azurerm_kubernetes_cluster.this.identity[0].principal_id
+}
 ```
+
+O AKS usa uma subnet que não está no resource group dele, então a identidade do cluster precisa de `Network Contributor` nessa subnet ([doc de identidade gerenciada do AKS](https://learn.microsoft.com/en-us/azure/aks/system-assigned-managed-identity)). Com `SystemAssigned`, a atribuição só pode ser feita depois de o cluster existir. Se você quer o papel antes da criação, ou uma zona DNS privada própria para a API, use uma identidade `UserAssigned`.
 
 **`app-orders`** é a stack da aplicação. O banco é uma chamada de módulo dedicada. Ela consulta a rede e as zonas DNS da `vnet-core` e o emissor OIDC do cluster da `aks-core`:
 
 ```hcl
 # infra/stacks/app-orders/main.tf (terraform {} e provider como no exemplo do backend da Parte 1)
-variable "environment"         { type = string }
-variable "instance"            { type = string }
-variable "postgres_sku_name"   { type = string }
+variable "environment" { type = string }
+variable "instance" { type = string }
+variable "location" { type = string }
+variable "postgres_sku_name" { type = string }
 variable "postgres_storage_mb" { type = number }
 
 locals {
   suffix     = "${var.environment}-${var.instance}"
   network_rg = "rg-vnet-core-${local.suffix}"
   vnet_name  = "vnet-core-${local.suffix}"
+}
+
+resource "azurerm_resource_group" "this" {
+  name     = "rg-app-orders-${local.suffix}" # rg-app-orders-prod-brs-01
+  location = var.location
 }
 
 data "azurerm_subnet" "postgres" {
@@ -262,7 +331,9 @@ data "azurerm_kubernetes_cluster" "this" {
 module "postgresql" {
   source = "../../modules/postgresql"
 
-  name                = "pgsql-orders-${local.suffix}"   # pgsql-orders-prod-brs-01
+  location            = var.location
+  resource_group_name = azurerm_resource_group.this.name
+  name                = "pgsql-orders-${local.suffix}" # pgsql-orders-prod-brs-01
   delegated_subnet_id = data.azurerm_subnet.postgres.id
   private_dns_zone_id = data.azurerm_private_dns_zone.postgres.id
   sku_name            = var.postgres_sku_name
@@ -272,12 +343,16 @@ module "postgresql" {
 module "key_vault" {
   source = "../../modules/key-vault"
 
-  name = "kv-orders-${local.suffix}"                     # kv-orders-prod-brs-01
+  location            = var.location
+  resource_group_name = azurerm_resource_group.this.name
+  name                = "kv-orders-${local.suffix}" # kv-orders-prod-brs-01
 }
 
 module "key_vault_private_endpoint" {
   source = "../../modules/private-endpoint"
 
+  location            = var.location
+  resource_group_name = azurerm_resource_group.this.name
   name                = "pep-kv-orders-${local.suffix}"
   subnet_id           = data.azurerm_subnet.endpoints.id
   target_resource_id  = module.key_vault.id
@@ -288,7 +363,9 @@ module "key_vault_private_endpoint" {
 module "workload_identity" {
   source = "../../modules/workload-identity"
 
-  name                 = "id-orders-${local.suffix}"     # id-orders-prod-brs-01
+  location             = var.location
+  resource_group_name  = azurerm_resource_group.this.name
+  name                 = "id-orders-${local.suffix}" # id-orders-prod-brs-01
   oidc_issuer_url      = data.azurerm_kubernetes_cluster.this.oidc_issuer_url
   namespace            = "orders"
   service_account_name = "orders"
@@ -354,12 +431,11 @@ resource "azurerm_user_assigned_identity" "this" {
 }
 
 resource "azurerm_federated_identity_credential" "this" {
-  name                = "fic-${var.name}"
-  resource_group_name = var.resource_group_name
-  parent_id           = azurerm_user_assigned_identity.this.id
-  issuer              = var.oidc_issuer_url
-  subject             = "system:serviceaccount:${var.namespace}:${var.service_account_name}"
-  audience            = ["api://AzureADTokenExchange"]
+  name                      = "fic-${var.name}"
+  user_assigned_identity_id = azurerm_user_assigned_identity.this.id
+  issuer                    = var.oidc_issuer_url
+  subject                   = "system:serviceaccount:${var.namespace}:${var.service_account_name}"
+  audience                  = ["api://AzureADTokenExchange"]
 }
 
 resource "azurerm_role_assignment" "kv_secrets_user" {
@@ -368,6 +444,8 @@ resource "azurerm_role_assignment" "kv_secrets_user" {
   principal_id         = azurerm_user_assigned_identity.this.principal_id
 }
 ```
+
+A credencial federada usa `user_assigned_identity_id`, que substituiu `parent_id` no provider 4.65 (o `parent_id` será removido na 5.0; veja o [recurso no registry](https://registry.terraform.io/providers/hashicorp/azurerm/latest/docs/resources/federated_identity_credential)). O exemplo do Microsoft Learn ainda mostra o atributo antigo.
 
 O Key Vault do exemplo usa RBAC (`rbac_authorization_enabled = true`) e `public_network_access_enabled = false`, atributos documentados do recurso [`azurerm_key_vault`](https://registry.terraform.io/providers/hashicorp/azurerm/latest/docs/resources/key_vault).
 
@@ -491,6 +569,18 @@ spec:
                 name: orders-config
 ```
 
+A base precisa do próprio `kustomization.yaml`, que lista o que ela contém. Sem ele, o `kustomize build` do overlay falha:
+
+```yaml
+# infra/argocd/manifests/orders/base/kustomization.yaml
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+resources:
+  - serviceaccount.yaml
+  - deployment.yaml
+```
+
 ```yaml
 # infra/argocd/manifests/orders/overlays/prod-brs-01/kustomization.yaml
 apiVersion: kustomize.config.k8s.io/v1beta1
@@ -566,7 +656,7 @@ parameters:
 
 stages:
   # ...
-  - ${{ if eq(parameters.argocd, true) }}:
+  - ${{ if and(eq(parameters.argocd, true), eq(parameters.action, 'apply')) }}:
       - template: templates/argocd-bootstrap.yml
         parameters:
           stageName: argocd
@@ -578,6 +668,8 @@ stages:
             - ${{ if eq(parameters.appOrders, true) }}:
                 - app_orders
 ```
+
+O stage só entra quando a ação é `apply`: um run de `plan` não instala nada no cluster.
 
 E o template do bootstrap, que usa o mesmo Environment (e, portanto, as mesmas aprovações), com uma service connection própria:
 
@@ -635,7 +727,7 @@ jobs:
   # ...
   argocd:
     needs: [aks-core, app-orders]
-    if: ${{ !cancelled() && !failure() && inputs.argocd }}
+    if: ${{ !cancelled() && !failure() && inputs.argocd && inputs.action == 'apply' }}
     uses: ./.github/workflows/argocd-bootstrap.yml
     with:
       environment: ${{ inputs.environment }}
@@ -672,7 +764,7 @@ jobs:
           subscription-id: ${{ vars.AZURE_SUBSCRIPTION_ID }}
 
       - name: instalar o Argo CD e a Application raiz
-        run: ./infra/scripts/bootstrap-argocd.sh "${{ inputs.environment }}" "${{ inputs.instance }}"
+        run: bash ./infra/scripts/bootstrap-argocd.sh "${{ inputs.environment }}" "${{ inputs.instance }}"
 ```
 
 O runner precisa ter `az` e `kubectl` instalados. O login usa a action `azure/login`, que é o fluxo da [documentação do GitHub](https://docs.github.com/en/actions/how-tos/secure-your-work/security-harden-deployments/oidc-in-azure), e o `bootstrap-argocd.sh` é o mesmo script do Azure DevOps.

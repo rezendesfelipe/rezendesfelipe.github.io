@@ -2,6 +2,7 @@
 title: "Pipeline parameters: provision only what you choose (Terraform and one tfstate per stack)"
 description: "How to use parameters in Azure DevOps and GitHub Actions to choose which Terraform stacks run, with one tfstate per stack and names that say what each thing holds."
 pubDate: 2026-11-21
+updatedDate: 2026-11-22
 author:
   name: "Felipe Rezende"
   role: "Cloud & DevOps Architect"
@@ -42,7 +43,7 @@ What I use today has two halves that go together:
 
 One half without the other doesn't solve it. Parameters without split state become a checkbox that changes nothing. Split state without parameters becomes a pile of duplicated pipelines.
 
-> **How to read this article.** Every link points to official documentation or published research. When an idea is mine, and not the source's, I mark it as **my reading**. The code is simplified to explain the design: adapt names, versions and permissions to your environment and try it in dev before anything else. If you want to see the parameters working, jump to [Pipeline parameters](#pipeline-parameters). The stack and module code is in [Part 2](/en/blog/en-us/2026-11-22/private-aks-postgresql-terraform-argocd/).
+> **How to read this article.** Every link points to official documentation or published research. When an idea is mine, and not the source's, I mark it as **my reading**. The code is simplified to explain the design: adapt names, versions and permissions to your environment and try it in dev before anything else. If you want to see the parameters working, jump to [Pipeline parameters](#pipeline-parameters). The stack and module code is in [Part 2](/en/blog/en-us/2026-11-22/private-aks-postgresql-terraform-argocd/). **Update (2026-11-22):** I revalidated the code with `terraform validate`, `actionlint`, `shellcheck` and `kustomize build` and fixed what didn't pass: minimum Terraform (1.12) and provider (4.65) versions, the state variables, error handling in `tf.sh` and the note on the service connection.
 
 ---
 
@@ -173,12 +174,12 @@ Each stack declares an empty backend and receives the rest at `init` (what Terra
 ```hcl
 # infra/stacks/aks-core/main.tf
 terraform {
-  required_version = "~> 1.9"
+  required_version = ">= 1.12, < 2.0"
 
   required_providers {
     azurerm = {
       source  = "hashicorp/azurerm"
-      version = "~> 4.0"
+      version = ">= 4.65, < 5.0"
     }
   }
 
@@ -189,6 +190,8 @@ provider "azurerm" {
   features {}
 }
 ```
+
+Why `>= 1.12` and `>= 4.65`: OIDC authentication for the backend on Azure DevOps only appears in the [backend documentation](https://developer.hashicorp.com/terraform/language/v1.16.x/backend/azurerm) from Terraform 1.12, and Part 2 uses provider attributes that arrived after 4.0 (`rbac_authorization_enabled` on Key Vault and `user_assigned_identity_id` on the federated credential). A `~> 1.9` or `~> 4.0` would accept versions without them.
 
 `init` sets the `key`, which in `azurerm` is the blob name inside the container:
 
@@ -240,6 +243,9 @@ Azure Pipelines has [runtime parameters](https://learn.microsoft.com/en-us/azure
 ```yaml
 # infra/pipelines/azure-pipelines.yml
 trigger: none   # always an intentional run; see "Traps"
+
+variables:
+  - group: tfstate   # TFSTATE_RG and TFSTATE_SA (where the state lives)
 
 parameters:
   - name: environment
@@ -391,6 +397,7 @@ What matters in this design:
 
 - **One service connection per environment** (`sc-terraform-prod`), with identity federation, instead of stored credentials.
 - **The `private-agents` pool sits inside the VNet**, because ACR (and, if you close it, the state) doesn't accept public access and the cluster API is private (details in [Part 2](/en/blog/en-us/2026-11-22/private-aks-postgresql-terraform-argocd/)).
+- **The state's location comes from a variable group** (`tfstate`, with `TFSTATE_RG` and `TFSTATE_SA`). Without it, the script's `set -u` stops at `init`.
 - **Approval lives in the Environment**, not in the YAML. According to the [documentation](https://learn.microsoft.com/en-us/azure/devops/pipelines/process/approvals), approvals and checks aren't defined in the YAML, and whoever edits the YAML can't change them.
 - **The `plan` is published as an artifact and `apply` applies that plan**: what was reviewed is what gets applied.
 
@@ -412,7 +419,8 @@ export ARM_USE_AZUREAD=true
 export ARM_CLIENT_ID="$servicePrincipalId"   # exposed by the AzureCLI@2 task
 export ARM_TENANT_ID="$tenantId"
 export ARM_ADO_PIPELINE_SERVICE_CONNECTION_ID="$AZURESUBSCRIPTION_SERVICE_CONNECTION_ID"  # required by the provider on Azure DevOps
-export ARM_SUBSCRIPTION_ID="$(az account show --query id -o tsv)"
+ARM_SUBSCRIPTION_ID="$(az account show --query id -o tsv)"   # environment subscription (two lines so set -e catches an az failure)
+export ARM_SUBSCRIPTION_ID
 
 cd "infra/stacks/${stack}"
 
@@ -433,10 +441,14 @@ case "$cmd" in
     terraform apply -input=false \
       "${PIPELINE_WORKSPACE}/plan-${stage}/${stack}.tfplan"
     ;;
+  *)
+    echo "usage: tf.sh <plan|apply> <stack> <env> <instance>" >&2
+    exit 2
+    ;;
 esac
 ```
 
-> **A note on authentication in Azure DevOps.** The [`AzureCLI@2`](https://learn.microsoft.com/en-us/azure/devops/pipelines/tasks/reference/azure-cli-v2) task exposes `$servicePrincipalId` and `$tenantId` when `addSpnToEnvironment: true` and the service connection uses federation. For the **backend**, the [`azurerm` docs](https://developer.hashicorp.com/terraform/language/v1.16.x/backend/azurerm) say the OIDC token endpoints are found automatically on Azure DevOps. For the **provider**, the [OIDC guide](https://registry.terraform.io/providers/hashicorp/azurerm/latest/docs/guides/service_principal_oidc) uses `SYSTEM_ACCESSTOKEN` and `SYSTEM_OIDCREQUESTURI` (hence the tasks' `env:`) and requires the service connection ID in `ARM_ADO_PIPELINE_SERVICE_CONNECTION_ID`. Reusing `AZURESUBSCRIPTION_SERVICE_CONNECTION_ID` in that variable is **my reading**: the guide uses its own variable.
+> **A note on authentication in Azure DevOps.** The [`AzureCLI@2`](https://learn.microsoft.com/en-us/azure/devops/pipelines/tasks/reference/azure-cli-v2) task exposes `$servicePrincipalId` and `$tenantId` when `addSpnToEnvironment: true` and the service connection uses federation. For the **backend**, the [`azurerm` docs](https://developer.hashicorp.com/terraform/language/v1.16.x/backend/azurerm) say the OIDC token endpoints are found automatically on Azure DevOps. For the **provider**, the [OIDC guide](https://registry.terraform.io/providers/hashicorp/azurerm/latest/docs/guides/service_principal_oidc) uses `SYSTEM_ACCESSTOKEN` and `SYSTEM_OIDCREQUESTURI` (hence the tasks' `env:`) and requires the service connection ID in `ARM_ADO_PIPELINE_SERVICE_CONNECTION_ID`. Reusing `AZURESUBSCRIPTION_SERVICE_CONNECTION_ID` in that variable is backed by the backend docs themselves: from Terraform 1.12, they say the `AzureCLI` and `AzurePowerShell` tasks set that variable automatically.
 
 ### GitHub Actions
 
