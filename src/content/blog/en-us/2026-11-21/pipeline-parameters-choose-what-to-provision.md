@@ -10,7 +10,7 @@ category: "Cloud & DevOps"
 tags: ["terraform", "azure-devops", "github-actions", "iac", "tfstate", "modules", "platform-engineering", "azure"]
 readingTime: "18 min"
 lang: "en"
-draft: true
+draft: false
 ---
 
 > **TL;DR**

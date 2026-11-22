@@ -10,7 +10,7 @@ category: "Cloud & DevOps"
 tags: ["terraform", "aks", "argocd", "gitops", "postgresql", "private-link", "workload-identity", "platform-engineering", "azure"]
 readingTime: "15 min"
 lang: "pt"
-draft: true
+draft: false
 ---
 
 > **TL;DR**
