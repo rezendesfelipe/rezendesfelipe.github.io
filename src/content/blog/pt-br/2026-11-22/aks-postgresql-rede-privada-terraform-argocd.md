@@ -802,19 +802,19 @@ Uma nova versão da `orders` vira uma mudança no `newTag` do overlay, num pull 
 
 ## Gerando esse layout com uma skill
 
-Montar isso na mão funciona, mas é fácil errar justamente nos pontos que eu listo nas armadilhas: `dependsOn` condicional que quebra a validação, `key` do state fora do padrão de nomes, `subject` da Workload Identity diferente do namespace e do service account do Argo CD, `destroy` oferecido em produção. Por isso eu transformei o padrão destes dois artigos em uma skill pública, a **`azure-terraform-stacks`**, no repositório [rezendesfelipe/agent-skills](https://github.com/rezendesfelipe/agent-skills).
+Montar isso na mão funciona, mas é fácil errar justamente nos pontos que eu listo nas armadilhas: `dependsOn` condicional que quebra a validação, `key` do state fora do padrão de nomes, `subject` da Workload Identity diferente do namespace e do service account do Argo CD, `destroy` oferecido em produção. Por isso eu transformei o padrão destes dois artigos em uma skill pública, a **`azure-terraform-stacks`**, no repositório [rezendesfelipe/agent-skills](https://github.com/rezendesfelipe/agent-skills) (o [`SKILL.md`](https://github.com/rezendesfelipe/agent-skills/tree/main/plugins/azure-terraform-stacks/skills/azure-terraform-stacks/SKILL.md) descreve o fluxo e os comandos).
 
 O que ela faz:
 
 - **Parte de um manifesto.** O agente conversa com você e escreve `infra/stacks.yaml` (ambientes, regiões e instâncias, padrão de nomes, stacks e dependências, plataforma de CI e, se quiser, GitOps). Todo arquivo gerado deriva dele.
 - **Gera o layout dos artigos.** Pastas `infra/{modules,stacks,envs,scripts,pipelines}`, `key` do state no formato `<stack>-<env>-<instância>.tfstate`, backend `azurerm` parcial, o orquestrador com parâmetros (Azure DevOps ou GitHub Actions) e, opcionalmente, a camada do Argo CD com Kustomize e o bootstrap. Há também um perfil com as três stacks e os módulos da arquitetura de referência desta Parte.
-- **Confere as regras.** O comando `check` valida um `infra/` existente: `key` do state, nomes, parâmetros contra stacks, `dependsOn` contra o manifesto, `subject` da Workload Identity contra a Application do Argo CD, ausência de `destroy` em produção e `trigger: none`.
+- **Confere as regras.** O comando `check` valida um `infra/` existente: `key` do state, nomes, parâmetros contra stacks, `dependsOn` contra o manifesto, `subject` da Workload Identity contra a Application do Argo CD, ausência de `destroy` em produção e `trigger: none`. Com `--deep`, roda também `terraform fmt` e `validate`, `actionlint`, `kustomize build` e `shellcheck`, quando estão instalados, e informa o que pulou.
 - **Faz a ponte entre Terraform e Git.** O `bridge` leva saídas do `terraform output -json` para o overlay do Kustomize, recusa valores marcados como `sensitive` e, se você pedir, abre um pull request (nunca faz merge).
-- **Desenha a arquitetura.** O `diagram` gera um arquivo `.drawio` editável a partir do manifesto, com os ícones oficiais do Azure e o nome da stack dona de cada recurso.
+- **Desenha a arquitetura.** O `diagram` gera um arquivo `.drawio` editável a partir do manifesto, com os ícones oficiais do Azure e o nome da stack dona de cada recurso. Para exportar SVG e PNG ela precisa do app desktop do draw.io; sem ele, entrega só o `.drawio`.
 
 Os nomes são o padrão dos artigos por padrão, mas você pode trocar a ordem, o separador e as abreviações no manifesto (as regras de nome global, como a do ACR e a do Key Vault, continuam valendo). Funciona com qualquer região, e o modo `alz` lê uma landing zone existente (spoke com peering para um hub, zonas Private DNS centrais) em vez de criar a rede.
 
-O que ela **não** faz: não roda `terraform apply` nem `destroy`, não cria service connections, identidades federadas, Environments nem agentes, não monta a landing zone e não migra um state único para stacks. Ela escreve arquivos e roda checagens locais. E o código gerado parte do código simplificado destes artigos, então vale o mesmo aviso: revise e teste em dev.
+O que ela **não** faz: não roda `terraform apply` nem `destroy`, não cria service connections, identidades federadas, Environments nem agentes, não monta a landing zone e não migra um state único para stacks. Ela escreve arquivos e roda checagens locais, e mostra o `plan` do que vai escrever e pede confirmação antes. E o código gerado parte do código simplificado destes artigos, então vale o mesmo aviso: revise e teste em dev.
 
 Para instalar (precisa de Node.js 20+):
 
