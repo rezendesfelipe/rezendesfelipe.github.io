@@ -50,7 +50,7 @@ const certifications = [
 
 const techStack = [
   { label: 'Azure', icon: 'https://cdn.jsdelivr.net/gh/devicons/devicon/icons/azure/azure-original.svg' },
-  { label: 'AWS', icon: 'https://cdn.jsdelivr.net/gh/devicons/devicon/icons/amazonwebservices/amazonwebservices-original-wordmark.svg' },
+  { label: 'AWS', icon: '/images/stack/aws.svg' },
   { label: 'GCP', icon: 'https://cdn.jsdelivr.net/gh/devicons/devicon/icons/googlecloud/googlecloud-original.svg' },
   { label: 'Terraform', icon: 'https://cdn.jsdelivr.net/gh/devicons/devicon/icons/terraform/terraform-original.svg' },
   { label: 'Azure DevOps', icon: 'https://cdn.jsdelivr.net/gh/devicons/devicon/icons/azuredevops/azuredevops-original.svg' },
@@ -59,6 +59,16 @@ const techStack = [
   { label: 'Cloud Code', icon: 'https://cdn.jsdelivr.net/gh/devicons/devicon/icons/googlecloud/googlecloud-original.svg' },
   { label: 'GPT', icon: 'https://cdn.jsdelivr.net/gh/devicons/devicon/icons/openapi/openapi-original.svg' },
   { label: 'GitHub', icon: 'https://cdn.simpleicons.org/github/2FD9F4' },
+  { label: 'Anthropic', icon: '/images/stack/anthropic.svg' },
+];
+
+const frameworks = [
+  { name: 'C4 Model', origin: 'Simon Brown', description: 'Architecture diagrams at four zoom levels: context, containers, components and code.', links: [{ label: 'c4model.com', url: 'https://c4model.com/' }] },
+  { name: 'Twelve-Factor App', origin: 'Heroku', description: 'Twelve practices for cloud-native apps: config in the environment, stateless processes, dev/prod parity.', links: [{ label: '12factor.net', url: 'https://12factor.net/' }] },
+  { name: 'Spec-Driven Development', origin: 'GitHub Spec Kit', description: 'The spec becomes the central artifact: spec, plan and tasks drive implementation, including by AI agents.', links: [{ label: 'Spec Kit', url: 'https://github.com/github/spec-kit' }] },
+  { name: 'Graph Engineering', origin: 'Knowledge graphs', description: 'Modeling systems, dependencies and knowledge as graphs to give context to platforms and agents.', links: [] },
+  { name: 'Well-Architected Framework', origin: 'Azure · AWS', description: 'Pillars of reliability, security, cost, operational excellence and performance to assess workloads.', links: [{ label: 'Azure', url: 'https://learn.microsoft.com/azure/well-architected/' }, { label: 'AWS', url: 'https://aws.amazon.com/architecture/well-architected/' }] },
+  { name: 'Cloud Adoption Framework', origin: 'Azure · AWS', description: 'Strategy, plan, ready (landing zones), adopt, govern and manage across the cloud journey.', links: [{ label: 'Azure', url: 'https://learn.microsoft.com/azure/cloud-adoption-framework/' }, { label: 'AWS', url: 'https://aws.amazon.com/cloud-adoption-framework/' }] },
 ];
 
 const languages = [
@@ -138,6 +148,28 @@ const languages = [
             <li class="stack-item">
               <img src={item.icon} alt={item.label} width="22" height="22" loading="lazy" decoding="async" />
               <span>{item.label}</span>
+            </li>
+          ))}
+        </ul>
+      </section>
+
+      <section class="section container-wide about-section">
+        <div class="section__header"><h2>Frameworks & Architectures</h2></div>
+        <ul class="framework-grid">
+          {frameworks.map((fw) => (
+            <li class="framework-item">
+              <div class="framework-item__head">
+                <h3>{fw.name}</h3>
+                <span class="framework-item__origin">{fw.origin}</span>
+              </div>
+              <p>{fw.description}</p>
+              {fw.links.length > 0 && (
+                <div class="framework-item__links">
+                  {fw.links.map((link) => (
+                    <a href={link.url} target="_blank" rel="noopener noreferrer" aria-label={`Reference ${fw.name}: ${link.label}`}>{link.label} ↗</a>
+                  ))}
+                </div>
+              )}
             </li>
           ))}
         </ul>
@@ -355,6 +387,66 @@ const languages = [
     color: var(--text);
   }
 
+  .framework-grid {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: .65rem;
+  }
+  .framework-item {
+    display: flex;
+    flex-direction: column;
+    gap: .45rem;
+    padding: .85rem 1rem;
+    background: rgba(34, 42, 61, .35);
+    border: 1px solid rgba(69, 70, 77, .35);
+    border-radius: .55rem;
+    transition: border-color .2s ease, box-shadow .2s ease;
+  }
+  .framework-item:hover {
+    border-color: rgba(47, 217, 244, .45);
+    box-shadow: 0 0 18px rgba(47, 217, 244, .08);
+  }
+  .framework-item__head {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: .75rem;
+  }
+  .framework-item h3 {
+    margin: 0;
+    font-family: var(--font-display);
+    font-size: 1rem;
+    color: var(--text);
+  }
+  .framework-item__origin {
+    flex: 0 0 auto;
+    font-size: .72rem;
+    letter-spacing: .04em;
+    text-transform: uppercase;
+    color: var(--primary);
+  }
+  .framework-item p {
+    margin: 0;
+    font-size: .88rem;
+    line-height: 1.5;
+    color: var(--muted);
+  }
+  .framework-item__links {
+    display: flex;
+    flex-wrap: wrap;
+    gap: .8rem;
+    margin-top: auto;
+    font-size: .82rem;
+  }
+  .framework-item__links a {
+    color: var(--primary);
+    text-decoration: none;
+  }
+  .framework-item__links a:hover { text-decoration: underline; }
+
   .language-list {
     list-style: none;
     padding: 0;
@@ -374,5 +466,6 @@ const languages = [
   @media (max-width: 920px) {
     .about-hero { grid-template-columns: 1fr; }
     .stack-grid { grid-template-columns: 1fr; }
+    .framework-grid { grid-template-columns: 1fr; }
   }
 </style>
