@@ -2,46 +2,70 @@
 import BaseHead from '../components/BaseHead.astro';
 import SiteNav from '../components/SiteNav.astro';
 import SiteFooter from '../components/SiteFooter.astro';
-import cvFile from '../assets/CV_CA_FELIPE-REZENDE_ENG_26.pdf';
+import cvFile from '../assets/Felipe_Rezende_CV_Senior_Azure_Cloud_Architect_EN.pdf';
 import { SITE_TITLE } from '../consts';
 
 const timeline = [
 	{
-		period: 'Dez 2025 — Atual',
+		period: 'Jun 2026 — Atual',
+		role: 'Cloud Architect Consultant · SLMIT',
+		summary: 'Módulos Terraform reutilizáveis com guardrails de governança, pipelines multi-stage no Azure DevOps, AKS com Argo CD e fluxos de entrega assistidos por IA com Claude e GitHub Copilot.',
+	},
+	{
+		period: 'Abr 2026 — Jun 2026',
+		role: 'Senior DevOps Engineer · CI&T',
+		summary: 'Pipelines multi-stage no Azure DevOps, Terraform modular e automação PowerShell/Azure CLI para provisionar Azure; AKS, Argo CD e Elasticsearch.',
+	},
+	{
+		period: 'Dez 2025 — Abr 2026',
 		role: 'Senior Cloud Consultant · SoftwareOne',
-		summary: 'Liderando iniciativas de transformação cloud e arquitetura corporativa em grande escala.',
+		summary: 'Azure Landing Zones como código, 20+ assessments alinhados ao Cloud Adoption Framework, migrações, otimização de custos e avaliações de postura de segurança com Defender for Cloud.',
 	},
 	{
 		period: 'Jul 2025 — Nov 2025',
 		role: 'Cloud Solutions Architect Lead · Mars',
-		summary: 'Desenho de arquiteturas Azure-native para migração de workloads e modernização de plataformas.',
+		summary: 'Arquiteturas Azure de grande escala para microsserviços, data lakehouse e Azure AI Foundry; provisionamento automatizado reduziu o time-to-delivery em 20%.',
+	},
+	{
+		period: 'Mai 2024 — Dez 2025',
+		role: 'Professor de DevSecOps (Compliance e Auditoria) · FIAP',
+		summary: 'Compliance em AWS, Azure e GCP, Policy-as-Code com OPA e Checkov, e identidade em Kubernetes/AKS (OIDC, Entra ID, RBAC).',
 	},
 	{
 		period: 'Fev 2023 — Abr 2025',
 		role: 'Team Lead · SoftwareOne',
-		summary: 'Mentoria técnica e condução de ambientes mission-critical em contexto multi-cloud.',
+		summary: 'Liderança de sete engenheiros em soluções Azure, AWS e GCP para 15+ clientes enterprise; migrações reduziram em 25% o custo de infraestrutura.',
 	},
 	{
-		period: 'Mai 2024 — Dez 2025',
-		role: 'Professor · FIAP',
-		summary: 'Formação de novos profissionais em cloud, arquitetura e práticas de plataforma.',
+		period: 'Set 2022 — Jan 2023',
+		role: 'Cloud Engineer · McKinsey & Company',
+		summary: 'Infraestrutura em Azure e AWS com Terraform e GitHub; Veracode e Checkov integrados a pipelines DevSecOps.',
 	},
 	{
-		period: '2019 — 2022',
-		role: 'Evolução Profissional em Cloud',
-		summary: 'Atuação contínua em administração, segurança e automação de ambientes Azure com expansão para multi-cloud.',
+		period: 'Jan 2021 — Set 2022',
+		role: 'Azure Associate Consultant · SoftwareOne',
+		summary: 'Arquiteturas Azure (cloud-native, event-driven, hub-and-spoke) para 15+ clientes e 5+ migrações multi-cloud, da pré-venda à passagem para serviços gerenciados.',
+	},
+	{
+		period: 'Jan 2019 — Jan 2021',
+		role: 'Azure Consultant · 4MSTECH',
+		summary: 'Migrações de VMware, Hyper-V e servidores físicos para Azure, Azure Foundation, Windows Virtual Desktop, backup e automação com Terraform e PowerShell.',
+	},
+	{
+		period: '2016 — 2018',
+		role: 'Analista de Suporte de TI · IWX e Groupnet',
+		summary: 'Suporte N1 a N3 e administração de Windows Server, firewalls pfSense, Lotus Notes/Domino, backups e antivírus.',
 	},
 ];
 
 const certifications = [
 	{ badge: 'AWS', title: 'AWS Certified Solutions Architect – Professional', period: '04/2024 – 04/2027', verifyUrl: 'https://www.credly.com/badges/73e82779-8329-4dd5-bbcd-546f1e41f73d' },
-	{ badge: 'AWS', title: 'AWS Certified Solutions – Associate', period: '12/2022 – 12/2025', verifyUrl: 'https://www.credly.com/badges/4a0a0e01-446d-4b94-8c33-032d0e28a3fe' },
-	{ badge: 'GCP', title: 'Google - Professional Cloud Architect Certification', period: '10/2024 – 10/2026', verifyUrl: 'https://www.credly.com/badges/63e9158b-eb3b-4b4a-9cf4-e2879db320af' },
 	{ badge: 'GCP', title: 'Google - Associate Cloud Engineer Certification', period: '11/2024 – 11/2027', verifyUrl: 'https://www.credly.com/badges/2daa72a3-4b00-43bc-850c-ec4d9f3453c2' },
-	{ badge: 'Azure', title: 'Azure Solutions Architect Expert (AZ-305)', period: '12/2024 – 12/2025', verifyUrl: 'https://www.credly.com/badges/a5a444c7-d39f-4ad9-aea4-bbfb4c4f0a42', msVerifyUrl: 'https://learn.microsoft.com/api/credentials/share/en-us/rezendesfelipe/9F66B30DAD48E3AC?sharingId=2B6A9F34C6D1FFD7' },
-	{ badge: 'Azure', title: 'DevOps Engineer Expert (AZ-400)', period: '09/2024 – 09/2025', verifyUrl: 'https://www.credly.com/badges/a1ab5729-5fb0-48dc-9ce4-4eec02f570ce', msVerifyUrl: 'https://learn.microsoft.com/api/credentials/share/en-us/rezendesfelipe/94BF76F2254CC078?sharingId=2B6A9F34C6D1FFD7' },
-	{ badge: 'Azure', title: 'Azure Administrator (AZ-104)', period: '10/2019 – 10/2025', verifyUrl: 'https://www.credly.com/badges/626cde72-c84f-4c83-98bc-a8f6518d07fb', msVerifyUrl: 'https://learn.microsoft.com/api/credentials/share/en-us/rezendesfelipe/6920CC7BE0990940?sharingId=2B6A9F34C6D1FFD7' },
-	{ badge: 'Azure', title: 'Azure Security Engineer Associate (AZ-500)', period: '10/2019 – 10/2025', verifyUrl: 'https://www.credly.com/badges/dc6750ac-644c-47e2-b9a8-43fdd4f751f6', msVerifyUrl: 'https://learn.microsoft.com/api/credentials/share/en-us/rezendesfelipe/7F432DE421A3CBB2?sharingId=2B6A9F34C6D1FFD7' },
+	{ badge: 'Azure', title: 'Azure Solutions Architect Expert (AZ-305)', period: '12/2024 – 2027', verifyUrl: 'https://www.credly.com/badges/a5a444c7-d39f-4ad9-aea4-bbfb4c4f0a42', msVerifyUrl: 'https://learn.microsoft.com/api/credentials/share/en-us/rezendesfelipe/9F66B30DAD48E3AC?sharingId=2B6A9F34C6D1FFD7' },
+	{ badge: 'Azure', title: 'DevOps Engineer Expert (AZ-400)', period: '09/2024 – 2027', verifyUrl: 'https://www.credly.com/badges/a1ab5729-5fb0-48dc-9ce4-4eec02f570ce', msVerifyUrl: 'https://learn.microsoft.com/api/credentials/share/en-us/rezendesfelipe/94BF76F2254CC078?sharingId=2B6A9F34C6D1FFD7' },
+	{ badge: 'Azure', title: 'Azure Administrator (AZ-104)', period: '10/2019 – 2027', verifyUrl: 'https://www.credly.com/badges/626cde72-c84f-4c83-98bc-a8f6518d07fb', msVerifyUrl: 'https://learn.microsoft.com/api/credentials/share/en-us/rezendesfelipe/6920CC7BE0990940?sharingId=2B6A9F34C6D1FFD7' },
+	{ badge: 'Azure', title: 'Azure Network Engineer Associate (AZ-700)', period: 'até 2027', msVerifyUrl: 'https://learn.microsoft.com/api/credentials/share/pt-br/rezendesfelipe/6208940A09AF202D?sharingId=2B6A9F34C6D1FFD7' },
+	{ badge: 'Azure', title: 'Azure Security Engineer Associate (AZ-500)', period: '10/2019 – 2027', verifyUrl: 'https://www.credly.com/badges/dc6750ac-644c-47e2-b9a8-43fdd4f751f6', msVerifyUrl: 'https://learn.microsoft.com/api/credentials/share/en-us/rezendesfelipe/7F432DE421A3CBB2?sharingId=2B6A9F34C6D1FFD7' },
 	{ badge: 'Azure', title: 'Azure AI Fundamentals (AI-900)', period: '06/2024', verifyUrl: 'https://www.credly.com/badges/49da122d-f00e-4eda-ac66-1201baf4a967', msVerifyUrl: 'https://learn.microsoft.com/api/credentials/share/en-us/rezendesfelipe/8F78C7E227A67877?sharingId=2B6A9F34C6D1FFD7' },
 	{ badge: 'Azure', title: 'Security, Compliance, and Identity Fundamentals (SC-900)', period: '04/2022', verifyUrl: 'https://www.credly.com/badges/1f686e20-fb13-4b04-88d0-3248b8a7b1c7' },
 	{ badge: 'GitHub', title: 'GitHub Foundations', period: '01/2025 – 01/2028', verifyUrl: 'https://www.credly.com/badges/68561262-16a6-4708-a452-d9a70f53199c' },
@@ -72,9 +96,9 @@ const frameworks = [
 ];
 
 const languages = [
-	'English – C1 (Fluent)',
-	'Spanish – B2 (Basic)',
-	'Brazilian Portuguese - Native',
+	'Portuguese – Native',
+	'English – C2 (Fluent)',
+	'Spanish – B1',
 ];
 ---
 
@@ -88,10 +112,10 @@ const languages = [
 		<main class="about-page">
 			<section class="about-hero container-wide">
 				<div>
-					<p class="about-kicker">Arquiteto de Infraestrutura Cloud</p>
+					<p class="about-kicker">Senior Azure Cloud Architect</p>
 					<h1>Construindo <span>Fundações Digitais</span> Resilientes.</h1>
 					<p>
-						Felipe Rezende é Arquiteto de Infraestrutura Cloud focado em Azure, com experiência em ambientes multi-cloud,
+						Felipe Rezende é Arquiteto Cloud Azure Sênior, com experiência em ambientes multi-cloud,
 						automação, segurança e engenharia de plataformas.
 					</p>
 					<div class="about-actions">
@@ -125,12 +149,18 @@ const languages = [
 				<ul class="cert-list">
 					{certifications.map((cert) => (
 						<li class="cert-item">
-							<a class="cert-badge cert-badge--link" href={cert.verifyUrl} target="_blank" rel="noopener noreferrer">{cert.badge}</a>
+							{(cert.verifyUrl || cert.msVerifyUrl) ? (
+								<a class="cert-badge cert-badge--link" href={cert.verifyUrl || cert.msVerifyUrl} target="_blank" rel="noopener noreferrer">{cert.badge}</a>
+							) : (
+								<span class="cert-badge">{cert.badge}</span>
+							)}
 							<div>
 								<p class="cert-title">{cert.title}</p>
 								<p class="cert-period">{cert.period}</p>
 								<div class="cert-links">
-									<a href={cert.verifyUrl} target="_blank" rel="noopener noreferrer">Validar badge</a>
+									{cert.verifyUrl && (
+										<a href={cert.verifyUrl} target="_blank" rel="noopener noreferrer">Validar badge</a>
+									)}
 									{cert.msVerifyUrl && (
 										<a href={cert.msVerifyUrl} target="_blank" rel="noopener noreferrer">Validar no Microsoft Learn</a>
 									)}
